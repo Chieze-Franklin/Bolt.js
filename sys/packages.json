@@ -1,0 +1,45 @@
+{
+	"apps" : [
+		{
+			"id" : "home",
+			"path" : "/jaysos_home"
+		},
+		{
+			"id" : "home2",
+			"path" : "/jaysos_home2"
+		},
+		{
+			"id" : "notes",
+			"path" : "/jaysos_notes"
+		}
+	],
+	"shorts" : [
+		{
+			"short" : "home",
+			"full" : "app-start/home"
+		}
+	],
+	"tags" : [
+		{
+			"tag" : "default",
+			"paths" : [
+				"home",
+				"/jaysos_home2"
+			]
+		},
+		{
+			"tag" : "home",
+			"paths" : [
+				"home",
+				"/jaysos_home2"
+			]
+		},
+		{
+			"tag" : "index",
+			"paths" : [
+				"home",
+				"/jaysos_home2"
+			]
+		}
+	]
+}

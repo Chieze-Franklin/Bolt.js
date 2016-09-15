@@ -1,0 +1,10 @@
+{
+	"host": "localhost",
+	"port": 400,
+
+	"app_port_start": 500,
+	"app_port_end": 600,
+	"multi_window": true,
+	"ram": 500,
+	"storage": 50000
+}
