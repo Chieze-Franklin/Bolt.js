@@ -1,0 +1,37 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../assets/css/jquery-ui.css">
+
+		<script type="text/javascript" src="../assets/js/jQuery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="../assets/js/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../client/jaysos.config-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/jaysos.service-0.1.0.js"></script>
+
+		<script type="text/javascript" src="../client/jaysos.jq/jaysos.jq.window-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/jaysos.jq/jaysos.jq.app-0.1.0.js"></script>
+
+		<script type="text/javascript">
+			window.onload = function(){
+				Jaysos.Config.setHost("{{host}}");
+				Jaysos.Config.setPort("{{port}}");
+				Jaysos.Config.setProtocol("{{protocol}}");
+			};
+
+			var run = function(){
+				Jaysos.JQ.AppManager.startAppByTag('home', { mode: 'full-screen' });
+			}
+			var run2 = function(){
+				Jaysos.JQ.AppManager.startAppByName('notes', { mode: 'window', instance: 'new' });
+			}
+			var run3 = function(){
+				Jaysos.JQ.AppManager.stopAppByName('notes');
+			}
+		</script>
+	</head>
+	<body>
+		<button onclick="run()">Start Home</button><br />
+		<button onclick="run2()">Start Notes</button><br />
+		<button onclick="run3()">Stop Notes</button><br />
+	</body>
+</html>

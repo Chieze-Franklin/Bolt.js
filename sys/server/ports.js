@@ -41,11 +41,13 @@ module.exports = {
 			var port = __pathPortMap.get(path);
 			if(__ports.indexOf(port) > -1){
 				__ports.pop(port);
+			__pathPortMap.delete(path);
 			}
 
 			var server = __pathServerMap.get(path);
 			if(server){
 				server.close();
+				__pathServerMap.delete(path);
 			}
 		}
 	},

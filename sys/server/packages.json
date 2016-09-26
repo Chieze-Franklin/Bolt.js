@@ -1,15 +1,19 @@
 {
 	"apps" : [
 		{
-			"id" : "home",
+			"name" : "home",
 			"path" : "/jaysos_home"
 		},
 		{
-			"id" : "home2",
+			"name" : "home2",
 			"path" : "/jaysos_home2"
 		},
 		{
-			"id" : "notes",
+			"name" : "hotel",
+			"path" : "/jaysos_reservation"
+		},
+		{
+			"name" : "notes",
 			"path" : "/jaysos_notes"
 		}
 	],
@@ -17,6 +21,10 @@
 		{
 			"short" : "home",
 			"full" : "app-start/home"
+		},
+		{
+			"short" : "test",
+			"full" : "app-start/hotel"
 		}
 	],
 	"tags" : [
