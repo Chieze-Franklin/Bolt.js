@@ -249,6 +249,45 @@ var get_appstop_app = function(request, response){
 	response.send(context);
 }
 
+var get_help = function(request, response){
+	//response.send(app._router.stack); //run this (comment everything below) to see the structure of 'app._router.stack'
+
+	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
+
+	var system = {
+		name: "Jaysos",
+		friendly_name: "Bolt OS",
+		version: 1,
+		friendly_version: "2016"
+	};
+	var routes = [];
+	var paths = [];
+	app._router.stack.forEach(function(r){
+		if(r.route && r.route.path){
+			var entry = {};
+			var entry_summary = "";
+			if(r.route.stack){
+				r.route.stack.forEach(function(s){
+					if(s.method){
+						entry.method = s.method;
+						entry_summary += s.method + ": ";
+					}
+					entry.path = r.route.path;
+					entry_summary += r.route.path;
+
+					routes.push(entry);
+					paths.push(entry_summary);
+				});
+			}
+		}
+	});
+
+	system.paths = paths;
+	system.routes = routes;
+
+	response.send(system);
+}
+
 var get_res_app_view = function(request, response){
 	var options = {
 		method: 'get',
@@ -415,6 +454,28 @@ var post_app_app = function(request, response){
 }
 
 //---------Endpoints
+//TODO: discuss the versioning scheme below with others
+/*
+How versioning will be done
+Different versions of an endpoint are represented using different handlers:
+	app.ACTION({endpoint}, {handler}, {handler}_{n}, {handler}_{n-1},...{handler}_1);
+For instance:
+	app.post('/app', post_app, post_app_2, post_app_3);
+
+When a request comes in, it is (naturally) passed to the first handler. Every handler that receives the request will perform the following:
+	if there is no other handler (and, hence, no need to call 'next()', just handle the request)
+	else
+		check for the header 'Jaysos-Version' using "request.headers['jaysos-version']" (lowercase) or "request.get('Jaysos-Version')" (case-INsensitive)
+		if header is present
+			if it is the version you are expecting
+				handle the request, and do not call 'next()'
+			else
+				do not handle the request, call 'next()'
+			end
+		else if header is not present
+			handle the request, and do not call 'next()'
+		end
+*/
 
 var app = express();
 
@@ -480,6 +541,11 @@ app.get('/apps/:tag', get_apps_tag);
 
 //TODO: app.get('/config', get_config);
 //TODO: app.get('/config/:property', get_config_property);
+
+//returns an array of all endpoints
+app.get('/help', get_help);
+//TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
+//TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
 //TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
 
