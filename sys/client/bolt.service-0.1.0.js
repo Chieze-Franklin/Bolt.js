@@ -1,4 +1,4 @@
-var Jaysos = (function(jaysos){
+var Bolt = (function(bolt){
 
 	var __getXmlHttp = function(){
 		var xhttp;
@@ -10,10 +10,10 @@ var Jaysos = (function(jaysos){
 		return xhttp;
 	}
 
-	jaysos.ServiceManager = {
+	bolt.ServiceManager = {
 		get: function(route, handler){
 			var xhttp = __getXmlHttp();
-			xhttp.open("GET", Jaysos.Config.getProtocol() + "://" + Jaysos.Config.getHost() + ":" + Jaysos.Config.getPort() + route, true);
+			xhttp.open("GET", Bolt.Config.getProtocol() + "://" + Bolt.Config.getHost() + ":" + Bolt.Config.getPort() + route, true);
 			xhttp.send();
 	      	xhttp.onreadystatechange = function(){
 	      		if(xhttp.readyState === 4){//=== XMLHttpRequest.DONE){
@@ -29,5 +29,5 @@ var Jaysos = (function(jaysos){
 		}
 	};
 
-	return jaysos;
-}(Jaysos || {}));
+	return bolt;
+}(Bolt || {}));

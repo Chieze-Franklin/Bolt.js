@@ -1,5 +1,5 @@
-var Jaysos = (function(jaysos, $){
-	jaysos.JQ = (function(jq){
+var Bolt = (function(bolt, $){
+	bolt.JQ = (function(jq){
 		var __mapPathToWindows = new Map();
 
 		jq.WindowManager = {
@@ -22,7 +22,7 @@ var Jaysos = (function(jaysos, $){
 				if(winContextArray && winContextArray.length > 0){
 					winContextArray.forEach(function(winContext, index){
 						if(winContext && winContext.window){
-							if (winContext.type === 'js') {//native javascripi win
+							if (winContext.type === 'js') {//native javascript win
   								winContext.window.close();
   							}
   							else if (winContext.type === 'jq') {//jquery dialog
@@ -37,7 +37,7 @@ var Jaysos = (function(jaysos, $){
 				for(i = 0; app.charAt(i) == '/' && i < app.length; )
 					app = app.substring(i + 1);
 
-				Jaysos.ServiceManager.get('/app-start/' + app, function(err, data){
+				Bolt.ServiceManager.get('/app-start/' + app, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
@@ -54,9 +54,9 @@ var Jaysos = (function(jaysos, $){
 							winContext = winContextArray[winContextArray.length - 1];
 					}
 
-					if(context.port && context.appInfo.jaysos_index){
-	  					var _host = (context.host) ? context.host : Jaysos.Config.getHost();
-	  					var url = Jaysos.Config.getProtocol() + "://" + _host + ":" + context.port + context.appInfo.jaysos_index;
+					if(context.port && context.appInfo.bolt_index){
+	  					var _host = (context.host) ? context.host : Bolt.Config.getHost();
+	  					var url = Bolt.Config.getProtocol() + "://" + _host + ":" + context.port + context.appInfo.bolt_index;
 
 	  					if(options.mode === 'full-screen' || options.mode === 'new-tab'){
 	  						var target = '_self';
@@ -146,7 +146,7 @@ var Jaysos = (function(jaysos, $){
 		};
 
 		return jq;
-	}(jaysos.JQ || {}));
+	}(bolt.JQ || {}));
 
-	return jaysos;
-}(Jaysos || {}, jQuery));
+	return bolt;
+}(Bolt || {}, jQuery));

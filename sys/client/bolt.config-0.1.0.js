@@ -1,9 +1,9 @@
-var Jaysos = (function(jaysos){
+var Bolt = (function(bolt){
 	var __protocol = "http";
 	var __host = "localhost";
 	var __port;
 
-	jaysos.Config = {
+	bolt.Config = {
 		getHost: function(){
 			return __host;
 		},
@@ -24,5 +24,5 @@ var Jaysos = (function(jaysos){
 		}
 	};
 
-	return jaysos;
-}(Jaysos || {}));
+	return bolt;
+}(Bolt || {}));

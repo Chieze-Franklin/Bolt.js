@@ -14,7 +14,8 @@
 		},
 		{
 			"name" : "notes",
-			"path" : "/jaysos_notes"
+			"path" : "/jaysos_notes",
+			"startup" : true
 		}
 	],
 	"shorts" : [
@@ -37,6 +38,7 @@
 		},
 		{
 			"tag" : "home",
+			"path": "/jaysos_home2",
 			"paths" : [
 				"home",
 				"/jaysos_home2"

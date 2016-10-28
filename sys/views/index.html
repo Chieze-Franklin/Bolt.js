@@ -5,27 +5,27 @@
 		<script type="text/javascript" src="../assets/js/jQuery-2.1.4.min.js"></script>
 		<script type="text/javascript" src="../assets/js/jquery-ui.min.js"></script>
 
-		<script type="text/javascript" src="../client/jaysos.config-0.1.0.js"></script>
-		<script type="text/javascript" src="../client/jaysos.service-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.config-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.service-0.1.0.js"></script>
 
-		<script type="text/javascript" src="../client/jaysos.jq/jaysos.jq.window-0.1.0.js"></script>
-		<script type="text/javascript" src="../client/jaysos.jq/jaysos.jq.app-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.jq/bolt.jq.window-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.jq/bolt.jq.app-0.1.0.js"></script>
 
 		<script type="text/javascript">
 			window.onload = function(){
-				Jaysos.Config.setHost("{{host}}");
-				Jaysos.Config.setPort("{{port}}");
-				Jaysos.Config.setProtocol("{{protocol}}");
+				Bolt.Config.setHost("{{host}}");
+				Bolt.Config.setPort("{{port}}");
+				Bolt.Config.setProtocol("{{protocol}}");
 			};
 
 			var run = function(){
-				Jaysos.JQ.AppManager.startAppByTag('home', { mode: 'full-screen' });
+				Bolt.JQ.AppManager.startAppByTag('home', { mode: 'full-screen' });
 			}
 			var run2 = function(){
-				Jaysos.JQ.AppManager.startAppByName('notes', { mode: 'window', instance: 'new' });
+				Bolt.JQ.AppManager.startAppByName('notes', { mode: 'window', instance: 'new' });
 			}
 			var run3 = function(){
-				Jaysos.JQ.AppManager.stopAppByName('notes');
+				Bolt.JQ.AppManager.stopAppByName('notes');
 			}
 		</script>
 	</head>

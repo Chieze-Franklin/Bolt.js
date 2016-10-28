@@ -20,12 +20,12 @@ var __getContextAppInfo = function(data){
 		version: package.version,
 		description: package.description,
 		main: package.main,
-		jaysos_main: package.jaysos_main,
-		jaysos_icon: package.jaysos_icon,
-		jaysos_index: package.jaysos_index,
-		jaysos_init: package.jaysos_init,
-		jaysos_service: package.jaysos_service,
-		jaysos_tags: package.jaysos_tags
+		bolt_main: package.bolt_main,
+		bolt_icon: package.bolt_icon,
+		bolt_index: package.bolt_index,
+		bolt_init: package.bolt_init,
+		bolt_startup: package.bolt_startup,
+		bolt_tags: package.bolt_tags
 	};
 	return context;
 }
@@ -33,8 +33,8 @@ var __getContextAppInfo = function(data){
 var __getContextResInfo = function(data, name){
 	var package = JSON.parse(data);
 	var context = {};
-	for (var i = 0; i < package.jaysos_resources.length; i++) {
-		var entry = package.jaysos_resources[i]
+	for (var i = 0; i < package.bolt_resources.length; i++) {
+		var entry = package.bolt_resources[i]
 		if(entry.name === name){
 			context.resInfo = {
 				name: entry.name,
@@ -173,12 +173,12 @@ var get_appstart_app = function(request, response){
 			context.host = config.getHost();
 			
 			//start the server
-			var jaysos_main = context.appInfo.jaysos_main;
-			if(jaysos_main){
+			var bolt_main = context.appInfo.bolt_main;
+			if(bolt_main){
 				if(!ports.hasPort(context.path)){
 					//var p = ports.makePort(context.path);
 
-					var app = require(path.join(__dirname, 'node_modules', context.path, jaysos_main));
+					var app = require(path.join(__dirname, 'node_modules', context.path, bolt_main));
 					ports.makePort(context.path, app, function(err, port){
 						if(err){
 							//TODO: probably cuz there's no available port, send an error response
@@ -191,7 +191,7 @@ var get_appstart_app = function(request, response){
 						context.port = port;
 
 						//pass the OS host & port to the app
-						var initUrl = context.appInfo.jaysos_init;
+						var initUrl = context.appInfo.bolt_init;
 						if(initUrl){
 							var opt = {
 								method: 'get',
@@ -255,9 +255,9 @@ var get_help = function(request, response){
 	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
 
 	var system = {
-		name: "Jaysos",
-		friendly_name: "Bolt OS",
-		version: 1,
+		name: "Bolt.js",
+		friendly_name: "Bolt Runtime Environment",
+		version: "0.0.1",
 		friendly_version: "2016"
 	};
 	var routes = [];
@@ -465,7 +465,7 @@ For instance:
 When a request comes in, it is (naturally) passed to the first handler. Every handler that receives the request will perform the following:
 	if there is no other handler (and, hence, no need to call 'next()', just handle the request)
 	else
-		check for the header 'Jaysos-Version' using "request.headers['jaysos-version']" (lowercase) or "request.get('Jaysos-Version')" (case-INsensitive)
+		check for the header 'Bolt-Version' using "request.headers['bolt-version']" (lowercase) or "request.get('Bolt-Version')" (case-INsensitive)
 		if header is present
 			if it is the version you are expecting
 				handle the request, and do not call 'next()'
@@ -527,6 +527,9 @@ app.get('/app-start/:app', get_appstart_app);
 
 //TODO: app.get('/app-get/:dev/:app', ...); //installs the app
 //TODO: app.post('/app-get/:dev/:app', ...); //updates the app
+/*
+during install and update, copy the bolt client files specified as dependencies into the folders specified
+*/
 //TODO: app.del('/app-get/:dev/:app', ...); uninstall the app
 
 //TODO: app.post('/app-id', ...); //sets an id for the app
@@ -579,5 +582,6 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	var port = server.address().port;
 	console.log("UI Server listening at http://%s:%s", host, port);
 
-	//TODO: start "system services"
+	//start start-up services
+	
 });

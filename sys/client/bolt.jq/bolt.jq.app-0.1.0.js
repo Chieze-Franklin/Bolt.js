@@ -1,11 +1,11 @@
-var Jaysos = (function(jaysos){
-	jaysos.JQ = (function(jq){
+var Bolt = (function(bolt){
+	bolt.JQ = (function(jq){
 		jq.AppManager = {
 			startAppByName: function(app, options){
-				Jaysos.JQ.WindowManager.openWindow(app, options);
+				Bolt.JQ.WindowManager.openWindow(app, options);
 			},
 			startAppByTag: function(tag, options){
-				Jaysos.ServiceManager.get('/apps/' + tag, function(err, data){
+				Bolt.ServiceManager.get('/apps/' + tag, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
@@ -20,11 +20,11 @@ var Jaysos = (function(jaysos){
       					});
       					var app = prompt(msg, contexts[0].path);
       					if(app != null)//TODO: include a confirm to ask if to use this app always (as against jst once)
-      						Jaysos.JQ.WindowManager.openWindow(app, options);
+      						Bolt.JQ.WindowManager.openWindow(app, options);
       				}
       				else if(contexts.length == 1){
       					var context = contexts[0];
-      					Jaysos.JQ.WindowManager.openWindow(context.path, options);
+      					Bolt.JQ.WindowManager.openWindow(context.path, options);
       				}
       				else{
       					//TODO: no app found
@@ -33,7 +33,7 @@ var Jaysos = (function(jaysos){
 				});
 			},
 			stopAppByName: function(app){
-				Jaysos.ServiceManager.get('/app-stop/' + app, function(err, data){
+				Bolt.ServiceManager.get('/app-stop/' + app, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
@@ -41,13 +41,13 @@ var Jaysos = (function(jaysos){
 
 					var context = JSON.parse(data);
 
-					Jaysos.JQ.WindowManager.closeWindow(context.path);
+					Bolt.JQ.WindowManager.closeWindow(context.path);
 				});
 			}
 		};
 
 		return jq;
-	}(jaysos.JQ || {}));
+	}(bolt.JQ || {}));
 
-	return jaysos;
-}(Jaysos || {}));
+	return bolt;
+}(Bolt || {}));

@@ -1,3 +1,5 @@
 __raw/
 node_modules/*
-apps/*
+sys/routes/
+./*.png
+./*.jpg

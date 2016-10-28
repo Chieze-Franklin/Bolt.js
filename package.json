@@ -1,11 +1,11 @@
 {
-  "name": "Jaysos",
+  "name": "Bolt.js",
   "version": "0.0.1",
-  "description": "a Node.js operating system",
-  "main": "main.js",
+  "description": "a Node.js-base runtime environment written in JavaScript",
+  "main": "bolt.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Chieze-Franklin/jaysos"
+    "url": "https://github.com/Chieze-Franklin/Bolt.js"
   },
   "keywords": [
     "operating",
@@ -25,7 +25,7 @@
   "author": "Chieze Franklin",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Chieze-Franklin/jaysos/issues"
+    "url": "https://github.com/Chieze-Franklin/Bolt.js/issues"
   },
-  "homepage": "https://github.com/Chieze-Franklin/jaysos"
+  "homepage": "https://github.com/Chieze-Franklin/Bolt.js"
 }
