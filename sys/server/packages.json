@@ -2,8 +2,7 @@
 	"apps" : [
 		{
 			"name" : "home",
-			"path" : "/jaysos_home",
-			"startup" : true
+			"path" : "/jaysos_home"
 		},
 		{
 			"name" : "home2",
@@ -12,8 +11,7 @@
 		},
 		{
 			"name" : "hotel",
-			"path" : "/jaysos_reservation",
-			"startup" : true
+			"path" : "/jaysos_reservation"
 		},
 		{
 			"name" : "notes",

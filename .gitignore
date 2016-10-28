@@ -1,4 +1,5 @@
 __raw/
+_github.io/_notes/
 node_modules/*
 sys/routes/
 ./*.png

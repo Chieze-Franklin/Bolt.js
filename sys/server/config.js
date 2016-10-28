@@ -17,10 +17,10 @@ var getConfig = function(){
 }
 
 module.exports = {
-	getAppPortEnd : function(){
+	getAppPortEnd : function(){ //deprecated (for now)
 		return getConfig().app_port_end;
 	},
-	getAppPorts : function(){
+	getAppPorts : function(){ //deprecated (for now); see {root folder}/__raw/ports2.js for how it was used
 		if(__ports) return __ports;
 
 		__ports = [];
@@ -29,7 +29,7 @@ module.exports = {
 		}
 		return __ports;
 	},
-	getAppPortStart : function(){
+	getAppPortStart : function(){ //deprecated (for now)
 		return getConfig().app_port_start;
 	},
 	getHost : function(){
