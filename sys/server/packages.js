@@ -17,7 +17,7 @@ module.exports = {
 		var p = getPackages();
 		for (var i = 0; i < p.apps.length; i++) {
 			var entry = p.apps[i]
-			if(entry.name === name){
+			if(entry.name && entry.name === name){ //entry.name may not even be defined, that's y I first test if(entry.name)
 				return entry.path;
 			}
 		}
@@ -30,6 +30,28 @@ module.exports = {
 				return entry.full;
 			}
 		}
+	},
+	getStartupAppNames : function(){
+		var p = getPackages();
+		var names = [];
+		for (var i = 0; i < p.apps.length; i++) {
+			var entry = p.apps[i]
+			if(entry.startup && entry.name){
+				names.push(entry.name);
+			}
+		}
+		return names;
+	},
+	getStartupAppPaths : function(){
+		var p = getPackages();
+		var paths = [];
+		for (var i = 0; i < p.apps.length; i++) {
+			var entry = p.apps[i]
+			if(entry.startup && entry.path){
+				paths.push(entry.path);
+			}
+		}
+		return paths;
 	},
 	getTagPaths : function(tag){
 		var p = getPackages();

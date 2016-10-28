@@ -1,7 +1,7 @@
 {
   "name": "Bolt.js",
   "version": "0.0.1",
-  "description": "a Node.js-base runtime environment written in JavaScript",
+  "description": "A Node.js-base runtime environment written in JavaScript",
   "main": "bolt.js",
   "repository": {
     "type": "git",

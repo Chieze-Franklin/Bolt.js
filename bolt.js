@@ -580,8 +580,39 @@ app.use(function(req, res, next) {
 var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
 	var port = server.address().port;
-	console.log("UI Server listening at http://%s:%s", host, port);
+	console.log("Bolt Server listening at http://%s:%s", host, port);
 
 	//start start-up services
-	
+	var startups = pacman.getStartupAppNames();
+	var runStartup = function(index){
+		if(index >= startups.length){
+			return;
+		}
+
+		var name = startups[index];
+		var options = {
+			method: 'get',
+			host: config.getHost(),
+			port: config.getPort(),
+			path: '/app-start/' + name
+		};
+		
+		var req = http.request(options, function(res){
+			var body = '';
+			res.on('data', function(data) {
+				body += data;
+			});
+			res.on('end', function() {
+				var context = JSON.parse(body);
+				if(context.port){
+					console.log("Started startup app%s%s at %s:%s",
+						(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
+						(context.host ? context.host : ""), context.port);
+				}
+				runStartup(++index);
+			});
+		});
+		req.end();
+	}
+	runStartup(0);
 });
