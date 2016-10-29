@@ -7,7 +7,7 @@ var path = require("path");
 
 var config = require("./sys/server/config");
 var pacman = require("./sys/server/packages");
-var ports = require("./sys/server/ports");
+var processes = require("./sys/server/processes");
 
 //---------Helpers
 var __pathToContextMap = new Map();
@@ -64,7 +64,7 @@ var get_app_app = function(request, response){
 			var context = JSON.parse(body);
 
 			//run the app
-			if(ports.hasPort(context.path)){
+			if(context.port){
 				var postBody = {
 					method: 'get',
 					host: context.host,
@@ -169,26 +169,24 @@ var get_appstart_app = function(request, response){
 		});
 		res.on('end', function() {
 			var context = JSON.parse(body);
-
-			context.host = config.getHost();
 			
-			//start the server
-			var bolt_main = context.appInfo.bolt_main;
-			if(bolt_main){
-				if(!ports.hasPort(context.path)){
-					//var p = ports.makePort(context.path);
+			//start a child process for the app
+			if(context.appInfo.bolt_main){
+				context.host = config.getHost();
 
-					var app = require(path.join(__dirname, 'node_modules', context.path, bolt_main));
-					ports.makePort(context.path, app, function(err, port){
-						if(err){
-							//TODO: probably cuz there's no available port, send an error response
-							//context.error = err.message;
-							//response.send(context);
-							//return;
-							response.status(500).end(err);
+				if(!processes.hasProcess(context.path)){
+					//pass the context (and a callback) to processes.createProcess()
+					//processes.createProcess() will start a new instance of app_process as a child process
+					//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
+					//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
+					//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
+					//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
+					processes.createProcess(context, function(error, _context){
+						if(error){
+							response.status(500).end(error);
 						}
 
-						context.port = port;
+						context = _context;
 
 						//pass the OS host & port to the app
 						var initUrl = context.appInfo.bolt_init;
@@ -216,8 +214,8 @@ var get_appstart_app = function(request, response){
 					});
 				}
 				else{
-					var p = ports.getPort(context.path);
-					context.port = p;
+					context.pid = processes.getAppPid(context.path);
+					context.port = processes.getAppPort(context.path);
 					response.send(context);
 				}
 			}
@@ -243,8 +241,8 @@ var get_appstop_app = function(request, response){
 	var context = __pathToContextMap.get(_path);
 	__pathToContextMap.delete(_path);
 
-	//close port
-	ports.closePort(_path); //TODO: not working well
+	//kill process
+	processes.killProcess(_path); //TODO: not working well
 
 	response.send(context);
 }
@@ -380,7 +378,7 @@ var post_app = function(request, response){
 	//don't be confused, the route of the body will be the path of our request options
 	//the path of the body represents the app, and we can use it to get the port
 	if(!options.port){
-		options.port = ports.getPort(request.body.path); 
+		options.port = processes.getAppPort(request.body.path); 
 		//options.port may still be undefined/null, esp. if u called this function without starting the server for the app
 		//or if there's no available port
 		if(!options.port){
@@ -419,7 +417,7 @@ var post_app_app = function(request, response){
 			var context = JSON.parse(body);
 
 			//run the app
-			if(ports.hasPort(context.path)){
+			if(processes.hasProcess(context.path)){
 				var postBody = request.body;
 				var opt = {
 					method: 'post',
@@ -581,6 +579,11 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
 	var port = server.address().port;
 	console.log("Bolt Server listening at http://%s:%s", host, port);
+
+	//listen for 'uncaughtException' so it doesnt crash our system
+	process.on('uncaughtException', function(error){
+		console.log(error.code);
+	});
 
 	//start start-up services
 	var startups = pacman.getStartupAppNames();
