@@ -1,6 +1,6 @@
 {
   "name": "Bolt.js",
   "tagline": "A Node.js-base app runtime environment written in JavaScript ",
-  "body": "### Welcome to Bolt.js\r\nBolt is a Node.js-based app runtime environment written in JavaScript.\r\n\r\nWith Bolt you get to run your JavaScript web apps and websites in an environment that feels like an operating system.",
+  "body": "### Welcome to Bolt.js\r\nBolt.js is a Node.js-based app runtime environment written in JavaScript.\r\n\r\nWith Bolt.js you get to run your JavaScript web apps and websites in an environment that feels like an operating system.",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }
