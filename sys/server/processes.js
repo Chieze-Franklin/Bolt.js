@@ -13,14 +13,13 @@ module.exports = {
 	createProcess : function(context, callback){
 		this.killProcess(context.path); //kill existing process first
 
-		var childPath = path.join(__dirname, 'app_process.js');
+		var childPath = path.join(__dirname, 'app_host.js');
 		child = exec('node ' + childPath);
 
 		child.stdout.on('data', function(data) { 
-			var message = data.toString();
-			if(message.indexOf("app_process.port=") == 0){ //if(message.startsWith("app_process.port="))
-				var index = message.indexOf('=');
-				var port = message.substr(index + 1);
+			if(data.indexOf("app_host.port=") == 0){ //if(data.startsWith("app_host.port="))
+				var index = data.indexOf('=');
+				var port = data.substr(index + 1);
 
 				var opt = {
 					method: 'post',

@@ -1,13 +1,19 @@
 var bodyParser = require('body-parser');
 var cons = require('consolidate');
+var exec = require('child_process').exec, child;
 var express = require("express");
 var fs = require("fs");
 var http = require("http");
+var mongodb = require('mongodb');
+var mongoose = require('mongoose'), Schema = mongoose.Schema;
 var path = require("path");
 
 var config = require("./sys/server/config");
 var pacman = require("./sys/server/packages");
 var processes = require("./sys/server/processes");
+
+var models = require("./sys/server/models");
+var schemas = require("./sys/server/schemas");
 
 //---------Helpers
 var __pathToContextMap = new Map();
@@ -550,10 +556,12 @@ app.get('/help', get_help);
 
 //TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
 
+//TODO: app.get('/res/:res') //runs a resource that can be served by any app
 //runs the resource with the specified name (using default options)
 //TODO: unstable, and may be removed
 app.get('/res/:app/:res', get_res_app_view);
 
+//TODO: app.get('/res/:res') //gets the resource info of a resource that can be served by any app
 //gets the resource info of the resource with the specified name
 app.get('/res-info/:app/:res', get_resinfo_app_view);
 
@@ -568,13 +576,6 @@ app.use(function(req, res, next) {
   next(err);
 });
 
-/*app.configure(function(){
-	app.use(function(err, req, res, next) {
-	  console.log(err.message);
-	  console.log(err);
-	});
-})*/
-
 var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
 	var port = server.address().port;
@@ -582,40 +583,93 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 	//listen for 'uncaughtException' so it doesnt crash our system
 	process.on('uncaughtException', function(error){
-		console.log(error.code);
+		console.log(error);
 	});
+
+	var hasStartedStartups = false;
 
 	//start start-up services
 	var startups = pacman.getStartupAppNames();
-	var runStartup = function(index){
+	var runStartups = function(index){
 		if(index >= startups.length){
 			return;
 		}
+		else if(index === -1){
+			//testing
+			var newUser = new models.user({ name: 'randomUser' });
+			var newUser2 = new models.user({ name: 'randomUser' });
+			console.log(newUser);
+			console.log(newUser2);
 
-		var name = startups[index];
-		var options = {
-			method: 'get',
-			host: config.getHost(),
-			port: config.getPort(),
-			path: '/app-start/' + name
-		};
-		
-		var req = http.request(options, function(res){
-			var body = '';
-			res.on('data', function(data) {
-				body += data;
+			mongoose.connect('mongodb://localhost:401/bolt');
+
+			/*mongodb.MongoClient.connect('mongodb://localhost:401/bolt', function(err, db) {
+				console.log('Connected to MongoDB!');
+				db.close();
+				runStartups(++index);
+			});*/
+			mongoose.connection.on('open', function(){
+				console.log('Connected to MongoDB!');
+				runStartups(++index);
 			});
-			res.on('end', function() {
-				var context = JSON.parse(body);
-				if(context.port){
-					console.log("Started startup app%s%s at %s:%s",
-						(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
-						(context.host ? context.host : ""), context.port);
-				}
-				runStartup(++index);
+		}
+		else{
+			var name = startups[index];
+			var options = {
+				method: 'get',
+				host: config.getHost(),
+				port: config.getPort(),
+				path: '/app-start/' + name
+			};
+			
+			var req = http.request(options, function(res){
+				var body = '';
+				res.on('data', function(data) {
+					body += data;
+				});
+				res.on('end', function() {
+					var context = JSON.parse(body);
+					if(context.port){
+						console.log("Started startup app%s%s at %s:%s",
+							(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
+							(context.host ? context.host : ""), context.port);
+					}
+					runStartups(++index);
+				});
 			});
-		});
-		req.end();
+			req.end();
+		}
 	}
-	runStartup(0);
+
+	//start mongodb 
+	if (process.platform === 'win32'){
+		var mongodbPath = path.join(__dirname, 'sys/bins/mongodb-win64/mongod.exe');
+		var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
+		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port 401');
+
+		child.stdout.on('data', function(data){
+			console.log(data);	
+
+			//ok so I'm going to do something probably bad here
+			//I want to start the mongodb client and startup apps only after am sure the mongod.exe is ready
+			//I don't know of a way to know that yet so I'm going to do a lil dirty work here...
+			//By studying the output of mongod.exe on the command line I noticed when ready it emits a line containing
+			//		"[initandlisten] waiting for connections on port "
+			if(!hasStartedStartups){
+				if(data.indexOf("[initandlisten] waiting for connections on port ") > -1){
+					hasStartedStartups = true;
+					runStartups(-1);
+				}
+			}
+		});
+		child.stderr.on('data', function(data){ console.log(data); });
+
+		child.on('close', function(code, signal){ 
+			//console.log("mongod.exe process ", child.pid, " closing with code ", code); 
+		});
+	}
+	//else if (process.platform === 'linux'){
+	//	//ubuntu: sudo service mongodb start
+	//}
+	//else {}
 });

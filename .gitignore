@@ -1,6 +1,15 @@
 __raw/
 _github.io/_notes/
 node_modules/*
+sys/bins/mongodb-win32/*
+sys/bins/mongodb-win64/*
+sys/bins/mongodb-win64/*.*
+sys/bins/mongodb-win64/*.exe
+sys/bins/mongodb-win64/*.dll
+sys/bins/mongodb-win64/*.pdb
+sys/data/mongodb/**/*
+sys/data/mongodb/*
+sys/data/mongodb/
 sys/routes/
 ./*.png
 ./*.jpg

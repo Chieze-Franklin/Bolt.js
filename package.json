@@ -7,9 +7,23 @@
     "type": "git",
     "url": "https://github.com/Chieze-Franklin/Bolt.js"
   },
+  "scripts": {
+    "start": "node bolt"
+  },
   "keywords": [
+    "bolt",
+    "host",
+    "jaysos",
+    "jsos",
+    "node",
+    "node.js",
+    "nodeos",
     "operating",
-    "system"
+    "os",
+    "os.js",
+    "system",
+    "runtime",
+    "environment"
   ],
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -18,8 +32,11 @@
     "express": "~4.14.0",
     "handlebars": "^4.0.5",
     "hbs": "~4.0.0",
+    "mongodb": "^2.2.11",
+    "mongoose": "^4.6.5",
     "multer": "^1.2.0",
     "mustache": "^2.2.1",
+    "socket.io": "^1.5.1",
     "underscore": "^1.8.3"
   },
   "author": "Chieze Franklin",

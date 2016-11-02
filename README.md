@@ -1,8 +1,8 @@
-## Bolt
+## Bolt.js
 
-Bolt is a Node.js-based runtime environment written in JavaScript.
+Bolt.js is a Node.js-based runtime environment written in JavaScript.
 
-With Bolt you get to run your JavaScript web apps and websites in an environment that feels like an operating system.
+With Bolt.js you get to run your JavaScript web apps and websites in an environment that feels like an operating system.
 
 ## Contribute
 
