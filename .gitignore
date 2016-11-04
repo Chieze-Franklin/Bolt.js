@@ -2,6 +2,11 @@ __raw/
 _github.io/_notes/
 node_modules/*
 sys/bins/mongodb-win32/*
+sys/bins/mongodb-win32/*
+sys/bins/mongodb-win32/*.*
+sys/bins/mongodb-win32/*.exe
+sys/bins/mongodb-win32/*.dll
+sys/bins/mongodb-win32/*.pdb
 sys/bins/mongodb-win64/*
 sys/bins/mongodb-win64/*.*
 sys/bins/mongodb-win64/*.exe

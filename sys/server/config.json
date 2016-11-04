@@ -1,10 +1,19 @@
 {
 	"host": "localhost",
 	"port": 400,
+	"protocol": "http",
 
-	"app_port_start": 500,
-	"app_port_end": 600,
-	"multi_window": true,
+	"dbHost": "localhost",
+	"dbPort": 401,
+
+	"appPortStart": 500,
+	"appPortEnd": 600,
+	"multiWindow": true,
 	"ram": 500,
-	"storage": 50000
+	"storage": 50000,
+
+	"friendlyName": "Bolt Runtime Environment",
+	"friendlyVersion": "2016 Build 1",
+	"name": "Bolt.js",
+	"version": 1
 }

@@ -18,24 +18,49 @@ var getConfig = function(){
 
 module.exports = {
 	getAppPortEnd : function(){ //deprecated (for now)
-		return getConfig().app_port_end;
+		return getConfig().appPortEnd;
 	},
 	getAppPorts : function(){ //deprecated (for now); see {root folder}/__raw/ports2.js for how it was used
 		if(__ports) return __ports;
 
 		__ports = [];
-		for(var i = getConfig().app_port_start; i <= getConfig().app_port_end; i++){
+		for(var i = getConfig().appPortStart; i <= getConfig().appPortEnd; i++){
 			__ports.push(i);
 		}
 		return __ports;
 	},
 	getAppPortStart : function(){ //deprecated (for now)
-		return getConfig().app_port_start;
+		return getConfig().appPortStart;
+	},
+
+	getDbHost : function(){
+		return getConfig().dbHost;
+	},
+	getDbPort : function(){
+		return getConfig().dbPort;
+	},
+	getFriendlyName : function(){
+		return getConfig().friendlyName;
+	},
+	getFriendlyVersion : function(){
+		return getConfig().friendlyVersion;
 	},
 	getHost : function(){
 		return getConfig().host;
 	},
+	getMultiWindow : function(){
+		return getConfig().multiWindow;
+	},
+	getName : function(){
+		return getConfig().name;
+	},
 	getPort : function(){
 		return getConfig().port;
+	},
+	getProtocol : function(){
+		return getConfig().protocol;
+	},
+	getVersion : function(){
+		return getConfig().version;
 	}
 };

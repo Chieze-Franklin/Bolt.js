@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../assets/css/jquery-ui.css">
+
+		<script type="text/javascript" src="../assets/js/jQuery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="../assets/js/jquery-ui.min.js"></script>
+
+		<script type="text/javascript" src="../client/bolt.config-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.service-0.1.0.js"></script>
+
+		<script type="text/javascript" src="../client/bolt.jq/bolt.jq.window-0.1.0.js"></script>
+		<script type="text/javascript" src="../client/bolt.jq/bolt.jq.app-0.1.0.js"></script>
+
+		<script type="text/javascript">
+			$(document).ready(function(){
+				Bolt.Config.setHost("{{host}}");
+				Bolt.Config.setPort("{{port}}");
+				Bolt.Config.setProtocol("{{protocol}}");
+
+			    var email,password;
+			    $("#submit").click(function(){
+			        email=$("#email").val();
+			        password=$("#password").val();
+			        /*
+			        * Perform some validation here.
+			        */
+			        $.post("{{protocol}}://{{host}}:{{port}}/user/login", { username: email, password: password },function(data){       
+			            if(data==='done')          
+			            {
+			                window.location.href="/";
+			            }
+			        });
+			    });
+			});
+		</script>
+	</head>
+	<body>
+		<input type="text" size="40" placeholder="Type your email" id="email"><br />
+		<input type="password" size="40" placeholder="Type your password" id="password"><br />
+		<input type="button" value="Submit" id="submit">
+	</body>
+</html>

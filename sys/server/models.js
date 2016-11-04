@@ -2,9 +2,9 @@
 
 var mongoose = require('mongoose');
 
-var schemas = require("./schemas");
+var schemata = require("./schemata");
 
-var userModel = mongoose.model('User', schemas.user);
+var userModel = mongoose.model('User', schemata.user);
 
 module.exports = {
 	user : userModel,

@@ -7,13 +7,17 @@ var http = require("http");
 var mongodb = require('mongodb');
 var mongoose = require('mongoose'), Schema = mongoose.Schema;
 var path = require("path");
+var session = require("client-sessions"/*"express-session"*/);
+var superagent = require('superagent');
 
 var config = require("./sys/server/config");
 var pacman = require("./sys/server/packages");
 var processes = require("./sys/server/processes");
 
 var models = require("./sys/server/models");
-var schemas = require("./sys/server/schemas");
+var schemata = require("./sys/server/schemata");
+
+var utils = require("./sys/server/utils");
 
 //---------Helpers
 var __pathToContextMap = new Map();
@@ -52,62 +56,92 @@ var __getContextResInfo = function(data, name){
 	return context;
 }
 
-//---------Handlers
-var get_app_app = function(request, response){
-	var options = {
-		method: 'get',
-		host: config.getHost(),
-		port: config.getPort(),
-		path: '/app-start/' + request.params.app
-	};
+var __getResponse = function(body, error, status){
+	var response = {};
 
-	var req = http.request(options, function(res){
-		var body = '';
-		res.on('data', function(data) {
-			body += data;
-		});
-		res.on('end', function() {
-			var context = JSON.parse(body);
+	//set status
+	if (status) {
+		response.status = status;
+	}
+	else {
+		if (body)
+			response.status = 200;
+		else if (error)
+			response.status = 500;
+	}
+
+	//set body
+	if (body)
+		response.body = body;
+
+	//set error
+	if (error)
+		response.error = error;
+
+	return response;
+}
+
+//---------Request Validators
+var checkUserAppRight = function(request, response, next){
+	next(); //TODO: check if user has right to start app (dont check if it's a startup app)
+}
+
+//---------Handlers
+var get = function(request, response){
+	superagent
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/users') //check if there's any registered user
+		.end(function(error, usersResponse){
+			if (error) {
+				response.end(__getResponse(null, error));
+			}
+
+			var scope = {
+				protocol: config.getProtocol(),
+				host: config.getHost(),
+				port: config.getPort()
+			};
+			var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
+			console.log("confirm:");
+			console.log(users);
+			if(users && users.length > 0){ //if there are registered users,...
+				if(request.session && request.session.user){ //a user is logged in, load index (welcome) page
+					response
+						.set('Content-type', 'text/html')
+						.render('index.html', scope);
+				}
+				else{ //NO user is logged in, show login view
+					response
+						.set('Content-type', 'text/html')
+						.render('login.html', scope);
+				}
+			}
+			else { //if there are NO registered users, then show them the setup view
+				response
+					.set('Content-type', 'text/html')
+					.render('setup.html', scope);
+			}
+		});	
+}
+
+var get_app_app = function(request, response){
+	superagent
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + request.params.app)
+		.end(function(error, appstartResponse){
+			if (error) {
+				response.end(__getResponse(null, error));
+			}
+
+			var context = appstartResponse.body.body;
 
 			//run the app
-			if(context.port){
-				var postBody = {
-					method: 'get',
-					host: context.host,
-					port: context.port,
-					path: context.path,
-					route: '/'
-				};
-				var opt = {
-					method: 'post',
-					host: config.getHost(),
-					port: config.getPort(),
-					path: "/app",
-					headers: {
-						'Content-Type': 'application/json',
-						'Content-Length': Buffer.byteLength(JSON.stringify(postBody))
-					}
-				};
-				var rq = http.request(opt, function(rs){
-					var bdy = '';
-					rs.on('data', function(d) {
-						bdy += d;
-					});
-					rs.on('end', function() {
-						
-						response.send(bdy);
-					});
-				});
-
-				rq.write(JSON.stringify(postBody));
-				rq.end();
+			if (context && context.port) {
+				var index = (context.appInfo.bolt_index) ? context.appInfo.bolt_index : "/"; //TODO: trim-start '/' off context.appInfo.bolt_index
+				response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 			}
-			else
-				response.send();
+			else {
+				response.send(__getResponse(null, null, 200));
+			}
 		});
-	});
-
-	req.end();
 }
 
 var get_appinfo_app = function(request, response){
@@ -115,9 +149,9 @@ var get_appinfo_app = function(request, response){
 	if(!_path){
 		_path = request.params.app;
 	}
-	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (err, data) {
-		if(err){
-			response.status(404).end(err);
+	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
+		if(error){
+			response.end(__getResponse(null, error));
 		}
 		
 		var package = JSON.parse(data);
@@ -125,7 +159,7 @@ var get_appinfo_app = function(request, response){
 		context.name = request.params.app;
 		context.path = _path;
 
-		response.send(context);
+		response.send(__getResponse(context));
 	});
 }
 
@@ -157,25 +191,19 @@ var get_appstart_app = function(request, response){
 		_path = request.params.app;
 	}
 	if(__pathToContextMap.has(_path)){
-		response.send(__pathToContextMap.get(_path));
+		response.send(__getResponse(__pathToContextMap.get(_path)));
 		return;
 	}
 
-	var options = {
-		method: 'get',
-		host: config.getHost(),
-		port: config.getPort(),
-		path: '/app-info/' + request.params.app
-	};
+	superagent
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-info/' + request.params.app) 
+		.end(function(appinfoError, appinfoResponse){
+			if (appinfoError) {
+				response.end(__getResponse(null, appinfoError));
+			}
 
-	var req = http.request(options, function(res){
-		var body = '';
-		res.on('data', function(data) {
-			body += data;
-		});
-		res.on('end', function() {
-			var context = JSON.parse(body);
-			
+			var context = appinfoResponse.body.body;
+
 			//start a child process for the app
 			if(context.appInfo.bolt_main){
 				context.host = config.getHost();
@@ -189,7 +217,7 @@ var get_appstart_app = function(request, response){
 					//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
 					processes.createProcess(context, function(error, _context){
 						if(error){
-							response.status(500).end(error);
+							response.end(__getResponse(null, error));
 						}
 
 						context = _context;
@@ -197,40 +225,24 @@ var get_appstart_app = function(request, response){
 						//pass the OS host & port to the app
 						var initUrl = context.appInfo.bolt_init;
 						if(initUrl){
-							var opt = {
-								method: 'get',
-								host: config.getHost(),
-								port: context.port,
-								path: initUrl + '?host=' + config.getHost() + '&port=' + config.getPort()
-							};
-							var rq = http.request(opt, function(rs){
-								var bdy = '';
-								rs.on('data', function(d) {
-									bdy += d;
-								});
-								rs.on('end', function() {
-									//
-								});
-							});
-							rq.end();
+							superagent
+								.get(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl + '?host=' + config.getHost() + '&port=' + config.getPort())
+								.end(function(initError, initResponse){});
 						}
 
 						__pathToContextMap.set(context.path, context);
-						response.send(context);
+						response.send(__getResponse(context));
 					});
 				}
 				else{
 					context.pid = processes.getAppPid(context.path);
 					context.port = processes.getAppPort(context.path);
-					response.send(context);
+					response.send(__getResponse(context));
 				}
 			}
 			else
-				response.send(context);
+				response.send(__getResponse(context));
 		});
-	});
-
-	req.end();
 }
 
 var get_appstop_app = function(request, response){
@@ -259,28 +271,28 @@ var get_help = function(request, response){
 	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
 
 	var system = {
-		name: "Bolt.js",
-		friendly_name: "Bolt Runtime Environment",
-		version: "0.0.1",
-		friendly_version: "2016"
+		name: config.getName(),
+		friendlyName: config.getFriendlyName(),
+		version: config.getVersion(),
+		friendlyVersion: config.getFriendlyVersion()
 	};
 	var routes = [];
 	var paths = [];
 	app._router.stack.forEach(function(r){
 		if(r.route && r.route.path){
 			var entry = {};
-			var entry_summary = "";
+			var entrySummary = "";
 			if(r.route.stack){
 				r.route.stack.forEach(function(s){
 					if(s.method){
 						entry.method = s.method;
-						entry_summary += s.method + ": ";
+						entrySummary += s.method + ": ";
 					}
 					entry.path = r.route.path;
-					entry_summary += r.route.path;
+					entrySummary += r.route.path;
 
 					routes.push(entry);
-					paths.push(entry_summary);
+					paths.push(entrySummary);
 				});
 			}
 		}
@@ -342,36 +354,13 @@ var get_resinfo_app_view = function(request, response){
 	});
 }
 
-var get_short = function(request, response){
-	var _path = pacman.getFullPath(request.params.short);
-	if(!_path){
-		response.status(404).end();
-	}
-
-	//trim-start '/'
-	for(i = 0; _path.charAt(i) == '/' && i < _path.length; )
-		_path = _path.substring(i + 1);
-
-	var options = {
-		method: 'get',
-		host: config.getHost(),
-		port: config.getPort(),
-		path: '/' + _path
-	};
-
-	var req = http.request(options, function(res){
-		var body = '';
-		res.on('data', function(data) {
-			body += data;
-		});
-		res.on('end', function() {
-			var result = JSON.parse(body);
-			
-			response.send(result);
-		});
+var get_users = function(request, response){
+	models.user.find({}, function(error, users){
+		if(error){
+			response.end(__getResponse(null, error));
+		}
+		response.send(__getResponse(users));
 	});
-
-	req.end();
 }
 
 var post_app = function(request, response){
@@ -457,6 +446,54 @@ var post_app_app = function(request, response){
 	req.end();
 }
 
+var post_user_add = function(request, response){
+	//TODO: ID the request
+	if(request.body.username && request.body.password){
+		var newUser = new models.user({ 
+			username: request.body.username, 
+			passwordHash: utils.Security.hashSync(request.body.password )
+		});
+		newUser.save();
+		delete newUser.passwordHash;
+		response.send(newUser);
+	}
+	else {
+		response.status(400).end('please supply email and password');
+	}
+}
+
+var post_user_login = function(request, response){
+	//TODO: ID the request
+	models.user.findOne({ 
+		username: request.body.username, 
+		passwordHash: utils.Security.hashSync(request.body.password) 
+	}, function(error, user){
+		if(error){
+			response.status(400).end(error);
+		}
+
+		if(!user){
+			request.session.reset();
+			response.status(400).end("no matching user");
+		}
+		else{
+			user.visits+=1;
+			user.save();
+			delete user.passwordHash;
+			request.session.user = user;
+			response.locals.user = user;
+			console.log(request.session.user);//TODO: ////////////////////////////////////////
+			response.send(user);
+		}
+	});
+}
+
+var post_user_logout = function(request, response){
+	//TODO: ID the request
+	request.session.reset();
+  	response.redirect('/');//TODO: don't redirect, send
+}
+
 //---------Endpoints
 //TODO: discuss the versioning scheme below with others
 /*
@@ -485,12 +522,37 @@ var app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+app.use(function (request, response, next) {
+  response.header('Access-Control-Allow-Origin', '*');
+  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 
-  res.set('Content-Type', 'application/json');
+  response.set('Content-Type', 'application/json');
   next();
+});
+app.use(session({
+	cookieName: 'session',
+	secret: "app.use(session({secret: 'edon no tliub si tlob'}));", //TODO: generate random string if not in database
+	duration: 24 * 60 * 60 * 1000,
+	activeDuration: 24 * 60 * 60 * 1000
+
+	/*saveUninitialized: true, 	//for express-session
+	resave: true*/				//for express-session
+}));
+app.use(function(request, response, next) {
+	if (request.session && request.session.user) {
+		models.user.findOne({ username: request.session.user.username }, function(error, user) {
+			if (user) {
+				delete user.passwordHash; // delete the password from the session
+				request.user = user;
+				request.session.user = user;  //refresh the session value
+				response.locals.user = user;  //make available to UI template engines
+			}
+			next();
+		});
+	} 
+	else {
+		next();
+	}
 });
 
 app.use('/assets', express.static(__dirname + '/sys/assets'));
@@ -499,17 +561,9 @@ app.use('/client', express.static(__dirname + '/sys/client'));
 app.set('views', __dirname + '/sys/views');
 app.engine('html', cons.handlebars);
 app.set('view engine', 'html');
-//redirect to home
-app.get('/', function(request, response){
-	//response.redirect('/home');
-	response.status(200);
-	response.set('Content-type', 'text/html');
-	response.render('index.html', {
-		protocol: "http",
-		host: config.getHost(),
-		port: config.getPort()
-	});
-});
+
+//this endpoint is a UI endpoint, displaying the appropriate view per time
+app.get('/', get);
 
 //runs the app with the specified info in the body of the post  (with the assumption that the server has already been started)
 //this is the route that other /app/* routes ultimately call
@@ -527,7 +581,7 @@ app.post('/app/:app', post_app_app);
 app.get('/app-info/:app', get_appinfo_app);
 
 //starts the server of the app with the specified name
-app.get('/app-start/:app', get_appstart_app);
+app.get('/app-start/:app', checkUserAppRight, get_appstart_app);
 
 //TODO: app.get('/app-get/:dev/:app', ...); //installs the app
 //TODO: app.post('/app-get/:dev/:app', ...); //updates the app
@@ -549,12 +603,12 @@ app.get('/apps/:tag', get_apps_tag);
 //TODO: app.get('/config', get_config);
 //TODO: app.get('/config/:property', get_config_property);
 
-//returns an array of all endpoints
+//returns an array of all endpoints, and some extra info
 app.get('/help', get_help);
 //TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
 //TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
-//TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
+//TODO: app.get('/running-apps', get_runningapps);
 
 //TODO: app.get('/res/:res') //runs a resource that can be served by any app
 //runs the resource with the specified name (using default options)
@@ -565,15 +619,30 @@ app.get('/res/:app/:res', get_res_app_view);
 //gets the resource info of the resource with the specified name
 app.get('/res-info/:app/:res', get_resinfo_app_view);
 
-//executes a shortcut command
-app.get('/:short', get_short);
-//TODO: app.post('/:short', ...); //here u can specify METHOD and other options
+//TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
+
+//gets the current user
+//TODO: app.get('/user', post_userd);
+
+//adds a user to the database
+app.post('/user/add', post_user_add);
+
+app.post('/user/login', post_user_login);
+
+app.post('/user/logout', post_user_logout);
+
+//returns an array of all registered users.
+app.get('/users', get_users);
+
+//returns an array of all live (currently-logged-in) users
+//TODO: app.get('/users/live', get_users_live);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+app.use(function(request, response, next) {
+  var error = new Error('Endpoint not found!');
+  error.status = 404;
+  //response.end(__getResponse(null, error));
+  next(error);
 });
 
 var server = app.listen(config.getPort(), config.getHost(), function(){
@@ -586,6 +655,8 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 		console.log(error);
 	});
 
+	//TODO: how do I check Bolt source hasnt been altered
+
 	var hasStartedStartups = false;
 
 	//start start-up services
@@ -595,13 +666,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 			return;
 		}
 		else if(index === -1){
-			//testing
-			var newUser = new models.user({ name: 'randomUser' });
-			var newUser2 = new models.user({ name: 'randomUser' });
-			console.log(newUser);
-			console.log(newUser2);
-
-			mongoose.connect('mongodb://localhost:401/bolt');
+			mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
 
 			/*mongodb.MongoClient.connect('mongodb://localhost:401/bolt', function(err, db) {
 				console.log('Connected to MongoDB!');
@@ -615,29 +680,23 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 		}
 		else{
 			var name = startups[index];
-			var options = {
-				method: 'get',
-				host: config.getHost(),
-				port: config.getPort(),
-				path: '/app-start/' + name
-			};
-			
-			var req = http.request(options, function(res){
-				var body = '';
-				res.on('data', function(data) {
-					body += data;
-				});
-				res.on('end', function() {
-					var context = JSON.parse(body);
-					if(context.port){
+			superagent
+				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + name)
+				.end(function(appstartError, appstartResponse){
+					if (appstartError) {
+						runStartups(++index);
+						return;
+					}
+
+					var context = appstartResponse.body.body;
+
+					if (context && context.port) {
 						console.log("Started startup app%s%s at %s:%s",
 							(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
 							(context.host ? context.host : ""), context.port);
 					}
 					runStartups(++index);
 				});
-			});
-			req.end();
 		}
 	}
 
@@ -645,7 +704,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	if (process.platform === 'win32'){
 		var mongodbPath = path.join(__dirname, 'sys/bins/mongodb-win64/mongod.exe');
 		var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
-		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port 401');
+		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port ' + config.getDbPort());
 
 		child.stdout.on('data', function(data){
 			console.log(data);	
