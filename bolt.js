@@ -30,27 +30,24 @@ var __getContextAppInfo = function(data){
 		version: package.version,
 		description: package.description,
 		main: package.main,
-		bolt_main: package.bolt_main,
-		bolt_icon: package.bolt_icon,
-		bolt_index: package.bolt_index,
-		bolt_init: package.bolt_init,
-		bolt_startup: package.bolt_startup,
-		bolt_tags: package.bolt_tags
+		bolt: package.bolt
 	};
 	return context;
 }
 
-var __getContextResInfo = function(data, name){
+var __getContextFileInfo = function(data, name){
 	var package = JSON.parse(data);
 	var context = {};
-	for (var i = 0; i < package.bolt_resources.length; i++) {
-		var entry = package.bolt_resources[i]
-		if(entry.name === name){
-			context.resInfo = {
-				name: entry.name,
-				path: entry.path
-			};
-			break;
+	if (package.bolt && package.bolt.files) {
+		for (var i = 0; i < package.bolt.files.length; i++) {
+			var entry = package.bolt.files[i]
+			if(entry.name === name){
+				context.fileInfo = {
+					name: entry.name,
+					path: entry.path
+				};
+				break;
+			}
 		}
 	}
 	return context;
@@ -83,7 +80,10 @@ var __getResponse = function(body, error, status){
 
 //---------Request Validators
 var checkUserAppRight = function(request, response, next){
-	next(); //TODO: check if user has right to start app (dont check if it's a startup app)
+	next(); //TODO: check if user has right to start :app (dont check if it's a startup app)
+}
+var checkUserAppFileRight = function(request, response, next){
+	next(); //TODO: check if user has right to access this :file
 }
 
 //---------Handlers
@@ -135,7 +135,7 @@ var get_app_app = function(request, response){
 
 			//run the app
 			if (context && context.port) {
-				var index = (context.appInfo.bolt_index) ? context.appInfo.bolt_index : "/"; //TODO: trim-start '/' off context.appInfo.bolt_index
+				var index = (context.appInfo.bolt.index) ? context.appInfo.bolt.index : "/"; //TODO: trim-start '/' off context.appInfo.bolt.index
 				response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 			}
 			else {
@@ -166,7 +166,9 @@ var get_appinfo_app = function(request, response){
 var get_apps_tag = function(request, response){
 	var paths = pacman.getTagPaths(request.params.tag);
 	if(!paths){
-		response.status(404).end();
+		var error = new Error("The tag '" + request.params.tag + "' could not be found!");
+		error.status = 404;
+		response.end(__getResponse(null, error, 404));
 	}
 
 	var contexts = [];
@@ -182,7 +184,7 @@ var get_apps_tag = function(request, response){
 
 		contexts.push(context);
 	});
-	response.send(contexts);
+	response.send(__getResponse(contexts));
 }
 
 var get_appstart_app = function(request, response){
@@ -205,7 +207,7 @@ var get_appstart_app = function(request, response){
 			var context = appinfoResponse.body.body;
 
 			//start a child process for the app
-			if(context.appInfo.bolt_main){
+			if(context.appInfo.bolt.main){
 				context.host = config.getHost();
 
 				if(!processes.hasProcess(context.path)){
@@ -223,7 +225,7 @@ var get_appstart_app = function(request, response){
 						context = _context;
 
 						//pass the OS host & port to the app
-						var initUrl = context.appInfo.bolt_init;
+						var initUrl = context.appInfo.bolt.init;
 						if(initUrl){
 							superagent
 								.get(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl + '?host=' + config.getHost() + '&port=' + config.getPort())
@@ -252,7 +254,9 @@ var get_appstop_app = function(request, response){
 	}
 
 	if(!__pathToContextMap.has(_path)){
-		response.status(404).end();
+		var error = new Error("The app '" + request.params.tag + "' could not be found to be running!");
+		error.status = 404;
+		response.end(__getResponse(null, error, 404));
 	}
 
 	//remove context
@@ -260,9 +264,53 @@ var get_appstop_app = function(request, response){
 	__pathToContextMap.delete(_path);
 
 	//kill process
-	processes.killProcess(_path); //TODO: not working well
+	processes.killProcess(_path); //TODO: haven't tested this
 
-	response.send(context);
+	response.send(__getResponse(context));
+}
+
+var get_file_app_file = function(request, response){
+	superagent
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/file-info/' + request.params.app + '/' + request.params.file)
+		.end(function(error, fileinfoResponse){
+			if (error) {
+				response.end(__getResponse(null, error));
+			}
+
+			var context = fileinfoResponse.body.body;
+
+			if (context.fileInfo && context.fileInfo.fullPath) {
+				//response.writeHead(301, {Location: 'file:///' + context.fileInfo.fullPath});
+				//response.end();
+				response.redirect(301, 'file:///' + context.fileInfo.fullPath);
+			}
+			else {
+				var error = new Error("The file '" + request.params.app + '/' + request.params.file + "' could not be found!");
+				error.status = 404;
+				response.end(__getResponse(null, error, 404));
+			}
+		});
+}
+
+var get_fileinfo_app_file = function(request, response){
+	var _path = pacman.getAppPath(request.params.app);
+	if(!_path){
+		_path = request.params.app;
+	}
+	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
+		if(error){
+			response.end(__getResponse(null, error));
+		}
+		
+		var package = JSON.parse(data);
+		var context = __getContextFileInfo(data, request.params.file);
+		if(context.fileInfo.path)
+			context.fileInfo.fullPath = path.join(__dirname, 'node_modules', _path, context.fileInfo.path);
+		context.name = request.params.app;
+		context.path = _path;
+
+		response.send(__getResponse(context));
+	});
 }
 
 var get_help = function(request, response){
@@ -301,57 +349,7 @@ var get_help = function(request, response){
 	system.paths = paths;
 	system.routes = routes;
 
-	response.send(system);
-}
-
-var get_res_app_view = function(request, response){
-	var options = {
-		method: 'get',
-		host: config.getHost(),
-		port: config.getPort(),
-		path: '/res-info/' + request.params.app + '/' + request.params.res
-	};
-
-	var req = http.request(options, function(res){
-		var body = '';
-		res.on('data', function(data) {
-			body += data;
-		});
-		res.on('end', function() {
-			var context = JSON.parse(body);
-
-			if(context.resInfo.full_path){
-				response.writeHead(302, {Location: 'file:///' + context.resInfo.full_path});
-				response.end();
-			}
-			else{
-				response.status(404).end("no resource found");
-			}
-		});
-	});
-
-	req.end();
-}
-
-var get_resinfo_app_view = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
-	if(!_path){
-		_path = request.params.app;
-	}
-	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (err, data) {
-		if(err){
-			response.status(404).end(err);
-		}
-		
-		var package = JSON.parse(data);
-		var context = __getContextResInfo(data, request.params.res);
-		if(context.resInfo.path)
-			context.resInfo.full_path = path.join(__dirname, 'node_modules', _path, context.resInfo.path);
-		context.name = request.params.app;
-		context.path = _path;
-
-		response.send(context);
-	});
+	response.send(__getResponse(system));
 }
 
 var get_users = function(request, response){
@@ -578,10 +576,10 @@ app.get('/app/:app', get_app_app);
 app.post('/app/:app', post_app_app);
 
 //gets the app info of the app with the specified name
-app.get('/app-info/:app', get_appinfo_app);
+app.get('/app-info/:app', checkUserAppRight, get_appinfo_app);
 
 //starts the server of the app with the specified name
-app.get('/app-start/:app', checkUserAppRight, get_appstart_app);
+app.get('/app-start/:app', get_appstart_app);
 
 //TODO: app.get('/app-get/:dev/:app', ...); //installs the app
 //TODO: app.post('/app-get/:dev/:app', ...); //updates the app
@@ -603,21 +601,21 @@ app.get('/apps/:tag', get_apps_tag);
 //TODO: app.get('/config', get_config);
 //TODO: app.get('/config/:property', get_config_property);
 
+//TODO: app.get('/file/:file') //runs a file that can be served by any app
+//runs the file with the specified name (using default options)
+//ISSUE: does not work properly because browsers seem to block it
+app.get('/file/:app/:file', get_file_app_file);
+
+//TODO: app.get('/file-info/:file') //gets the file info of a file that can be served by any app
+//gets the file info of the file with the specified name
+app.get('/file-info/:app/:file', checkUserAppRight, checkUserAppFileRight, get_fileinfo_app_file);
+
 //returns an array of all endpoints, and some extra info
 app.get('/help', get_help);
 //TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
 //TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
 //TODO: app.get('/running-apps', get_runningapps);
-
-//TODO: app.get('/res/:res') //runs a resource that can be served by any app
-//runs the resource with the specified name (using default options)
-//TODO: unstable, and may be removed
-app.get('/res/:app/:res', get_res_app_view);
-
-//TODO: app.get('/res/:res') //gets the resource info of a resource that can be served by any app
-//gets the resource info of the resource with the specified name
-app.get('/res-info/:app/:res', get_resinfo_app_view);
 
 //TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
 
@@ -639,9 +637,9 @@ app.get('/users', get_users);
 
 // catch 404 and forward to error handler
 app.use(function(request, response, next) {
-  var error = new Error('Endpoint not found!');
+  var error = new Error("The endpoint '" + request.path + "' could not be found!");
   error.status = 404;
-  //response.end(__getResponse(null, error));
+  //response.end(__getResponse(null, error, 404));
   next(error);
 });
 

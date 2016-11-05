@@ -54,9 +54,9 @@ var Bolt = (function(bolt, $){
 							winContext = winContextArray[winContextArray.length - 1];
 					}
 
-					if(context.port && context.appInfo.bolt_index){
+					if(context.port && context.appInfo.bolt.index){
 	  					var _host = (context.host) ? context.host : Bolt.Config.getHost();
-	  					var url = Bolt.Config.getProtocol() + "://" + _host + ":" + context.port + context.appInfo.bolt_index;
+	  					var url = Bolt.Config.getProtocol() + "://" + _host + ":" + context.port + context.appInfo.bolt.index;
 
 	  					if(options.mode === 'full-screen' || options.mode === 'new-tab'){
 	  						var target = '_self';

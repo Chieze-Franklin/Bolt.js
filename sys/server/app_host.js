@@ -7,7 +7,7 @@ var path = require("path");
 var post_appstart_app = function(request, response){
 	var context = request.body;
 
-	var bolt_main = context.appInfo.bolt_main;
+	var bolt_main = context.appInfo.bolt.main;
 	var app = require(path.join('../../node_modules', context.path, bolt_main));
 	var s = app.listen(0, function(){
 		var port = s.address().port;
