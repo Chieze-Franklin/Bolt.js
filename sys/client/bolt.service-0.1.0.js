@@ -14,7 +14,6 @@ var Bolt = (function(bolt){
 		get: function(route, handler){
 			var xhttp = __getXmlHttp();
 			xhttp.open("GET", Bolt.Config.getProtocol() + "://" + Bolt.Config.getHost() + ":" + Bolt.Config.getPort() + route, true);
-			xhttp.send();
 	      	xhttp.onreadystatechange = function(){
 	      		if(xhttp.readyState === 4){//=== XMLHttpRequest.DONE){
 	      			if(xhttp.status === 200 || xhttp.status === 0) {
@@ -26,6 +25,26 @@ var Bolt = (function(bolt){
 	      			}
 	      		}
 	      	}
+			xhttp.send();
+		},
+		post: function(route, body, handler){
+			if(!body)
+				body = {};
+			
+			var xhttp = __getXmlHttp();
+			xhttp.open("POST", Bolt.Config.getProtocol() + "://" + Bolt.Config.getHost() + ":" + Bolt.Config.getPort() + route, true);
+	      	xhttp.onreadystatechange = function(){
+	      		if(xhttp.readyState === 4){//=== XMLHttpRequest.DONE){
+	      			if(xhttp.status === 200 || xhttp.status === 0) {
+	      				handler(null, xhttp.responseText);
+	      			} else {
+	      				var error = new Error(xhttp.statusText);
+						error.code = xhttp.status;
+	      				handler(error);
+	      			}
+	      		}
+	      	}
+			xhttp.send(body);
 		}
 	};
 

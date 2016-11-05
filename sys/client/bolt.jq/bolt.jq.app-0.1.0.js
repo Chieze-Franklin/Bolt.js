@@ -11,7 +11,8 @@ var Bolt = (function(bolt){
 						return;
 					}
 
-					var contexts = JSON.parse(data);
+					var response = JSON.parse(data);
+					var contexts = response.body;
       				if(contexts.length > 1){
       					//TODO: ask the user to choose
       					var msg = "Choose App:\n\n";
@@ -33,13 +34,14 @@ var Bolt = (function(bolt){
 				});
 			},
 			stopAppByName: function(app){
-				Bolt.ServiceManager.get('/app-stop/' + app, function(err, data){
+				Bolt.ServiceManager.post('/app-stop/' + app, {}, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
 					}
 
-					var context = JSON.parse(data);
+					var response = JSON.parse(data);
+					var context = response.body;
 
 					Bolt.JQ.WindowManager.closeWindow(context.path);
 				});

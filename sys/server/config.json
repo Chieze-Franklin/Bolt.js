@@ -11,6 +11,7 @@
 	"multiWindow": true,
 	"ram": 500,
 	"storage": 50000,
+	"sessionSecret": "<those reponsible may regularly change this secret>",
 
 	"friendlyName": "Bolt Runtime Environment",
 	"friendlyVersion": "2016 Build 1",

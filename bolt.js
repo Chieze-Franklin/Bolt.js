@@ -125,7 +125,7 @@ var get = function(request, response){
 
 var get_app_app = function(request, response){
 	superagent
-		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + request.params.app)
+		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + request.params.app)
 		.end(function(error, appstartResponse){
 			if (error) {
 				response.end(__getResponse(null, error));
@@ -185,88 +185,6 @@ var get_apps_tag = function(request, response){
 		contexts.push(context);
 	});
 	response.send(__getResponse(contexts));
-}
-
-var get_appstart_app = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
-	if(!_path){
-		_path = request.params.app;
-	}
-	if(__pathToContextMap.has(_path)){
-		response.send(__getResponse(__pathToContextMap.get(_path)));
-		return;
-	}
-
-	superagent
-		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-info/' + request.params.app) 
-		.end(function(appinfoError, appinfoResponse){
-			if (appinfoError) {
-				response.end(__getResponse(null, appinfoError));
-			}
-
-			var context = appinfoResponse.body.body;
-
-			//start a child process for the app
-			if(context.appInfo.bolt.main){
-				context.host = config.getHost();
-
-				if(!processes.hasProcess(context.path)){
-					//pass the context (and a callback) to processes.createProcess()
-					//processes.createProcess() will start a new instance of app_process as a child process
-					//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
-					//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
-					//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
-					//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
-					processes.createProcess(context, function(error, _context){
-						if(error){
-							response.end(__getResponse(null, error));
-						}
-
-						context = _context;
-
-						//pass the OS host & port to the app
-						var initUrl = context.appInfo.bolt.init;
-						if(initUrl){
-							superagent
-								.get(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl + '?host=' + config.getHost() + '&port=' + config.getPort())
-								.end(function(initError, initResponse){});
-						}
-
-						__pathToContextMap.set(context.path, context);
-						response.send(__getResponse(context));
-					});
-				}
-				else{
-					context.pid = processes.getAppPid(context.path);
-					context.port = processes.getAppPort(context.path);
-					response.send(__getResponse(context));
-				}
-			}
-			else
-				response.send(__getResponse(context));
-		});
-}
-
-var get_appstop_app = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
-	if(!_path){
-		_path = request.params.app;
-	}
-
-	if(!__pathToContextMap.has(_path)){
-		var error = new Error("The app '" + request.params.tag + "' could not be found to be running!");
-		error.status = 404;
-		response.end(__getResponse(null, error, 404));
-	}
-
-	//remove context
-	var context = __pathToContextMap.get(_path);
-	__pathToContextMap.delete(_path);
-
-	//kill process
-	processes.killProcess(_path); //TODO: haven't tested this
-
-	response.send(__getResponse(context));
 }
 
 var get_file_app_file = function(request, response){
@@ -330,8 +248,19 @@ var get_help = function(request, response){
 		if(r.route && r.route.path){
 			var entry = {};
 			var entrySummary = "";
-			if(r.route.stack){
-				r.route.stack.forEach(function(s){
+			if(r.route.stack && r.route.stack.length > 0){
+				var s = r.route.stack[0];
+				if(s.method){
+					entry.method = s.method;
+					entrySummary += s.method + ": ";
+				}
+				entry.path = r.route.path;
+				entrySummary += r.route.path;
+
+				routes.push(entry);
+				paths.push(entrySummary);
+
+				/*r.route.stack.forEach(function(s){
 					if(s.method){
 						entry.method = s.method;
 						entrySummary += s.method + ": ";
@@ -341,7 +270,7 @@ var get_help = function(request, response){
 
 					routes.push(entry);
 					paths.push(entrySummary);
-				});
+				});*/
 			}
 		}
 	});
@@ -361,135 +290,146 @@ var get_users = function(request, response){
 	});
 }
 
-var post_app = function(request, response){
-	var options = {
-		method: request.body.method,
-		host: request.body.host,
-		port: request.body.port,
-		path: request.body.route
-	};
-	//don't be confused, the route of the body will be the path of our request options
-	//the path of the body represents the app, and we can use it to get the port
-	if(!options.port){
-		options.port = processes.getAppPort(request.body.path); 
-		//options.port may still be undefined/null, esp. if u called this function without starting the server for the app
-		//or if there's no available port
-		if(!options.port){
-			response.status(500).end("no port found");//TODO: better msg
-		}
+var post_appstart_app = function(request, response){
+	var _path = pacman.getAppPath(request.params.app);
+	if(!_path){
+		_path = request.params.app;
+	}
+	if(__pathToContextMap.has(_path)){
+		response.send(__getResponse(__pathToContextMap.get(_path)));
+		return;
 	}
 
-	var req = http.request(options, function(res){
-		var bdy = '';
-		res.on('data', function(d) {
-			bdy += d;
-		});
-		res.on('end', function() {
-			
-			response.send(bdy);
-		});
-	});
+	superagent
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-info/' + request.params.app) 
+		.end(function(appinfoError, appinfoResponse){
+			if (appinfoError) {
+				response.end(__getResponse(null, appinfoError));
+			}
 
-	req.end();
-}
+			var context = appinfoResponse.body.body;
 
-var post_app_app = function(request, response){
-	var options = {
-		method: 'get',
-		host: config.getHost(),
-		port: config.getPort(),
-		path: '/app-start/' + request.params.app
-	};
+			//start a child process for the app
+			if(context.appInfo.bolt.main){
+				context.host = config.getHost();
 
-	var req = http.request(options, function(res){
-		var body = '';
-		res.on('data', function(data) {
-			body += data;
-		});
-		res.on('end', function() {
-			var context = JSON.parse(body);
+				if(!processes.hasProcess(context.path)){
+					//pass the context (and a callback) to processes.createProcess()
+					//processes.createProcess() will start a new instance of app_process as a child process
+					//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
+					//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
+					//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
+					//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
+					processes.createProcess(context, function(error, _context){
+						if(error){
+							response.end(__getResponse(null, error));
+						}
 
-			//run the app
-			if(processes.hasProcess(context.path)){
-				var postBody = request.body;
-				var opt = {
-					method: 'post',
-					host: config.getHost(),
-					port: config.getPort(),
-					path: "/app",
-					headers: {
-						'Content-Type': 'application/json',
-						'Content-Length': Buffer.byteLength(JSON.stringify(postBody))
-					}
-				};
-				var rq = http.request(opt, function(rs){
-					var bdy = '';
-					rs.on('data', function(d) {
-						bdy += d;
+						context = _context;
+
+						//pass the OS host & port to the app
+						var initUrl = context.appInfo.bolt.init;
+						if(initUrl){
+							superagent
+								.get(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl + '?host=' + config.getHost() + '&port=' + config.getPort())
+								.end(function(initError, initResponse){});
+						}
+
+						__pathToContextMap.set(context.path, context);
+						response.send(__getResponse(context));
 					});
-					rs.on('end', function() {
-						
-						response.send(bdy);
-					});
-				});
-
-				rq.write(JSON.stringify(postBody));
-				rq.end();
+				}
+				else{
+					context.pid = processes.getAppPid(context.path);
+					context.port = processes.getAppPort(context.path);
+					response.send(__getResponse(context));
+				}
 			}
 			else
-				response.send();
+				response.send(__getResponse(context));
 		});
-	});
+}
 
-	req.end();
+var post_appstop_app = function(request, response){
+	var _path = pacman.getAppPath(request.params.app);
+	if(!_path){
+		_path = request.params.app;
+	}
+
+	if(!__pathToContextMap.has(_path)){
+		var error = new Error("The app '" + request.params.tag + "' could not be found to be running!");
+		error.status = 404;
+		response.end(__getResponse(null, error, 404));
+	}
+
+	//remove context
+	var context = __pathToContextMap.get(_path);
+	__pathToContextMap.delete(_path);
+
+	//kill process
+	processes.killProcess(_path); //TODO: haven't tested this
+
+	response.send(__getResponse(context));
 }
 
 var post_user_add = function(request, response){
 	//TODO: ID the request
 	if(request.body.username && request.body.password){
+		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		var newUser = new models.user({ 
-			username: request.body.username, 
-			passwordHash: utils.Security.hashSync(request.body.password )
+			username: usrnm, 
+			passwordHash: utils.Security.hashSync(request.body.password + usrnm)
 		});
 		newUser.save();
 		delete newUser.passwordHash;
-		response.send(newUser);
+		response.send(__getResponse(newUser));
 	}
 	else {
-		response.status(400).end('please supply email and password');
+		var error = new Error("Username and/or password missing!");
+		error.status = 400;
+		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
 	}
 }
 
 var post_user_login = function(request, response){
 	//TODO: ID the request
-	models.user.findOne({ 
-		username: request.body.username, 
-		passwordHash: utils.Security.hashSync(request.body.password) 
-	}, function(error, user){
-		if(error){
-			response.status(400).end(error);
-		}
+	if(request.body.username && request.body.password){
+		var usrnm = utils.String.trim(request.body.username.toLowerCase());
+		models.user.findOne({ 
+			username: usrnm, 
+			passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
+		}, function(error, user){
+			if(error){
+				response.end(__getResponse(null, error));
+			}
 
-		if(!user){
-			request.session.reset();
-			response.status(400).end("no matching user");
-		}
-		else{
-			user.visits+=1;
-			user.save();
-			delete user.passwordHash;
-			request.session.user = user;
-			response.locals.user = user;
-			console.log(request.session.user);//TODO: ////////////////////////////////////////
-			response.send(user);
-		}
-	});
+			if(!user){
+				request.session.reset();
+				var err = new Error("The user could not be found!");
+				err.status = 404;
+				response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
+			}
+			else{
+				user.visits+=1;
+				user.save();
+				delete user.passwordHash;
+				request.session.user = user;
+				response.locals.user = user;
+				response.send(__getResponse(user));
+			}
+		});
+	}
+	else {
+		var error = new Error("Username and/or password missing!");
+		error.status = 400;
+		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+	}
 }
 
 var post_user_logout = function(request, response){
 	//TODO: ID the request
 	request.session.reset();
-  	response.redirect('/');//TODO: don't redirect, send
+  	response.end(__getResponse(null, null, 200));
 }
 
 //---------Endpoints
@@ -529,7 +469,7 @@ app.use(function (request, response, next) {
 });
 app.use(session({
 	cookieName: 'session',
-	secret: "app.use(session({secret: 'edon no tliub si tlob'}));", //TODO: generate random string if not in database
+	secret: config.getSessionSecret(),
 	duration: 24 * 60 * 60 * 1000,
 	activeDuration: 24 * 60 * 60 * 1000
 
@@ -560,26 +500,17 @@ app.set('views', __dirname + '/sys/views');
 app.engine('html', cons.handlebars);
 app.set('view engine', 'html');
 
-//this endpoint is a UI endpoint, displaying the appropriate view per time
+//this UI endpoint displays the appropriate view per time
 app.get('/', get);
 
-//runs the app with the specified info in the body of the post  (with the assumption that the server has already been started)
-//this is the route that other /app/* routes ultimately call
-//this should be used to run only startup OS app(s) that have no external dependencies
-//because such dependencies (like .js and .css files) may not be loaded appropriately
-app.post('/app', post_app);
-
-//runs the app with the specified name (using default options)
+//this UI endpoint runs the app with the specified name (using default options)
 app.get('/app/:app', get_app_app);
-
-//runs the app with the specified info in the body of the post
-app.post('/app/:app', post_app_app);
 
 //gets the app info of the app with the specified name
 app.get('/app-info/:app', checkUserAppRight, get_appinfo_app);
 
 //starts the server of the app with the specified name
-app.get('/app-start/:app', get_appstart_app);
+app.post('/app-start/:app', post_appstart_app);
 
 //TODO: app.get('/app-get/:dev/:app', ...); //installs the app
 //TODO: app.post('/app-get/:dev/:app', ...); //updates the app
@@ -591,7 +522,7 @@ during install and update, copy the bolt client files specified as dependencies 
 //TODO: app.post('/app-id', ...); //sets an id for the app
 
 //stops the server of the app with the specified name
-app.get('/app-stop/:app', get_appstop_app);
+app.post('/app-stop/:app', post_appstop_app);
 
 //TODO: app.get('/apps', get_apps); //gets an array of app-info for all installed apps
 //gets an array of app-info for all installed apps with the specified tag
@@ -667,19 +598,16 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 			mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
 
 			/*mongodb.MongoClient.connect('mongodb://localhost:401/bolt', function(err, db) {
-				console.log('Connected to MongoDB!');
-				db.close();
 				runStartups(++index);
 			});*/
 			mongoose.connection.on('open', function(){
-				console.log('Connected to MongoDB!');
 				runStartups(++index);
 			});
 		}
 		else{
 			var name = startups[index];
 			superagent
-				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + name)
+				.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + name)
 				.end(function(appstartError, appstartResponse){
 					if (appstartError) {
 						runStartups(++index);

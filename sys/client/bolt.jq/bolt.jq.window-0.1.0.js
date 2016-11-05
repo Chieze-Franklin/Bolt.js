@@ -37,13 +37,14 @@ var Bolt = (function(bolt, $){
 				for(i = 0; app.charAt(i) == '/' && i < app.length; )
 					app = app.substring(i + 1);
 
-				Bolt.ServiceManager.get('/app-start/' + app, function(err, data){
+				Bolt.ServiceManager.post('/app-start/' + app, {}, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
 					}
 
-					var context = JSON.parse(data);
+					var response = JSON.parse(data);
+					var context = response.body;
 
 					var winContext;
 

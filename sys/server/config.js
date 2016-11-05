@@ -60,6 +60,9 @@ module.exports = {
 	getProtocol : function(){
 		return getConfig().protocol;
 	},
+	getSessionSecret : function(){
+		return getConfig().sessionSecret;
+	},
 	getVersion : function(){
 		return getConfig().version;
 	}

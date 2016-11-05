@@ -5,6 +5,11 @@ var mongoose = require('mongoose'),
 	ObjectId = Schema.ObjectId;
 
 module.exports = {
+	boltSecret : {
+		name: { type: String, required: true },
+
+		value: { type: String, required: true }
+	},
 	role : {
 		name: { type: String, required: true },
 
