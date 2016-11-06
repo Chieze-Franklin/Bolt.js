@@ -75,7 +75,7 @@ var __getResponse = function(body, error, status){
 	if (error)
 		response.error = error;
 
-	return response;
+	return JSON.stringify(response);
 }
 
 //---------Request Validators
@@ -95,30 +95,17 @@ var get = function(request, response){
 				response.end(__getResponse(null, error));
 			}
 
-			var scope = {
-				protocol: config.getProtocol(),
-				host: config.getHost(),
-				port: config.getPort()
-			};
 			var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
-			console.log("confirm:");
-			console.log(users);
 			if(users && users.length > 0){ //if there are registered users,...
-				if(request.session && request.session.user){ //a user is logged in, load index (welcome) page
-					response
-						.set('Content-type', 'text/html')
-						.render('index.html', scope);
+				if(request.session && request.session.user){ //a user is logged in, load the home view
+					response.redirect('/home');
 				}
 				else{ //NO user is logged in, show login view
-					response
-						.set('Content-type', 'text/html')
-						.render('login.html', scope);
+					response.redirect('/login');
 				}
 			}
 			else { //if there are NO registered users, then show them the setup view
-				response
-					.set('Content-type', 'text/html')
-					.render('setup.html', scope);
+				response.redirect('/setup');
 			}
 		});	
 }
@@ -127,11 +114,22 @@ var get_app_app = function(request, response){
 	superagent
 		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + request.params.app)
 		.end(function(error, appstartResponse){
+			var scope = {
+				protocol: config.getProtocol(),
+				host: config.getHost(),
+				port: config.getPort()
+			};
+
 			if (error) {
-				response.end(__getResponse(null, error));
+				//response.end(__getResponse(null, error));
+				response.locals.title = "Error";
+				response
+					.set('Content-type', 'text/html')
+					.render('error.html', scope);
 			}
 
 			var context = appstartResponse.body.body;
+			//TODO: check appstartResponse.body.error, esp for access denial i.e. appstartResponse.body.status==403 (403.html)
 
 			//run the app
 			if (context && context.port) {
@@ -139,7 +137,11 @@ var get_app_app = function(request, response){
 				response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 			}
 			else {
-				response.send(__getResponse(null, null, 200));
+				//response.send(__getResponse(null, null, 200));
+				response.locals.title = "404";
+				response
+					.set('Content-type', 'text/html')
+					.render('404.html', scope);
 			}
 		});
 }
@@ -197,7 +199,7 @@ var get_file_app_file = function(request, response){
 
 			var context = fileinfoResponse.body.body;
 
-			if (context.fileInfo && context.fileInfo.fullPath) {
+			if (context && context.fileInfo && context.fileInfo.fullPath) {
 				//response.writeHead(301, {Location: 'file:///' + context.fileInfo.fullPath});
 				//response.end();
 				response.redirect(301, 'file:///' + context.fileInfo.fullPath);
@@ -281,6 +283,32 @@ var get_help = function(request, response){
 	response.send(__getResponse(system));
 }
 
+var get_login = function(request, response){
+	//TODO: ID the request
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort()
+	};
+	response.locals.title = "Login";
+	response
+		.set('Content-type', 'text/html')
+		.render('login.html', scope);
+}
+
+var get_setup = function(request, response){
+	//TODO: ID the request
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort()
+	};
+	response.locals.title = "Setup";
+	response
+		.set('Content-type', 'text/html')
+		.render('setup.html', scope);
+}
+
 var get_users = function(request, response){
 	models.user.find({}, function(error, users){
 		if(error){
@@ -288,6 +316,19 @@ var get_users = function(request, response){
 		}
 		response.send(__getResponse(users));
 	});
+}
+
+var get_view = function(request, response){
+	//TODO: get the app that serves that view; if not found show 404.html
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort()
+	};
+	response.locals.title = "Setup";
+	response
+		.set('Content-type', 'text/html')
+		.render('index.html', scope);
 }
 
 var post_appstart_app = function(request, response){
@@ -432,6 +473,10 @@ var post_user_logout = function(request, response){
   	response.end(__getResponse(null, null, 200));
 }
 
+var setContentToCss = function(request, response, next) {
+	response.set('Content-Type', 'text/css');
+  	next();
+}
 //---------Endpoints
 //TODO: discuss the versioning scheme below with others
 /*
@@ -493,7 +538,11 @@ app.use(function(request, response, next) {
 	}
 });
 
-app.use('/assets', express.static(__dirname + '/sys/assets'));
+app.use('/assets/plugins/*/*css', setContentToCss);
+app.use('/pages/css', setContentToCss);
+
+app.use('/assets', express.static(__dirname + '/sys/views/assets'));
+app.use('/pages', express.static(__dirname + '/sys/views/pages'));
 app.use('/client', express.static(__dirname + '/sys/client'));
 
 app.set('views', __dirname + '/sys/views');
@@ -565,6 +614,16 @@ app.get('/users', get_users);
 
 //returns an array of all live (currently-logged-in) users
 //TODO: app.get('/users/live', get_users_live);
+
+//---------------views
+//this UI endpoint displays the login view
+app.get('/login', get_login);
+
+//this UI endpoint displays the setup view
+app.get('/setup', get_setup);
+
+//this UI endpoint displays the specified view
+app.get('/:view', get_view);
 
 // catch 404 and forward to error handler
 app.use(function(request, response, next) {
