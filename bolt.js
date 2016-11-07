@@ -22,6 +22,8 @@ var utils = require("./sys/server/utils");
 //---------Helpers
 var __pathToContextMap = new Map();
 
+const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
+
 var __getContextAppInfo = function(data){
 	var package = JSON.parse(data);
 	var context = {};
@@ -53,6 +55,22 @@ var __getContextFileInfo = function(data, name){
 	return context;
 }
 
+var __randomRequestId = [];
+var __genRandomRequestId = function(){
+	var id = utils.String.getRandomString(24);
+	__randomRequestId.push(id);
+	return id;
+}
+var __isRandomRequestId = function(id){
+	var result = (__randomRequestId.indexOf(id) > -1);
+
+	//trim the IDs down to 100
+	if(__randomRequestId.length > 100)
+		__randomRequestId.splice(0, __randomRequestId.length - 100);
+
+	return result;
+}
+
 var __getResponse = function(body, error, status){
 	var response = {};
 
@@ -79,6 +97,18 @@ var __getResponse = function(body, error, status){
 }
 
 //---------Request Validators
+var checkRequestId = function(request, response, next){
+	var id = request.get(X_BOLT_REQ_ID);
+	if(!id || !__isRandomRequestId(id)) { //this would be true if the request is NOT coming from a native Bolt view
+		//TODO: check the app that sent the ID; if NOT one of the apps we are expecting
+		var error = new Error("This app has no permission to make this request");
+		error.status = 403;
+		response.end(__getResponse(null, error, 403)); //TODO: this is one place u need to specify: error_title and error_message
+	}
+	else {
+		next();
+	}
+}
 var checkUserAppRight = function(request, response, next){
 	next(); //TODO: check if user has right to start :app (dont check if it's a startup app)
 }
@@ -94,18 +124,34 @@ var get = function(request, response){
 			if (error) {
 				response.end(__getResponse(null, error));
 			}
+			else {
+				var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
+				if(users && users.length > 0){ //if there are registered users,...
+					if(request.session && request.session.user){ //a user is logged in, load the home view
+						response.redirect('/home');
+					}
+					else{ //NO user is logged in, show login view
+						response.redirect('/login');
+					}
+				}
+				else { //if there are NO registered users, then show them the setup view (there's no /setup cuz I dont want ppl typing that)
+					//response
+					//	.set(X_BOLT_REQ_ID, __genRandomRequestId())
+					//	.redirect('/setup');
 
-			var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
-			if(users && users.length > 0){ //if there are registered users,...
-				if(request.session && request.session.user){ //a user is logged in, load the home view
-					response.redirect('/home');
+					var scope = {
+						protocol: config.getProtocol(),
+						host: config.getHost(),
+						port: config.getPort(),
+
+						reqid: __genRandomRequestId(),
+						title: "Setup"
+					};
+					//response.locals.title = "Setup";
+					response
+						.set('Content-type', 'text/html')
+						.render('setup.html', scope);
 				}
-				else{ //NO user is logged in, show login view
-					response.redirect('/login');
-				}
-			}
-			else { //if there are NO registered users, then show them the setup view
-				response.redirect('/setup');
 			}
 		});	
 }
@@ -127,21 +173,22 @@ var get_app_app = function(request, response){
 					.set('Content-type', 'text/html')
 					.render('error.html', scope);
 			}
-
-			var context = appstartResponse.body.body;
-			//TODO: check appstartResponse.body.error, esp for access denial i.e. appstartResponse.body.status==403 (403.html)
-
-			//run the app
-			if (context && context.port) {
-				var index = (context.appInfo.bolt.index) ? context.appInfo.bolt.index : "/"; //TODO: trim-start '/' off context.appInfo.bolt.index
-				response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
-			}
 			else {
-				//response.send(__getResponse(null, null, 200));
-				response.locals.title = "404";
-				response
-					.set('Content-type', 'text/html')
-					.render('404.html', scope);
+				var context = appstartResponse.body.body;
+				//TODO: check appstartResponse.body.error, esp for access denial i.e. appstartResponse.body.status==403 (403.html)
+
+				//run the app
+				if (context && context.port) {
+					var index = (context.appInfo.bolt.index) ? context.appInfo.bolt.index : "/"; //TODO: trim-start '/' off context.appInfo.bolt.index
+					response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
+				}
+				else {
+					//response.send(__getResponse(null, null, 200));
+					response.locals.title = "404";
+					response
+						.set('Content-type', 'text/html')
+						.render('404.html', scope);
+				}
 			}
 		});
 }
@@ -155,13 +202,14 @@ var get_appinfo_app = function(request, response){
 		if(error){
 			response.end(__getResponse(null, error));
 		}
-		
-		var package = JSON.parse(data);
-		var context = __getContextAppInfo(data);
-		context.name = request.params.app;
-		context.path = _path;
+		else {
+			var package = JSON.parse(data);
+			var context = __getContextAppInfo(data);
+			context.name = request.params.app;
+			context.path = _path;
 
-		response.send(__getResponse(context));
+			response.send(__getResponse(context));
+		}
 	});
 }
 
@@ -172,21 +220,22 @@ var get_apps_tag = function(request, response){
 		error.status = 404;
 		response.end(__getResponse(null, error, 404));
 	}
+	else {
+		var contexts = [];
+		paths.forEach(function(_path, index){
+			var resolvedPath = pacman.getAppPath(_path);
+			if(!resolvedPath){
+				resolvedPath = _path;
+			}
+			var data = fs.readFileSync(path.join(__dirname, 'node_modules', resolvedPath, 'package.json'));
+			var package = JSON.parse(data);
+			var context = __getContextAppInfo(data);
+			context.path = resolvedPath;
 
-	var contexts = [];
-	paths.forEach(function(_path, index){
-		var resolvedPath = pacman.getAppPath(_path);
-		if(!resolvedPath){
-			resolvedPath = _path;
-		}
-		var data = fs.readFileSync(path.join(__dirname, 'node_modules', resolvedPath, 'package.json'));
-		var package = JSON.parse(data);
-		var context = __getContextAppInfo(data);
-		context.path = resolvedPath;
-
-		contexts.push(context);
-	});
-	response.send(__getResponse(contexts));
+			contexts.push(context);
+		});
+		response.send(__getResponse(contexts));
+	}
 }
 
 var get_file_app_file = function(request, response){
@@ -196,18 +245,19 @@ var get_file_app_file = function(request, response){
 			if (error) {
 				response.end(__getResponse(null, error));
 			}
-
-			var context = fileinfoResponse.body.body;
-
-			if (context && context.fileInfo && context.fileInfo.fullPath) {
-				//response.writeHead(301, {Location: 'file:///' + context.fileInfo.fullPath});
-				//response.end();
-				response.redirect(301, 'file:///' + context.fileInfo.fullPath);
-			}
 			else {
-				var error = new Error("The file '" + request.params.app + '/' + request.params.file + "' could not be found!");
-				error.status = 404;
-				response.end(__getResponse(null, error, 404));
+				var context = fileinfoResponse.body.body;
+
+				if (context && context.fileInfo && context.fileInfo.fullPath) {
+					//response.writeHead(301, {Location: 'file:///' + context.fileInfo.fullPath});
+					//response.end();
+					response.redirect(301, 'file:///' + context.fileInfo.fullPath);
+				}
+				else {
+					var error = new Error("The file '" + request.params.app + '/' + request.params.file + "' could not be found!");
+					error.status = 404;
+					response.end(__getResponse(null, error, 404));
+				}
 			}
 		});
 }
@@ -221,15 +271,16 @@ var get_fileinfo_app_file = function(request, response){
 		if(error){
 			response.end(__getResponse(null, error));
 		}
-		
-		var package = JSON.parse(data);
-		var context = __getContextFileInfo(data, request.params.file);
-		if(context.fileInfo.path)
-			context.fileInfo.fullPath = path.join(__dirname, 'node_modules', _path, context.fileInfo.path);
-		context.name = request.params.app;
-		context.path = _path;
+		else {
+			var package = JSON.parse(data);
+			var context = __getContextFileInfo(data, request.params.file);
+			if(context.fileInfo.path)
+				context.fileInfo.fullPath = path.join(__dirname, 'node_modules', _path, context.fileInfo.path);
+			context.name = request.params.app;
+			context.path = _path;
 
-		response.send(__getResponse(context));
+			response.send(__getResponse(context));
+		}
 	});
 }
 
@@ -284,11 +335,12 @@ var get_help = function(request, response){
 }
 
 var get_login = function(request, response){
-	//TODO: ID the request
 	var scope = {
 		protocol: config.getProtocol(),
 		host: config.getHost(),
-		port: config.getPort()
+		port: config.getPort(),
+
+		reqid: __genRandomRequestId()
 	};
 	response.locals.title = "Login";
 	response
@@ -296,14 +348,28 @@ var get_login = function(request, response){
 		.render('login.html', scope);
 }
 
-var get_setup = function(request, response){
-	//TODO: ID the request
+var get_logout = function(request, response){
 	var scope = {
 		protocol: config.getProtocol(),
 		host: config.getHost(),
 		port: config.getPort()
 	};
 	response.locals.title = "Setup";
+	response
+		.set('Content-type', 'text/html')
+		.render('logout.html', scope);
+}
+
+var get_setup = function(request, response){
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort(),
+
+		reqid: __genRandomRequestId(),
+		title: "Setup"
+	};
+	//response.locals.title = "Setup";
 	response
 		.set('Content-type', 'text/html')
 		.render('setup.html', scope);
@@ -314,7 +380,9 @@ var get_users = function(request, response){
 		if(error){
 			response.end(__getResponse(null, error));
 		}
-		response.send(__getResponse(users));
+		else {
+			response.send(__getResponse(users));
+		}
 	});
 }
 
@@ -325,10 +393,9 @@ var get_view = function(request, response){
 		host: config.getHost(),
 		port: config.getPort()
 	};
-	response.locals.title = "Setup";
 	response
 		.set('Content-type', 'text/html')
-		.render('index.html', scope);
+		.send('hello world, with love from ' + request.params.view);
 }
 
 var post_appstart_app = function(request, response){
@@ -346,6 +413,7 @@ var post_appstart_app = function(request, response){
 		.end(function(appinfoError, appinfoResponse){
 			if (appinfoError) {
 				response.end(__getResponse(null, appinfoError));
+				return;
 			}
 
 			var context = appinfoResponse.body.body;
@@ -402,28 +470,71 @@ var post_appstop_app = function(request, response){
 		error.status = 404;
 		response.end(__getResponse(null, error, 404));
 	}
+	else {
+		//remove context
+		var context = __pathToContextMap.get(_path);
+		__pathToContextMap.delete(_path);
 
-	//remove context
-	var context = __pathToContextMap.get(_path);
-	__pathToContextMap.delete(_path);
+		//kill process
+		processes.killProcess(_path); //TODO: haven't tested this
 
-	//kill process
-	processes.killProcess(_path); //TODO: haven't tested this
+		response.send(__getResponse(context));
+	}
+}
 
-	response.send(__getResponse(context));
+var post_role_add = function(request, response){
+	if(request.body.name){
+		models.role.findOne({ name: request.body.name }, function(error, role){
+			if (error){
+				response.end(__getResponse(null, error));
+			}
+			else if(!role){
+				var newRole = new models.role({ name: request.body.name });
+				if(request.body.isAdmin){
+					newRole.isAdmin = request.body.isAdmin;
+				}
+				if(request.body.description){
+					newRole.description = request.body.description;
+				}
+				newRole.save();
+				response.send(__getResponse(newRole));
+			}
+			else{
+				var err = new Error("A role with the same name already exists!");
+				err.status = 400;
+				response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+			}
+		});
+	}
+	else {
+		var error = new Error("Role name missing!");
+		error.status = 400;
+		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+	}
 }
 
 var post_user_add = function(request, response){
-	//TODO: ID the request
 	if(request.body.username && request.body.password){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
-		var newUser = new models.user({ 
-			username: usrnm, 
-			passwordHash: utils.Security.hashSync(request.body.password + usrnm)
+		models.user.findOne({ username: usrnm }, function(error, user){
+			if (error){
+				response.end(__getResponse(null, error));
+			}
+			else if(!user){
+				var newUser = new models.user({ 
+					username: usrnm, 
+					passwordHash: utils.Security.hashSync(request.body.password + usrnm)
+				});
+				newUser.save();
+				delete newUser.passwordHash;
+				response.send(__getResponse(newUser));
+			}
+			else{
+				var err = new Error("A user with the same username already exists!");
+				err.status = 400;
+				response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+			}
 		});
-		newUser.save();
-		delete newUser.passwordHash;
-		response.send(__getResponse(newUser));
 	}
 	else {
 		var error = new Error("Username and/or password missing!");
@@ -433,18 +544,16 @@ var post_user_add = function(request, response){
 }
 
 var post_user_login = function(request, response){
-	//TODO: ID the request
 	if(request.body.username && request.body.password){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		models.user.findOne({ 
 			username: usrnm, 
 			passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
 		}, function(error, user){
-			if(error){
+			if (error){
 				response.end(__getResponse(null, error));
 			}
-
-			if(!user){
+			else if(!user){
 				request.session.reset();
 				var err = new Error("The user could not be found!");
 				err.status = 404;
@@ -468,9 +577,48 @@ var post_user_login = function(request, response){
 }
 
 var post_user_logout = function(request, response){
-	//TODO: ID the request
 	request.session.reset();
   	response.end(__getResponse(null, null, 200));
+}
+
+var post_userrole_add = function(request, response){
+	if(request.body.user && request.body.role){
+		var usrnm = utils.String.trim(request.body.user.toLowerCase());
+		models.user.findOne({ username: usrnm }, function(errorUser, user){
+			if (errorUser){
+				response.end(__getResponse(null, errorUser));
+			}
+			else if(!user){
+				request.session.reset();
+				var errUser = new Error("The user could not be found!");
+				errUser.status = 404;
+				response.end(__getResponse(null, errUser, 404)); //TODO: this is one place u need to specify: error_title and error_message
+			}
+			else{
+				models.role.findOne({ name: request.body.role }, function(errorRole, role){
+					if (errorRole){
+						response.end(__getResponse(null, errorRole));
+					}
+					else if(!role){
+						request.session.reset();
+						var errRole = new Error("The role could not be found!");
+						errRole.status = 404;
+						response.end(__getResponse(null, errRole, 404)); //TODO: this is one place u need to specify: error_title and error_message
+					}
+					else{
+						var newUserRoleAssoc = new models.userRoleAssoc({ role_id: role._id, user_id: user._id });
+						newUserRoleAssoc.save();
+						response.send(__getResponse(newUserRoleAssoc));
+					}
+				});
+			}
+		});
+	}
+	else {
+		var error = new Error("Username and/or password missing!");
+		error.status = 400;
+		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+	}
 }
 
 var setContentToCss = function(request, response, next) {
@@ -570,6 +718,9 @@ during install and update, copy the bolt client files specified as dependencies 
 
 //TODO: app.post('/app-id', ...); //sets an id for the app
 
+//TODO: /app-role/add //adds an app-role association
+//TODO: /app-role/del 
+
 //stops the server of the app with the specified name
 app.post('/app-stop/:app', post_appstop_app);
 
@@ -595,7 +746,10 @@ app.get('/help', get_help);
 //TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
 //TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
-//TODO: app.get('/running-apps', get_runningapps);
+//creates a new role
+app.post('/role/add', checkRequestId, post_role_add);
+
+//TODO: /role/del
 
 //TODO: app.get('/running-apps', get_runningapps); //gets an array of all running apps consider: /live-apps, /apps-running
 
@@ -603,11 +757,20 @@ app.get('/help', get_help);
 //TODO: app.get('/user', post_userd);
 
 //adds a user to the database
-app.post('/user/add', post_user_add);
+app.post('/user/add', checkRequestId, post_user_add);
 
-app.post('/user/login', post_user_login);
+//TODO: /user/del
 
-app.post('/user/logout', post_user_logout);
+//logs a user into the system
+app.post('/user/login', checkRequestId, post_user_login);
+
+//logs a user out of the system
+app.post('/user/logout', checkRequestId, post_user_logout);
+
+//adds a user-role associate to the database
+app.post('/user-role/add', checkRequestId, post_userrole_add);
+
+//TODO: /user-role/del
 
 //returns an array of all registered users.
 app.get('/users', get_users);
@@ -617,10 +780,13 @@ app.get('/users', get_users);
 
 //---------------views
 //this UI endpoint displays the login view
-app.get('/login', get_login);
+app.get('/login', checkRequestId, get_login);
+
+//this UI endpoint displays the logout view
+app.get('/logout', checkRequestId, get_logout);
 
 //this UI endpoint displays the setup view
-app.get('/setup', get_setup);
+app.get('/setup', checkRequestId, get_setup);
 
 //this UI endpoint displays the specified view
 app.get('/:view', get_view);
@@ -687,7 +853,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 	//start mongodb 
 	if (process.platform === 'win32'){
-		var mongodbPath = path.join(__dirname, 'sys/bins/mongodb-win64/mongod.exe');
+		var mongodbPath = path.join(__dirname, 'sys/bins/win32/mongod.exe');
 		var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
 		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port ' + config.getDbPort());
 

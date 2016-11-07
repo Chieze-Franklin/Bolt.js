@@ -47,9 +47,9 @@
         <!-- START Background Caption-->
         <div class="bg-caption pull-bottom sm-pull-bottom text-white p-l-20 m-b-20">
           <h2 class="semi-bold text-white">
-					Computers make our tasks easier.</h2>
+					Log into Bolt!</h2>
           <p class="small">
-            All work copyright of respective owner, otherwise © 2016 Bolt.
+            All work copyright of respective owners, otherwise © 2016 Bolt.
           </p>
         </div>
         <!-- END Background Caption-->
@@ -106,8 +106,6 @@
     $(function()
     {
         //$('#form-login').validate()
-
-        
     })
     $(document).ready(function(){
         Bolt.Config.setHost("{{host}}");
@@ -121,15 +119,24 @@
             /*
             * Perform some validation here.
             */
-            $.post("{{protocol}}://{{host}}:{{port}}/user/login", { username: email, password: password }, function(response){  
-                if(response.status === 200){
-                  //succes
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{port}}/user/login",
+              data: { username: email, password: password },
+              type: "POST",
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+              },
+              success: function(response, status, xhr){
+                //all bolt responses have status fields
+                if(response.status == 200){
                   window.location.href="{{protocol}}://{{host}}:{{port}}/home";
                 }
-                else{
+                else {
                   //TODO: error
                   console.log(response);
                 }
+              },
+              error: function(xhr, status, err){}
             });
         });
       });
