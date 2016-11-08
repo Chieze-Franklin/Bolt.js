@@ -7,17 +7,24 @@ var mongoose = require('mongoose'),
 module.exports = {
 	app : {
 		appHash: { type: String },
-		name: { type: String, required: true },
+		name: { type: String, required: true, lowercase: true },
 		path: { type: String, required: true },
 		//secretHash: { type: String, required: true },
 
-		dateCreated: { type: Date, default: Date.now }
+		description: { type: String },
+		dateCreated: { type: Date, default: Date.now },
+		startup: { type: Boolean, default: false },
+		tags: { type: [String]},
+		version: { type: Number }
 	},
 	appRoleAssoc : {
-		role_id: { type: ObjectId, required: true },
+		app: { type: String, required: true },
 		app_id: { type: ObjectId, required: true },
+		role: { type: String, required: true },
+		role_id: { type: ObjectId, required: true },
+
 		dateCreated: { type: Date, default: Date.now },
-		permissions: { type: Array}
+		permissions: { type: [String]}
 	},
 	boltSecret : {
 		name: { type: String, required: true },
@@ -31,7 +38,7 @@ module.exports = {
 		dateCreated: { type: Date, default: Date.now }
 	},
 	user : {
-		username: { type: String, required: true },
+		username: { type: String, required: true, lowercase: true },
 		passwordHash : { type: String, required: true },
 
 		blocked: { type: Boolean, default: false },
@@ -39,12 +46,17 @@ module.exports = {
 		visits: { type: Number, default: 0 }
 	},
 	userRoleAssoc : {
+		role: { type: String, required: true },
 		role_id: { type: ObjectId, required: true },
+		user: { type: String, required: true },
 		user_id: { type: ObjectId, required: true },
 		dateCreated: { type: Date, default: Date.now }
 	},
 	viewDelegate : {
-		view: { type: String, required: true },
-		app: { type: String, required: true }
+		name: { type: String, required: true },
+		app: { type: String, required: true },
+		app_id: { type: ObjectId, required: true },
+		apps: { type: [String] },
+		app_ids: { type: [ObjectId] }
 	}
 };

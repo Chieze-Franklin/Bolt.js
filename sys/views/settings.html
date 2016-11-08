@@ -98,7 +98,7 @@
             $("#sideload").click(function(){
                 $.ajax({
                   url: "{{protocol}}://{{host}}:{{port}}/app-reg",
-                  data: { app: "bolt-settings" },
+                  data: { path: "bolt-settings" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){

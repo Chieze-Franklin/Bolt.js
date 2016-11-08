@@ -11,7 +11,6 @@ var session = require("client-sessions"/*"express-session"*/);
 var superagent = require('superagent');
 
 var config = require("./sys/server/config");
-var pacman = require("./sys/server/packages");
 var processes = require("./sys/server/processes");
 
 var models = require("./sys/server/models");
@@ -20,7 +19,7 @@ var schemata = require("./sys/server/schemata");
 var utils = require("./sys/server/utils");
 
 //---------Helpers
-var __pathToContextMap = new Map();
+var __runningContexts = [];
 
 const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 
@@ -126,6 +125,9 @@ var __loadSetupView = function(request, response){
 }
 
 //---------Request Validators
+var checkAppUserPermToInstall = function(request, response, next){
+	next(); //TODO: check if app has user's permission to install an app (remember system apps need no permission)
+}
 var checkRequestId = function(request, response, next){
 	var id = request.get(X_BOLT_REQ_ID);
 	if(!id || !__isRandomRequestId(id)) { //this would be true if the request is NOT coming from a native Bolt view
@@ -221,48 +223,61 @@ var get_app_app = function(request, response){
 }
 
 var get_appinfo_app = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
-	if(!_path){
-		_path = request.params.app;
-	}
-	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
-		if(error){
+	var appnm = utils.String.trim(request.params.app.toLowerCase());
+	models.app.findOne({ 
+		name: appnm
+	}, function(error, app){
+		if (error){
 			response.end(__getResponse(null, error));
 		}
-		else {
-			var package = JSON.parse(data);
-			var context = __getContextAppInfo(data);
-			context.name = request.params.app;
-			context.path = _path;
+		else if(!app){
+			var err = new Error("The app could not be found!");
+			err.status = 404;
+			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
+		}
+		else{
+			fs.readFile(path.join(__dirname, 'node_modules', app.path, 'package.json'), function (err, data) {
+				if(err){
+					response.end(__getResponse(null, err));
+				}
+				else {
+					var context = __getContextAppInfo(data);
+					context.name = app.name;
+					context.path = app.path;
 
-			response.send(__getResponse(context));
+					response.send(__getResponse(context));
+				}
+			});
 		}
 	});
 }
 
 var get_apps_tag = function(request, response){
-	var paths = pacman.getTagPaths(request.params.tag);
-	if(!paths){
-		var error = new Error("The tag '" + request.params.tag + "' could not be found!");
-		error.status = 404;
-		response.end(__getResponse(null, error, 404));
-	}
-	else {
-		var contexts = [];
-		paths.forEach(function(_path, index){
-			var resolvedPath = pacman.getAppPath(_path);
-			if(!resolvedPath){
-				resolvedPath = _path;
-			}
-			var data = fs.readFileSync(path.join(__dirname, 'node_modules', resolvedPath, 'package.json'));
-			var package = JSON.parse(data);
-			var context = __getContextAppInfo(data);
-			context.path = resolvedPath;
+	var tag = utils.String.trim(request.params.tag.toLowerCase());
+	models.app.find({ 
+		tags: tag
+	}, function(error, apps){
+		if (error){
+			response.end(__getResponse(null, error));
+		}
+		else if(!apps){
+			var err = new Error("No apps with the tag '" + request.params.tag + "' could not be found!");
+			err.status = 404;
+			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
+		}
+		else{
+			var contexts = [];
+			apps.forEach(function(app, index){
+				var data = fs.readFileSync(path.join(__dirname, 'node_modules', app.path, 'package.json'));
+				var context = __getContextAppInfo(data);
+				context.name = app.name;
+				context.path = app.path;
 
-			contexts.push(context);
-		});
-		response.send(__getResponse(contexts));
-	}
+				contexts.push(context);
+			});
+			response.send(__getResponse(contexts));
+		}
+	});
 }
 
 var get_file_app_file = function(request, response){
@@ -290,23 +305,33 @@ var get_file_app_file = function(request, response){
 }
 
 var get_fileinfo_app_file = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
-	if(!_path){
-		_path = request.params.app;
-	}
-	fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
-		if(error){
+	var appnm = utils.String.trim(request.params.app.toLowerCase());
+	models.app.findOne({ 
+		name: appnm
+	}, function(error, app){
+		if (error){
 			response.end(__getResponse(null, error));
 		}
-		else {
-			var package = JSON.parse(data);
-			var context = __getContextFileInfo(data, request.params.file);
-			if(context.fileInfo.path)
-				context.fileInfo.fullPath = path.join(__dirname, 'node_modules', _path, context.fileInfo.path);
-			context.name = request.params.app;
-			context.path = _path;
+		else if(!app){
+			var err = new Error("The app could not be found!");
+			err.status = 404;
+			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
+		}
+		else{
+			fs.readFile(path.join(__dirname, 'node_modules', app.path, 'package.json'), function (err, data) {
+				if(err){
+					response.end(__getResponse(null, err));
+				}
+				else {
+					var context = __getContextFileInfo(data, request.params.file);
+					if(context.fileInfo.path)
+						context.fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, context.fileInfo.path);
+					context.name = app.name;
+					context.path = app.path;
 
-			response.send(__getResponse(context));
+					response.send(__getResponse(context));
+				}
+			});
 		}
 	});
 }
@@ -395,7 +420,7 @@ var get_users = function(request, response){
 var get_view = function(request, response){
 	//TODO: get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
 
-	//check for an app that can serve this view
+	//TODO: check for an app that can serve this view
 	if (false){}
 	//check for a native view
 	else {
@@ -428,17 +453,56 @@ var post_appget = function(request, response){
 }
 
 var post_appreg = function(request, response){
-	//get the app-info
+	if(request.body.path){
+		var _path = request.body.path;
+		fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
+			if(error){
+				response.end(__getResponse(null, error));
+			}
+			else {
+				var context = __getContextAppInfo(data);
+
+				var appnm = utils.String.trim(context.appInfo.name.toLowerCase());
+				models.app.findOne({ name: appnm }, function(error, app){
+					if (error){
+						response.end(__getResponse(null, error));
+					}
+					else if(!app){
+						var newApp = new models.app({ 
+							name: appnm,
+							path: _path
+						});
+						newApp.startup = (context.appInfo.bolt.startup) ? context.appInfo.bolt.startup : false;
+						newApp.tags = (context.appInfo.bolt.tags) ? context.appInfo.bolt.tags : [];
+						
+						//TODO: copy the bolt client files specified as dependencies into the folders specified
+
+						newApp.save();
+						response.send(__getResponse(newApp));
+					}
+					else{
+						var err = new Error("An app with the same name already exists!");
+						err.status = 400;
+						response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+					}
+				});
+			}
+		});
+	}
+	else {
+		var error = new Error("App path missing!");
+		error.status = 400;
+		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+	}
 }
 
-var post_appstart_app = function(request, response){
-	var _path = pacman.getAppPath(request.body.app);
-	if(!_path){
-		_path = request.body.app;
-	}
-	if(__pathToContextMap.has(_path)){
-		response.send(__getResponse(__pathToContextMap.get(_path)));
-		return;
+var post_appstart = function(request, response){
+	var appnm = utils.String.trim(request.body.app.toLowerCase());
+	for (var index = 0; index < __runningContexts.length; index++){
+		if (__runningContexts[index].name === appnm){
+			response.send(__getResponse(__runningContexts[index]));
+			return;
+		}
 	}
 
 	superagent
@@ -455,7 +519,7 @@ var post_appstart_app = function(request, response){
 			if(context.appInfo.bolt.main){
 				context.host = config.getHost();
 
-				if(!processes.hasProcess(context.path)){
+				if(!processes.hasProcess(context.name)){
 					//pass the context (and a callback) to processes.createProcess()
 					//processes.createProcess() will start a new instance of app_process as a child process
 					//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
@@ -478,13 +542,13 @@ var post_appstart_app = function(request, response){
 								.end(function(initError, initResponse){});
 						}
 
-						__pathToContextMap.set(context.path, context);
+						__runningContexts.push(context);
 						response.send(__getResponse(context));
 					});
 				}
 				else{
-					context.pid = processes.getAppPid(context.path);
-					context.port = processes.getAppPort(context.path);
+					context.pid = processes.getAppPid(context.name);
+					context.port = processes.getAppPort(context.name);
 					response.send(__getResponse(context));
 				}
 			}
@@ -493,27 +557,26 @@ var post_appstart_app = function(request, response){
 		});
 }
 
-var post_appstop_app = function(request, response){
-	var _path = pacman.getAppPath(request.body.app);
-	if(!_path){
-		_path = request.body.app;
+var post_appstop = function(request, response){
+	var appnm = utils.String.trim(request.body.app.toLowerCase());
+	for (var index = 0; index < __runningContexts.length; index++){
+		if (__runningContexts[index].name === appnm){
+			//remove context
+			var context = __runningContexts[index];
+			__runningContexts.pop(context);
+
+			//kill process
+			processes.killProcess(context.name); //TODO: haven't tested this
+
+			response.send(__getResponse(context));
+			return;
+		}
 	}
 
-	if(!__pathToContextMap.has(_path)){
-		var error = new Error("The app '" + request.body.tag + "' could not be found to be running!");
-		error.status = 404;
-		response.end(__getResponse(null, error, 404));
-	}
-	else {
-		//remove context
-		var context = __pathToContextMap.get(_path);
-		__pathToContextMap.delete(_path);
-
-		//kill process
-		processes.killProcess(_path); //TODO: haven't tested this
-
-		response.send(__getResponse(context));
-	}
+	//if it gets here then the context wasn't found
+	var error = new Error("The app '" + request.body.app + "' could not be found to be running!");
+	error.status = 404;
+	response.end(__getResponse(null, error, 404));
 }
 
 var post_role_add = function(request, response){
@@ -640,7 +703,12 @@ var post_userrole_add = function(request, response){
 						response.end(__getResponse(null, errRole, 404)); //TODO: this is one place u need to specify: error_title and error_message
 					}
 					else{
-						var newUserRoleAssoc = new models.userRoleAssoc({ role_id: role._id, user_id: user._id });
+						var newUserRoleAssoc = new models.userRoleAssoc({ 
+							role: role.name,
+							role_id: role._id, 
+							user: user.username,
+							user_id: user._id 
+						});
 						newUserRoleAssoc.save();
 						response.send(__getResponse(newUserRoleAssoc));
 					}
@@ -738,27 +806,24 @@ app.get('/', get);
 app.get('/app/:app', get_app_app);
 
 //installs an app from an online repository (current only npm is supported)
-app.post('/app-get', checkUserAdminRight, post_appget);
+app.post('/app-get', checkAppUserPermToInstall, checkUserAdminRight, post_appget);
 //TODO: /app-reget (update) /app-unget (uninstall)
 
 //gets the app info of the app with the specified name
-app.get('/app-info/:app', checkUserAppRight, get_appinfo_app);
+app.get('/app-info/:app', get_appinfo_app);
 
 //installs an app from an local repository (current only the node_modules folder is supported)
-app.post('/app-reg', checkUserAdminRight, post_appreg);
+app.post('/app-reg', checkAppUserPermToInstall, checkUserAdminRight, post_appreg);
 //TODO: /app-rereg (update) /app-unreg (uninstall)
-/*
-during install and update, copy the bolt client files specified as dependencies into the folders specified
-*/
 
 //starts the server of the app with the specified name
-app.post('/app-start', post_appstart_app);
+app.post('/app-start', checkUserAppRight, post_appstart);
 
 //TODO: /app-role/add //adds an app-role association
 //TODO: /app-role/del 
 
 //stops the server of the app with the specified name
-app.post('/app-stop', post_appstop_app);
+app.post('/app-stop', checkUserAppRight, post_appstop);
 
 //TODO: app.get('/apps', get_apps); //gets an array of app-info for all installed apps
 //gets an array of app-info for all installed apps with the specified tag
@@ -775,7 +840,7 @@ app.get('/file/:app/:file', get_file_app_file);
 
 //TODO: app.get('/file-info/:file') //gets the file info of a file that can be served by any app
 //gets the file info of the file with the specified name
-app.get('/file-info/:app/:file', checkUserAppRight, checkUserAppFileRight, get_fileinfo_app_file);
+app.get('/file-info/:app/:file', checkUserAppFileRight, get_fileinfo_app_file);
 
 //returns an array of all endpoints, and some extra info
 app.get('/help', get_help);
@@ -849,47 +914,8 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 	var hasStartedStartups = false;
 
-	//start start-up services
-	var startups = pacman.getStartupAppNames();
-	var runStartups = function(index){
-		if(index >= startups.length){
-			return;
-		}
-		else if(index === -1){
-			mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
-
-			/*mongodb.MongoClient.connect('mongodb://localhost:401/bolt', function(err, db) {
-				runStartups(++index);
-			});*/
-			mongoose.connection.on('open', function(){
-				runStartups(++index);
-			});
-		}
-		else{
-			var name = startups[index];
-			superagent
-				.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
-				.send({ app: name })
-				.end(function(appstartError, appstartResponse){
-					if (appstartError) {
-						runStartups(++index);
-						return;
-					}
-
-					var context = appstartResponse.body.body;
-
-					if (context && context.port) {
-						console.log("Started startup app%s%s at %s:%s",
-							(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
-							(context.host ? context.host : ""), context.port);
-					}
-					runStartups(++index);
-				});
-		}
-	}
-
 	//start mongodb 
-	if (process.platform === 'win32'){
+	if (process.platform === 'win32') {
 		var mongodbPath = path.join(__dirname, 'sys/bins/win32/mongod.exe');
 		var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
 		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port ' + config.getDbPort());
@@ -905,7 +931,50 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 			if(!hasStartedStartups){
 				if(data.indexOf("[initandlisten] waiting for connections on port ") > -1){
 					hasStartedStartups = true;
-					runStartups(-1);
+					
+					mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
+					mongoose.connection.on('open', function(){
+						//start start-up services
+						models.app.find({ 
+							startup: true
+						}, function(err, apps){
+							var startups = [];
+							if(!err && apps){
+								apps.forEach(function(app){
+									startups.push(app.name);
+								});
+							}
+
+							console.log("startuppppppp: ", startups.length);//TODO: delete//////////////////////////////////////////////
+							var runStartups = function(index){
+								if(index >= startups.length){
+									return;
+								}
+								
+								var name = startups[index];
+								superagent
+									.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
+									.send({ app: name })
+									.end(function(appstartError, appstartResponse){
+										if (appstartError) {
+											runStartups(++index);
+											return;
+										}
+
+										var context = appstartResponse.body.body;
+
+										if (context && context.port) {
+											console.log("Started startup app%s%s at %s:%s",
+												(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
+												(context.host ? context.host : ""), context.port);
+										}
+										runStartups(++index);
+									});
+							}
+
+							runStartups(0);
+						});
+					});
 				}
 			}
 		});

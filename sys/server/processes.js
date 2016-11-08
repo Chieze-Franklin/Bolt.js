@@ -3,15 +3,18 @@
 var exec = require('child_process').exec, child;
 var http = require("http");
 var path = require("path");
+var superagent = require('superagent');
 
-var __pathToAppPidMap = new Map();
-var __pathToAppPortMap = new Map();
-var __pathToChildProcessMap = new Map();
-var __pathToChildProcessPortMap = new Map();
+var config = require("./config");
+
+var __nameToAppPidMap = new Map();
+var __nameToAppPortMap = new Map();
+var __nameToChildProcessMap = new Map();
+var __nameToChildProcessPortMap = new Map();
 
 module.exports = {
 	createProcess : function(context, callback){
-		this.killProcess(context.path); //kill existing process first
+		this.killProcess(context.name); //kill existing process first
 
 		var childPath = path.join(__dirname, 'app_host.js');
 		child = exec('node ' + childPath);
@@ -21,36 +24,24 @@ module.exports = {
 				var index = data.indexOf('=');
 				var port = data.substr(index + 1);
 
-				var opt = {
-					method: 'post',
-					//host: config.getHost(),
-					port: port,
-					path: '/app-start',
-					headers: {
-						'Content-Type': 'application/json',
-						'Content-Length': Buffer.byteLength(JSON.stringify(context))
-					}
-				};
+				superagent
+					.post(config.getProtocol() + '://' + config.getHost() + ':' + port + '/app-start')
+					.send(context)
+					.end(function(appstartError, appstartResponse){
+						if (appstartError) {
+							callback(appstartError, null);
+						}
+						else {
+							context = appstartResponse.body;
 
-				var rq = http.request(opt, function(rs){
-					var bdy = '';
-					rs.on('data', function(d) {
-						bdy += d;
+							__nameToAppPidMap.set(context.name, context.pid);
+							__nameToAppPortMap.set(context.name, context.port);
+							__nameToChildProcessMap.set(context.name, child);
+							__nameToChildProcessPortMap.set(context.name, port);
+
+							callback(null, context);
+						}
 					});
-					rs.on('end', function() {
-						context = JSON.parse(bdy);
-
-						__pathToAppPidMap.set(context.path, context.pid);
-						__pathToAppPortMap.set(context.path, context.port);
-						__pathToChildProcessMap.set(context.path, child);
-						__pathToChildProcessPortMap.set(context.path, port);
-
-						callback(null, context);
-					});
-				});
-
-				rq.write(JSON.stringify(context));
-				rq.end();
 			}
 			else{
 				console.log(data);
@@ -65,25 +56,25 @@ module.exports = {
 			//TODO: raise event (with the context.path) to let ppl know its process has shut down
 		});
 	},
-	getAppPid : function(path){
-		__pathToAppPidMap.get(path);
+	getAppPid : function(name){
+		__nameToAppPidMap.get(name);
 	},
-	getAppPort : function(path){
-		__pathToAppPortMap.get(path);
+	getAppPort : function(name){
+		__nameToAppPortMap.get(name);
 	},
-	hasProcess : function(path){
-		return __pathToChildProcessMap.has(path);
+	hasProcess : function(name){
+		return __nameToChildProcessMap.has(name);
 	},
-	killProcess : function(path){
-		if(this.hasProcess(path)){
-			var child = __pathToChildProcessMap.get(path);
+	killProcess : function(name){
+		if(this.hasProcess(name)){
+			var child = __nameToChildProcessMap.get(name);
 			if(child){
 				child.kill();
-				__pathToChildProcessMap.delete(path);
-				__pathToChildProcessPortMap.delete(path);
-				__pathToAppPortMap.delete(path);
-				process.kill(__pathToAppPidMap.get(path));
-				__pathToAppPidMap.delete(path);
+				__nameToChildProcessMap.delete(name);
+				__nameToChildProcessPortMap.delete(name);
+				__nameToAppPortMap.delete(name);
+				process.kill(__nameToAppPidMap.get(name));
+				__nameToAppPidMap.delete(name);
 			}
 		}
 	}
