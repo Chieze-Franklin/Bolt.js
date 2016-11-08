@@ -9,7 +9,7 @@ module.exports = {
 		appHash: { type: String },
 		name: { type: String, required: true },
 		path: { type: String, required: true },
-		secretHash: { type: String, required: true },
+		//secretHash: { type: String, required: true },
 
 		dateCreated: { type: Date, default: Date.now }
 	},

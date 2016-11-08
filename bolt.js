@@ -59,15 +59,15 @@ var __randomRequestId = [];
 var __genRandomRequestId = function(){
 	var id = utils.String.getRandomString(24);
 	__randomRequestId.push(id);
-	return id;
-}
-var __isRandomRequestId = function(id){
-	var result = (__randomRequestId.indexOf(id) > -1);
 
 	//trim the IDs down to 100
 	if(__randomRequestId.length > 100)
 		__randomRequestId.splice(0, __randomRequestId.length - 100);
 
+	return id;
+}
+var __isRandomRequestId = function(id){
+	var result = (__randomRequestId.indexOf(id) > -1);
 	return result;
 }
 
@@ -96,6 +96,35 @@ var __getResponse = function(body, error, status){
 	return JSON.stringify(response);
 }
 
+var __loadLoginView = function(request, response){
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort(),
+
+		reqid: __genRandomRequestId()
+	};
+	response.locals.title = "Login";
+	response
+		.set('Content-type', 'text/html')
+		.render('login.html', scope);
+}
+
+var __loadSetupView = function(request, response){
+	var scope = {
+		protocol: config.getProtocol(),
+		host: config.getHost(),
+		port: config.getPort(),
+
+		reqid: __genRandomRequestId(),
+		title: "Setup"
+	};
+	//response.locals.title = "Setup";
+	response
+		.set('Content-type', 'text/html')
+		.render('setup.html', scope);
+}
+
 //---------Request Validators
 var checkRequestId = function(request, response, next){
 	var id = request.get(X_BOLT_REQ_ID);
@@ -108,6 +137,9 @@ var checkRequestId = function(request, response, next){
 	else {
 		next();
 	}
+}
+var checkUserAdminRight = function(request, response, next){
+	next(); //TODO: check if user has admin privilege
 }
 var checkUserAppRight = function(request, response, next){
 	next(); //TODO: check if user has right to start :app (dont check if it's a startup app)
@@ -128,29 +160,23 @@ var get = function(request, response){
 				var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
 				if(users && users.length > 0){ //if there are registered users,...
 					if(request.session && request.session.user){ //a user is logged in, load the home view
-						response.redirect('/home');
+						response//.redirect('/home');
 					}
 					else{ //NO user is logged in, show login view
-						response.redirect('/login');
+						//response
+						//	.set(X_BOLT_REQ_ID, __genRandomRequestId())
+						//	.redirect('/login');
+						//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
+						__loadLoginView(request, response);
 					}
 				}
 				else { //if there are NO registered users, then show them the setup view (there's no /setup cuz I dont want ppl typing that)
 					//response
 					//	.set(X_BOLT_REQ_ID, __genRandomRequestId())
 					//	.redirect('/setup');
+					//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
 
-					var scope = {
-						protocol: config.getProtocol(),
-						host: config.getHost(),
-						port: config.getPort(),
-
-						reqid: __genRandomRequestId(),
-						title: "Setup"
-					};
-					//response.locals.title = "Setup";
-					response
-						.set('Content-type', 'text/html')
-						.render('setup.html', scope);
+					__loadSetupView(request, response);
 				}
 			}
 		});	
@@ -158,7 +184,8 @@ var get = function(request, response){
 
 var get_app_app = function(request, response){
 	superagent
-		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + request.params.app)
+		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
+		.send({ app: request.params.app })
 		.end(function(error, appstartResponse){
 			var scope = {
 				protocol: config.getProtocol(),
@@ -335,17 +362,7 @@ var get_help = function(request, response){
 }
 
 var get_login = function(request, response){
-	var scope = {
-		protocol: config.getProtocol(),
-		host: config.getHost(),
-		port: config.getPort(),
-
-		reqid: __genRandomRequestId()
-	};
-	response.locals.title = "Login";
-	response
-		.set('Content-type', 'text/html')
-		.render('login.html', scope);
+	__loadLoginView(request, response);
 }
 
 var get_logout = function(request, response){
@@ -361,18 +378,7 @@ var get_logout = function(request, response){
 }
 
 var get_setup = function(request, response){
-	var scope = {
-		protocol: config.getProtocol(),
-		host: config.getHost(),
-		port: config.getPort(),
-
-		reqid: __genRandomRequestId(),
-		title: "Setup"
-	};
-	//response.locals.title = "Setup";
-	response
-		.set('Content-type', 'text/html')
-		.render('setup.html', scope);
+	__loadSetupView(request, response);
 }
 
 var get_users = function(request, response){
@@ -387,21 +393,48 @@ var get_users = function(request, response){
 }
 
 var get_view = function(request, response){
-	//TODO: get the app that serves that view; if not found show 404.html
-	var scope = {
-		protocol: config.getProtocol(),
-		host: config.getHost(),
-		port: config.getPort()
-	};
-	response
-		.set('Content-type', 'text/html')
-		.send('hello world, with love from ' + request.params.view);
+	//TODO: get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
+
+	//check for an app that can serve this view
+	if (false){}
+	//check for a native view
+	else {
+		var native = path.join(__dirname, 'sys/views', request.params.view + '.html');
+		fs.stat(native, function(error, stats){
+			if (!error && stats.isFile()){
+				var scope = {
+					protocol: config.getProtocol(),
+					host: config.getHost(),
+					port: config.getPort(),
+
+					title: request.params.view,
+					view: request.query.view,
+					reqid: __genRandomRequestId()
+				};
+				response
+					.set('Content-type', 'text/html')
+					.render(request.params.view + '.html', scope);
+			}
+			else {
+				response.redirect('/404?view=' + request.params.view);
+			}
+		});
+	}
+}
+
+var post_appget = function(request, response){
+	//expects: { app, version (optional) } => npm install {app}@{version}
+	//calls /app-reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
+}
+
+var post_appreg = function(request, response){
+	//get the app-info
 }
 
 var post_appstart_app = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
+	var _path = pacman.getAppPath(request.body.app);
 	if(!_path){
-		_path = request.params.app;
+		_path = request.body.app;
 	}
 	if(__pathToContextMap.has(_path)){
 		response.send(__getResponse(__pathToContextMap.get(_path)));
@@ -409,7 +442,7 @@ var post_appstart_app = function(request, response){
 	}
 
 	superagent
-		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-info/' + request.params.app) 
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-info/' + request.body.app) 
 		.end(function(appinfoError, appinfoResponse){
 			if (appinfoError) {
 				response.end(__getResponse(null, appinfoError));
@@ -440,7 +473,8 @@ var post_appstart_app = function(request, response){
 						var initUrl = context.appInfo.bolt.init;
 						if(initUrl){
 							superagent
-								.get(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl + '?host=' + config.getHost() + '&port=' + config.getPort())
+								.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
+								.send({ host: config.getHost(), port: config.getPort() }) //TODO: pass secret here
 								.end(function(initError, initResponse){});
 						}
 
@@ -460,13 +494,13 @@ var post_appstart_app = function(request, response){
 }
 
 var post_appstop_app = function(request, response){
-	var _path = pacman.getAppPath(request.params.app);
+	var _path = pacman.getAppPath(request.body.app);
 	if(!_path){
-		_path = request.params.app;
+		_path = request.body.app;
 	}
 
 	if(!__pathToContextMap.has(_path)){
-		var error = new Error("The app '" + request.params.tag + "' could not be found to be running!");
+		var error = new Error("The app '" + request.body.tag + "' could not be found to be running!");
 		error.status = 404;
 		response.end(__getResponse(null, error, 404));
 	}
@@ -703,26 +737,28 @@ app.get('/', get);
 //this UI endpoint runs the app with the specified name (using default options)
 app.get('/app/:app', get_app_app);
 
+//installs an app from an online repository (current only npm is supported)
+app.post('/app-get', checkUserAdminRight, post_appget);
+//TODO: /app-reget (update) /app-unget (uninstall)
+
 //gets the app info of the app with the specified name
 app.get('/app-info/:app', checkUserAppRight, get_appinfo_app);
 
-//starts the server of the app with the specified name
-app.post('/app-start/:app', post_appstart_app);
-
-//TODO: app.get('/app-get/:dev/:app', ...); //installs the app
-//TODO: app.post('/app-get/:dev/:app', ...); //updates the app
+//installs an app from an local repository (current only the node_modules folder is supported)
+app.post('/app-reg', checkUserAdminRight, post_appreg);
+//TODO: /app-rereg (update) /app-unreg (uninstall)
 /*
 during install and update, copy the bolt client files specified as dependencies into the folders specified
 */
-//TODO: app.del('/app-get/:dev/:app', ...); uninstall the app
 
-//TODO: app.post('/app-id', ...); //sets an id for the app
+//starts the server of the app with the specified name
+app.post('/app-start', post_appstart_app);
 
 //TODO: /app-role/add //adds an app-role association
 //TODO: /app-role/del 
 
 //stops the server of the app with the specified name
-app.post('/app-stop/:app', post_appstop_app);
+app.post('/app-stop', post_appstop_app);
 
 //TODO: app.get('/apps', get_apps); //gets an array of app-info for all installed apps
 //gets an array of app-info for all installed apps with the specified tag
@@ -783,7 +819,7 @@ app.get('/users', get_users);
 app.get('/login', checkRequestId, get_login);
 
 //this UI endpoint displays the logout view
-app.get('/logout', checkRequestId, get_logout);
+app.get('/logout', get_logout);
 
 //this UI endpoint displays the setup view
 app.get('/setup', checkRequestId, get_setup);
@@ -832,7 +868,8 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 		else{
 			var name = startups[index];
 			superagent
-				.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start/' + name)
+				.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
+				.send({ app: name })
 				.end(function(appstartError, appstartResponse){
 					if (appstartError) {
 						runStartups(++index);

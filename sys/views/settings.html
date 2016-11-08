@@ -40,10 +40,17 @@
       <div class="row-xs-height">
         <div class="col-xs-height col-middle">
           <div class="error-container text-center">
-            <h1 class="error-number">404</h1>
-            <h2 class="semi-bold">Sorry but we could not find the view <b>{{view}}</b></h2>
-            <p>Please ensure the target address is correct.<br />It is also possible there is no app serving this view.
+            <h1 class="error-number">No Settings App</h1>
+            <p>You have no <b>Settings</b> app installed. You can download one online or sideload an already-downloaded copy.
             </p>
+            <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="download">
+                <i class="fa fa-cloud-download"></i> 
+                <span class="bold">Download (from npm)</span>
+            </button>
+            <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="sideload">
+                <i class="fa fa-copy"></i> 
+                <span class="bold">Sideload (ensure it is first copied to the node_modules folder)</span>
+            </button>
           </div>
         </div>
       </div>
@@ -66,5 +73,48 @@
     <script src="assets/plugins/switchery/js/switchery.min.js" type="text/javascript"></script>
     <!-- END VENDOR JS -->
     <script src="pages/js/pages.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("#download").click(function(){
+                $.ajax({
+                  url: "{{protocol}}://{{host}}:{{port}}/app-get",
+                  data: { app: "bolt-settings" },
+                  type: "POST",
+                  headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+                  success: function(response, status, xhr){
+                    //all bolt responses have status fields
+                    if(response.status == 200){
+                      window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                    }
+                    else {
+                      //TODO: error
+                      console.log(response);
+                    }
+                  },
+                  error: function(xhr, status, err){}
+                });
+            });
+
+            $("#sideload").click(function(){
+                $.ajax({
+                  url: "{{protocol}}://{{host}}:{{port}}/app-reg",
+                  data: { app: "bolt-settings" },
+                  type: "POST",
+                  headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+                  success: function(response, status, xhr){
+                    //all bolt responses have status fields
+                    if(response.status == 200){
+                      window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                    }
+                    else {
+                      //TODO: error
+                      console.log(response);
+                    }
+                  },
+                  error: function(xhr, status, err){}
+                });
+            });
+          });
+    </script>
   </body>
 </html>

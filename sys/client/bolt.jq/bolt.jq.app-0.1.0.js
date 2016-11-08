@@ -34,7 +34,7 @@ var Bolt = (function(bolt){
 				});
 			},
 			stopAppByName: function(app){
-				Bolt.ServiceManager.post('/app-stop/' + app, {}, function(err, data){
+				Bolt.ServiceManager.post('/app-stop', { app: app }, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;

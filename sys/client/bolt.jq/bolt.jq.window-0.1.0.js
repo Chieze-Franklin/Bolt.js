@@ -37,7 +37,7 @@ var Bolt = (function(bolt, $){
 				for(i = 0; app.charAt(i) == '/' && i < app.length; )
 					app = app.substring(i + 1);
 
-				Bolt.ServiceManager.post('/app-start/' + app, {}, function(err, data){
+				Bolt.ServiceManager.post('/app-start', { app: app}, function(err, data){
 					if(err){
 						//TODO: do sth
 						return;
