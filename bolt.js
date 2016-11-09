@@ -23,37 +23,6 @@ var __runningContexts = [];
 
 const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 
-var __getContextAppInfo = function(data){
-	var package = JSON.parse(data);
-	var context = {};
-	context.appInfo = {
-		name: package.name,
-		version: package.version,
-		description: package.description,
-		main: package.main,
-		bolt: package.bolt
-	};
-	return context;
-}
-
-var __getContextFileInfo = function(data, name){
-	var package = JSON.parse(data);
-	var context = {};
-	if (package.bolt && package.bolt.files) {
-		for (var i = 0; i < package.bolt.files.length; i++) {
-			var entry = package.bolt.files[i]
-			if(entry.name === name){
-				context.fileInfo = {
-					name: entry.name,
-					path: entry.path
-				};
-				break;
-			}
-		}
-	}
-	return context;
-}
-
 var __randomRequestId = [];
 var __genRandomRequestId = function(){
 	var id = utils.String.getRandomString(24);
@@ -206,9 +175,9 @@ var get_app_app = function(request, response){
 				var context = appstartResponse.body.body;
 				//TODO: check appstartResponse.body.error, esp for access denial i.e. appstartResponse.body.status==403 (403.html)
 
-				//run the app
+				//load the app
 				if (context && context.port) {
-					var index = (context.appInfo.bolt.index) ? context.appInfo.bolt.index : "/"; //TODO: trim-start '/' off context.appInfo.bolt.index
+					var index = (context.appInfo.index) ? "/" + utils.String.trimStart(context.appInfo.index, "/") : "/";
 					response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 				}
 				else {
@@ -236,18 +205,7 @@ var get_appinfo_app = function(request, response){
 			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
 		}
 		else{
-			fs.readFile(path.join(__dirname, 'node_modules', app.path, 'package.json'), function (err, data) {
-				if(err){
-					response.end(__getResponse(null, err));
-				}
-				else {
-					var context = __getContextAppInfo(data);
-					context.name = app.name;
-					context.path = app.path;
-
-					response.send(__getResponse(context));
-				}
-			});
+			response.send(__getResponse(app));
 		}
 	});
 }
@@ -266,16 +224,7 @@ var get_apps_tag = function(request, response){
 			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
 		}
 		else{
-			var contexts = [];
-			apps.forEach(function(app, index){
-				var data = fs.readFileSync(path.join(__dirname, 'node_modules', app.path, 'package.json'));
-				var context = __getContextAppInfo(data);
-				context.name = app.name;
-				context.path = app.path;
-
-				contexts.push(context);
-			});
-			response.send(__getResponse(contexts));
+			response.send(__getResponse(apps));
 		}
 	});
 }
@@ -288,12 +237,12 @@ var get_file_app_file = function(request, response){
 				response.end(__getResponse(null, error));
 			}
 			else {
-				var context = fileinfoResponse.body.body;
+				var fileInfo = fileinfoResponse.body.body;
 
-				if (context && context.fileInfo && context.fileInfo.fullPath) {
-					//response.writeHead(301, {Location: 'file:///' + context.fileInfo.fullPath});
+				if (fileInfo && fileInfo.fullPath) {
+					//response.writeHead(301, {Location: 'file:///' + fileInfo.fullPath});
 					//response.end();
-					response.redirect(301, 'file:///' + context.fileInfo.fullPath);
+					response.redirect(301, 'file:///' + fileInfo.fullPath);
 				}
 				else {
 					var error = new Error("The file '" + request.params.app + '/' + request.params.file + "' could not be found!");
@@ -313,25 +262,48 @@ var get_fileinfo_app_file = function(request, response){
 			response.end(__getResponse(null, error));
 		}
 		else if(!app){
-			var err = new Error("The app could not be found!");
+			var err = new Error("The app or file could not be found!");
 			err.status = 404;
 			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
 		}
 		else{
-			fs.readFile(path.join(__dirname, 'node_modules', app.path, 'package.json'), function (err, data) {
-				if(err){
-					response.end(__getResponse(null, err));
-				}
-				else {
-					var context = __getContextFileInfo(data, request.params.file);
-					if(context.fileInfo.path)
-						context.fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, context.fileInfo.path);
-					context.name = app.name;
-					context.path = app.path;
+			var fileInfo;
 
-					response.send(__getResponse(context));
+			var files = app.files;
+			for (var file in files){
+				if (files.hasOwnProperty(file)){
+					if (file === request.params.file) {
+						fileInfo = {
+							name: file,
+							path: files[file]
+						};
+						break;
+					}
 				}
-			});
+			}
+
+			if(fileInfo.path){
+				fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, fileInfo.path);
+				fs.stat(fileInfo.fullPath, function(fsError, stats) {
+					if (fsError) {
+						fileInfo.error = fsError;
+					}
+					else {
+						fileInfo.stats = {
+							accessTime: stats.atime,
+							creationTime: stats.birthtime,
+							isDirectory: stats.isDirectory(),
+							isFile: stats.isFile(),
+							isSocket: stats.isSocket(),
+							modifiedTime: stats.mtime,
+							size: stats.size,
+							statsChangedTime: stats.ctime,
+						};
+					}
+				});
+			}
+
+			response.send(__getResponse(fileInfo));
 		}
 	});
 }
@@ -418,33 +390,58 @@ var get_users = function(request, response){
 }
 
 var get_view = function(request, response){
-	//TODO: get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
+	//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
 
-	//TODO: check for an app that can serve this view
-	if (false){}
-	//check for a native view
-	else {
-		var native = path.join(__dirname, 'sys/views', request.params.view + '.html');
-		fs.stat(native, function(error, stats){
-			if (!error && stats.isFile()){
-				var scope = {
-					protocol: config.getProtocol(),
-					host: config.getHost(),
-					port: config.getPort(),
-
-					title: request.params.view,
-					view: request.query.view,
-					reqid: __genRandomRequestId()
-				};
-				response
-					.set('Content-type', 'text/html')
-					.render(request.params.view + '.html', scope);
+	var app = null;
+	var plug = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
+	models.plugin.find({ path: plug }, function(errorPlugins, plugins){
+		if (errorPlugins){
+			response.end(__getResponse(null, errorPlugins));
+		}
+		//check for an app that can serve this view
+		else if(plugins && plugins.length > 0) {
+			if (plugins.length == 1) {
+				app = plugins[0].app;
 			}
 			else {
-				response.redirect('/404?view=' + request.params.view);
+				for (var index = 0; index < plugins.length; index++) {
+					var plugin = plugins[index];
+					if (plugin.isDefault) {
+						app = plugin.app;
+						break;
+					}
+				}
 			}
-		});
-	}
+		}
+
+		//if an app that can serve this view is found
+		if (app) {
+			response.redirect('/app/' + app);
+		}
+		//check for a native view
+		else {
+			var native = path.join(__dirname, 'sys/views', request.params.view + '.html');
+			fs.stat(native, function(error, stats) {
+				if (!error && stats.isFile()){
+					var scope = {
+						protocol: config.getProtocol(),
+						host: config.getHost(),
+						port: config.getPort(),
+
+						title: request.params.view,
+						view: request.query.view,
+						reqid: __genRandomRequestId()
+					};
+					response
+						.set('Content-type', 'text/html')
+						.render(request.params.view + '.html', scope);
+				}
+				else {
+					response.redirect('/404?view=' + request.params.view);
+				}
+			});
+		}
+	});
 }
 
 var post_appget = function(request, response){
@@ -454,28 +451,61 @@ var post_appget = function(request, response){
 
 var post_appreg = function(request, response){
 	if(request.body.path){
-		var _path = request.body.path;
+		var _path = utils.String.trim(request.body.path);
 		fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
 			if(error){
 				response.end(__getResponse(null, error));
 			}
 			else {
-				var context = __getContextAppInfo(data);
+				var package = JSON.parse(data);
 
-				var appnm = utils.String.trim(context.appInfo.name.toLowerCase());
+				if (!package.name) {
+					//TODO: error
+				}
+				var appnm = utils.String.trim(package.name.toLowerCase());
 				models.app.findOne({ name: appnm }, function(error, app){
 					if (error){
 						response.end(__getResponse(null, error));
 					}
 					else if(!app){
+						
+						//TODO: copy the bolt client files specified as dependencies into the folders specified; if it fails, stop installation
+
 						var newApp = new models.app({ 
 							name: appnm,
 							path: _path
 						});
-						newApp.startup = (context.appInfo.bolt.startup) ? context.appInfo.bolt.startup : false;
-						newApp.tags = (context.appInfo.bolt.tags) ? context.appInfo.bolt.tags : [];
-						
-						//TODO: copy the bolt client files specified as dependencies into the folders specified
+						newApp.description = package.description || "";
+						newApp.version = package.version || "";
+
+						if (package.bolt.main) newApp.main = package.bolt.main;
+
+						newApp.files = package.bolt.files || {};
+						if (package.bolt.icon) newApp.icon = package.bolt.icon;
+						if (package.bolt.index) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
+						if (package.bolt.ini) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
+						if (package.bolt.install) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
+						newApp.startup = package.bolt.startup || false;
+						newApp.tags = package.bolt.tags || [];
+
+						if (package.bolt.plugins) {
+							var plugins = package.bolt.plugins;
+							for (var plugin in plugins){
+								var plug = "/" + utils.String.trimStart(utils.String.trim(plugin.toLowerCase()), "/");
+								if (plugins.hasOwnProperty(plugin)){
+									var newPlugin = new models.plugin({
+										path: plug,
+										app: appnm,
+										endpoint: plugins[plugin]
+									});
+									newPlugin.save(); //TDOD: how to check that two plugins dont hv d same path and app
+								}
+							}
+						}
+
+						//TODO: appHash
+
+						newApp.package = package;
 
 						newApp.save();
 						response.send(__getResponse(newApp));
@@ -513,10 +543,15 @@ var post_appstart = function(request, response){
 				return;
 			}
 
-			var context = appinfoResponse.body.body;
+			var context = {}
+			var app = appinfoResponse.body.body;
+
+			context.name = app.name;
+			context.path = app.path;
+			context.appInfo = app;
 
 			//start a child process for the app
-			if(context.appInfo.bolt.main){
+			if(context.appInfo.main){
 				context.host = config.getHost();
 
 				if(!processes.hasProcess(context.name)){
@@ -534,7 +569,7 @@ var post_appstart = function(request, response){
 						context = _context;
 
 						//pass the OS host & port to the app
-						var initUrl = context.appInfo.bolt.init;
+						var initUrl = context.appInfo.ini;
 						if(initUrl){
 							superagent
 								.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
@@ -945,7 +980,6 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 								});
 							}
 
-							console.log("startuppppppp: ", startups.length);//TODO: delete//////////////////////////////////////////////
 							var runStartups = function(index){
 								if(index >= startups.length){
 									return;
