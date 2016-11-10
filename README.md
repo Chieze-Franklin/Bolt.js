@@ -11,6 +11,9 @@ With Bolt.js you get to run your JavaScript web apps and websites in an environm
 * Download the appropriate MongoDB files into the appropriate folder in */sys/bins*.
 * Run <code>node bolt</code>.
 
+## Resources
+Get up to speed on the whole Bolt thingy at [the Bolt wiki](https://github.com/Chieze-Franklin/Bolt.js/wiki).
+
 ## Contribute
 
 You can contribute to the project on [Github](https://github.com/Chieze-Franklin/Bolt.js).

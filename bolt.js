@@ -19,26 +19,32 @@ var schemata = require("./sys/server/schemata");
 var utils = require("./sys/server/utils");
 
 //---------Helpers
+
+//holds all running contexts
 var __runningContexts = [];
 
+//the request header to check for requests IDs
 const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 
-var __randomRequestId = [];
-var __genRandomRequestId = function(){
+//holds all the randomly-generated request IDs (for native views)
+var __randReqIds = [];
+//generates a random request ID
+var __genRandReqId = function(){
 	var id = utils.String.getRandomString(24);
-	__randomRequestId.push(id);
+	__randReqIds.push(id);
 
 	//trim the IDs down to 100
-	if(__randomRequestId.length > 100)
-		__randomRequestId.splice(0, __randomRequestId.length - 100);
+	if(__randReqIds.length > 100)
+		__randReqIds.splice(0, __randReqIds.length - 100);
 
 	return id;
 }
-var __isRandomRequestId = function(id){
-	var result = (__randomRequestId.indexOf(id) > -1);
-	return result;
+//checks if an ID is currently in the list of randomly-generated request IDs
+var __isRandReqId = function(id){
+	return (__randReqIds.indexOf(id) > -1);
 }
 
+//constructs an appropriate response object
 var __getResponse = function(body, error, status){
 	var response = {};
 
@@ -70,7 +76,7 @@ var __loadLoginView = function(request, response){
 		host: config.getHost(),
 		port: config.getPort(),
 
-		reqid: __genRandomRequestId()
+		reqid: __genRandReqId()
 	};
 	response.locals.title = "Login";
 	response
@@ -84,7 +90,7 @@ var __loadSetupView = function(request, response){
 		host: config.getHost(),
 		port: config.getPort(),
 
-		reqid: __genRandomRequestId(),
+		reqid: __genRandReqId(),
 		title: "Setup"
 	};
 	//response.locals.title = "Setup";
@@ -99,7 +105,7 @@ var checkAppUserPermToInstall = function(request, response, next){
 }
 var checkRequestId = function(request, response, next){
 	var id = request.get(X_BOLT_REQ_ID);
-	if(!id || !__isRandomRequestId(id)) { //this would be true if the request is NOT coming from a native Bolt view
+	if(!id || !__isRandReqId(id)) { //this would be true if the request is NOT coming from a native Bolt view
 		//TODO: check the app that sent the ID; if NOT one of the apps we are expecting
 		var error = new Error("This app has no permission to make this request");
 		error.status = 403;
@@ -135,7 +141,7 @@ var get = function(request, response){
 					}
 					else{ //NO user is logged in, show login view
 						//response
-						//	.set(X_BOLT_REQ_ID, __genRandomRequestId())
+						//	.set(X_BOLT_REQ_ID, __genRandReqId())
 						//	.redirect('/login');
 						//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
 						__loadLoginView(request, response);
@@ -143,7 +149,7 @@ var get = function(request, response){
 				}
 				else { //if there are NO registered users, then show them the setup view (there's no /setup cuz I dont want ppl typing that)
 					//response
-					//	.set(X_BOLT_REQ_ID, __genRandomRequestId())
+					//	.set(X_BOLT_REQ_ID, __genRandReqId())
 					//	.redirect('/setup');
 					//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
 
@@ -430,7 +436,7 @@ var get_view = function(request, response){
 
 						title: request.params.view,
 						view: request.query.view,
-						reqid: __genRandomRequestId()
+						reqid: __genRandReqId()
 					};
 					response
 						.set('Content-type', 'text/html')
