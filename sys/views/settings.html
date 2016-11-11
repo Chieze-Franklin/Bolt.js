@@ -77,7 +77,7 @@
         $(document).ready(function(){
             $("#download").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/app-get",
+                  url: "{{protocol}}://{{host}}:{{port}}/api/app/get",
                   data: { app: "bolt-settings" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -96,7 +96,7 @@
 
             $("#sideload").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/app-reg",
+                  url: "{{protocol}}://{{host}}:{{port}}/api/app/reg",
                   data: { path: "bolt-settings" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},

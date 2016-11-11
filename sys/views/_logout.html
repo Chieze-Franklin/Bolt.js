@@ -23,6 +23,8 @@
     <link href="assets/plugins/switchery/css/switchery.min.css" rel="stylesheet" type="text/css" media="screen" />
     <link href="pages/css/pages-icons.css" rel="stylesheet" type="text/css">
     <link class="main-stylesheet" href="pages/css/pages.css" rel="stylesheet" type="text/css" />
+    <!--BOLT-->
+    <script type="text/javascript" src="../client/bolt.config-0.1.0.js"></script>
     <!--[if lte IE 9]>
         <link href="pages/css/ie9.css" rel="stylesheet" type="text/css" />
     <![endif]-->
@@ -35,27 +37,53 @@
     }
     </script>
   </head>
-  <body class="fixed-header error-page">
-    <div class="container-xs-height full-height">
-      <div class="row-xs-height">
-        <div class="col-xs-height col-middle">
-          <div class="error-container text-center">
-            <h1 class="error-number">No Home App</h1>
-            <p>You have no <b>Home</b> app installed. You can download one online or sideload an already-downloaded copy.
-            </p>
-            <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="download">
-                <i class="fa fa-cloud-download"></i> 
-                <span class="bold">Download (from npm)</span>
-            </button>
-            <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="sideload">
-                <i class="fa fa-copy"></i> 
-                <span class="bold">Sideload (ensure it is first copied to the node_modules folder)</span>
-            </button>
+  <body class="fixed-header ">
+    <div class="login-wrapper ">
+      <!-- START Login Background Pic Wrapper-->
+      <div class="bg-pic">
+        <!-- START Background Pic-->
+        <img src="assets/img/demo/new-york-city-buildings-sunrise-morning-hd-wallpaper.jpg" data-src="assets/img/demo/new-york-city-buildings-sunrise-morning-hd-wallpaper.jpg" data-src-retina="assets/img/demo/new-york-city-buildings-sunrise-morning-hd-wallpaper.jpg" alt="" class="lazy">
+        <!-- END Background Pic-->
+        <!-- START Background Caption-->
+        <div class="bg-caption pull-bottom sm-pull-bottom text-white p-l-20 m-b-20">
+          <h2 class="semi-bold text-white">
+					Log into Bolt!</h2>
+          <p class="small">
+            All work copyright of respective owners, otherwise © 2016 Bolt.
+          </p>
+        </div>
+        <!-- END Background Caption-->
+      </div>
+      <!-- END Login Background Pic Wrapper-->
+      <!-- START Login Right Container-->
+      <div class="login-container bg-white">
+        <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
+          <img src="assets/img/logo.png" alt="logo" data-src="assets/img/logo.png" data-src-retina="assets/img/logo_2x.png" width="78" height="22">
+          <p class="p-t-35">Sign into your account</p>
+          <!-- START Login Form -->
+          <div>
+            <!-- START Form Control-->
+            <div class="form-group form-group-default">
+              <label>Login</label>
+              <div class="controls">
+                <input type="text" name="username" id="username" placeholder="User Name" class="form-control" required>
+              </div>
+            </div>
+            <!-- END Form Control-->
+            <!-- START Form Control-->
+            <div class="form-group form-group-default">
+              <label>Password</label>
+              <div class="controls">
+                <input type="password" class="form-control" name="password" id="password" placeholder="Credentials" required>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-cons m-t-10" value="submit" id="submit">Sign in</button>
           </div>
+          <!--END Login Form-->
         </div>
       </div>
+      <!-- END Login Right Container-->
     </div>
-    <!-- END PAGE CONTAINER -->
     <!-- BEGIN VENDOR JS -->
     <script src="assets/plugins/pace/pace.min.js" type="text/javascript"></script>
     <script src="assets/plugins/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
@@ -71,48 +99,46 @@
     <script type="text/javascript" src="assets/plugins/select2/js/select2.full.min.js"></script>
     <script type="text/javascript" src="assets/plugins/classie/classie.js"></script>
     <script src="assets/plugins/switchery/js/switchery.min.js" type="text/javascript"></script>
+    <script src="assets/plugins/jquery-validation/js/jquery.validate.min.js" type="text/javascript"></script>
     <!-- END VENDOR JS -->
     <script src="pages/js/pages.min.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function(){
-            $("#download").click(function(){
-                $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/get",
-                  data: { app: "bolt-home" },
-                  type: "POST",
-                  headers: {'X-Bolt-Req-Id': '{{reqid}}'},
-                  success: function(response, status, xhr){
-                    if(response.code == 0){
-                      window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
-                    }
-                    else {
-                      //TODO: error
-                      console.log(response);
-                    }
-                  },
-                  error: function(xhr, status, err){}
-                });
-            });
+    <script>
+    $(function()
+    {
+        //$('#form-login').validate()
+    })
+    $(document).ready(function(){
+        Bolt.Config.setHost("{{host}}");
+        Bolt.Config.setPort("{{port}}");
+        Bolt.Config.setProtocol("{{protocol}}");
 
-            $("#sideload").click(function(){
-                $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/reg",
-                  data: { app: "bolt-home" },
-                  type: "POST",
-                  headers: {'X-Bolt-Req-Id': '{{reqid}}'},
-                  success: function(response, status, xhr){
-                    if(response.code == 0){
-                      window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
-                    }
-                    else {
-                      //TODO: error
-                      console.log(response);
-                    }
-                  },
-                  error: function(xhr, status, err){}
-                });
+        var email,password;
+        $("#submit").click(function(){
+            email=$("#username").val();
+            password=$("#password").val();
+            /*
+            * Perform some validation here.
+            */
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{port}}/user/login",
+              data: { username: email, password: password },
+              type: "POST",
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+              },
+              success: function(response, status, xhr){
+                if(response.code == 0){
+                  window.location.href="{{protocol}}://{{host}}:{{port}}/home";
+                }
+                else {
+                  //TODO: error
+                  console.log(response);
+                }
+              },
+              error: function(xhr, status, err){}
             });
-          });
+        });
+      });
     </script>
   </body>
 </html>

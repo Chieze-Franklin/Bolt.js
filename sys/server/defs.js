@@ -31,7 +31,7 @@ module.exports = {
 		role_id: { type: ObjectId, required: true },
 
 		dateCreated: { type: Date, default: Date.now },
-		permissions: { type: [String]}
+		features: { type: [String]}
 	},
 	boltSecret : {
 		name: { type: String, required: true },
