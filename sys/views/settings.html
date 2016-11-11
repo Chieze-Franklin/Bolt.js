@@ -82,8 +82,7 @@
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){
-                    //all bolt responses have status fields
-                    if(response.status == 200){
+                    if(response.code == 0){
                       window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
                     }
                     else {
@@ -102,8 +101,7 @@
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){
-                    //all bolt responses have status fields
-                    if(response.status == 200){
+                    if(response.code == 0){
                       window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
                     }
                     else {

@@ -40,12 +40,10 @@
       <div class="row-xs-height">
         <div class="col-xs-height col-middle">
           <div class="error-container text-center">
-            <h1 class="error-number">{{title}}</h1>
-            <h2 class="semi-bold">Sorry but we could not find the view or app <b>{{view}}{{app}}</b></h2>
+            <h1 class="error-number">{{title}} {{code}}</h1>
+            <h2 class="semi-bold">{{errorUserTitle}}</h2>
             <p>
-                Please ensure the target address is correct.<br />
-                IF what you are looking for is a view, it is possible there is no app serving the view.<br />
-                If what you are looking for is an app, it is possible the app has no (running) server.
+                {{errorUserMessage}}
             </p>
             <p>Contact your system administrator.</p>
           </div>

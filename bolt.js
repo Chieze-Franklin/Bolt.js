@@ -16,9 +16,15 @@ var processes = require("./sys/server/processes");
 var models = require("./sys/server/models");
 var schemata = require("./sys/server/schemata");
 
+var errors = require("./sys/server/errors");
 var utils = require("./sys/server/utils");
 
 //---------Helpers
+
+//returns true if the object is null or undefined
+var __isNullOrUndefined = function(obj){
+	return (typeof obj === 'undefined' || !obj);
+}
 
 //holds all running contexts
 var __runningContexts = [];
@@ -45,27 +51,50 @@ var __isRandReqId = function(id){
 }
 
 //constructs an appropriate response object
-var __getResponse = function(body, error, status){
+var __getResponse = function(body, error, code, errorTraceId, errorUserTitle, errorUserMessage){
+	//TODO: support errorTraceId
+	//TODO: errorUserTitle and errorUserMessage should be change from strings to ints (==code) to support localization
+
 	var response = {};
 
-	//set status
-	if (status) {
-		response.status = status;
+	//set code
+	if (!__isNullOrUndefined(code)) {
+		response.code = code;
 	}
 	else {
-		if (body)
-			response.status = 200;
-		else if (error)
-			response.status = 500;
+		if (!__isNullOrUndefined(body))
+			response.code = 0;
+		else if (!__isNullOrUndefined(error))
+			response.code = 1000;
 	}
 
 	//set body
-	if (body)
+	if (!__isNullOrUndefined(body))
 		response.body = body;
 
 	//set error
-	if (error)
+	if (!__isNullOrUndefined(error))
 		response.error = error;
+
+	//set errorTraceId
+	if (!__isNullOrUndefined(errorTraceId))
+		response.errorTraceId = errorTraceId;
+
+	//set errorUserTitle
+	if (!__isNullOrUndefined(errorUserTitle))
+		response.errorUserTitle = errorUserTitle; //TODO: this is not the real implementation
+	else {
+		//TODO: this is not the real implementation
+		response.errorUserTitle = response.code;
+	}
+
+	//set errorUserMessage
+	if (!__isNullOrUndefined(errorUserMessage))
+		response.errorUserMessage = errorUserMessage; //TODO: this is not the real implementation
+	else {
+		//TODO: this is not the real implementation
+		response.errorUserMessage = errors[response.code];
+	}
 
 	return JSON.stringify(response);
 }
@@ -130,16 +159,29 @@ var get = function(request, response){
 	superagent
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/users') //check if there's any registered user
 		.end(function(error, usersResponse){
-			if (error) {
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else {
-				var users = usersResponse.body.body; //remember that 'usersResponse.body' is the Bolt response, and a Bolt response usually has a body field
-				if(users && users.length > 0){ //if there are registered users,...
-					if(request.session && request.session.user){ //a user is logged in, load the home view
-						response//.redirect('/home');
+				var responseError = usersResponse.body.error;
+				var users = usersResponse.body.body;
+
+				if (!__isNullOrUndefined(responseError)) {
+					var encodedCode = encodeURIComponent(appstartResponse.body.code);
+					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
+						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
+						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
 					}
-					else{ //NO user is logged in, show login view
+					else {
+						response.redirect('/error?code=' + encodedCode);
+					}
+				}
+				else if (!__isNullOrUndefined(users) && users.length > 0){ //if there are registered users,...
+					if (!__isNullOrUndefined(request.session) && !__isNullOrUndefined(request.session.user)) { //a user is logged in, load the home view
+						response.redirect('/home');
+					}
+					else { //NO user is logged in, show login view
 						//response
 						//	.set(X_BOLT_REQ_ID, __genRandReqId())
 						//	.redirect('/login');
@@ -147,7 +189,7 @@ var get = function(request, response){
 						__loadLoginView(request, response);
 					}
 				}
-				else { //if there are NO registered users, then show them the setup view (there's no /setup cuz I dont want ppl typing that)
+				else { //if there are NO registered users, then show them the setup view
 					//response
 					//	.set(X_BOLT_REQ_ID, __genRandReqId())
 					//	.redirect('/setup');
@@ -160,38 +202,43 @@ var get = function(request, response){
 }
 
 var get_app_app = function(request, response){
+	var appnm = utils.String.trim(request.params.app.toLowerCase());
 	superagent
 		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
-		.send({ app: request.params.app })
+		.send({ app: appnm })
 		.end(function(error, appstartResponse){
-			var scope = {
-				protocol: config.getProtocol(),
-				host: config.getHost(),
-				port: config.getPort()
-			};
-
-			if (error) {
-				//response.end(__getResponse(null, error));
-				response.locals.title = "Error";
-				response
-					.set('Content-type', 'text/html')
-					.render('error.html', scope);
+			if (!__isNullOrUndefined(error)) {
+				response.redirect('/error');
 			}
 			else {
+				var responseError = appstartResponse.body.error;
 				var context = appstartResponse.body.body;
-				//TODO: check appstartResponse.body.error, esp for access denial i.e. appstartResponse.body.status==403 (403.html)
 
-				//load the app
-				if (context && context.port) {
-					var index = (context.appInfo.index) ? "/" + utils.String.trimStart(context.appInfo.index, "/") : "/";
-					response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
+				if (!__isNullOrUndefined(responseError)) {
+					var encodedCode = encodeURIComponent(appstartResponse.body.code);
+					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
+						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
+						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
+					}
+					else {
+						response.redirect('/error?code=' + encodedCode);
+					}
+				}
+				else if (!__isNullOrUndefined(context)) {
+					if(!__isNullOrUndefined(context.port)){
+						var index = (!__isNullOrUndefined(context.appInfo.index)) ? "/" + utils.String.trimStart(context.appInfo.index, "/") : "/";
+						response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
+					}
+					else {
+						//TODO: maybe I shud show an error saying no port found for this app 
+						//but I don't want to hand-craft any user error message since that will not be localizable
+						//so I'll just be lazy here and show a 404
+						response.redirect('/404?app=' + encodeURIComponent(appnm));
+					}
 				}
 				else {
-					//response.send(__getResponse(null, null, 200));
-					response.locals.title = "404";
-					response
-						.set('Content-type', 'text/html')
-						.render('404.html', scope);
+					response.redirect('/404?app=' + encodeURIComponent(appnm));
 				}
 			}
 		});
@@ -202,7 +249,7 @@ var get_appinfo_app = function(request, response){
 	models.app.findOne({ 
 		name: appnm
 	}, function(error, app){
-		if (error){
+		if (!__isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
 		else if(!app){
@@ -221,7 +268,7 @@ var get_apps_tag = function(request, response){
 	models.app.find({ 
 		tags: tag
 	}, function(error, apps){
-		if (error){
+		if (!__isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
 		else if(!apps){
@@ -239,7 +286,7 @@ var get_file_app_file = function(request, response){
 	superagent
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/file-info/' + request.params.app + '/' + request.params.file)
 		.end(function(error, fileinfoResponse){
-			if (error) {
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else {
@@ -264,7 +311,7 @@ var get_fileinfo_app_file = function(request, response){
 	models.app.findOne({ 
 		name: appnm
 	}, function(error, app){
-		if (error){
+		if (!__isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
 		else if(!app){
@@ -314,7 +361,7 @@ var get_fileinfo_app_file = function(request, response){
 	});
 }
 
-var get_help = function(request, response){
+var get_info_help = function(request, response){
 	//response.send(app._router.stack); //run this (comment everything below) to see the structure of 'app._router.stack'
 
 	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
@@ -384,13 +431,16 @@ var get_setup = function(request, response){
 	__loadSetupView(request, response);
 }
 
-var get_users = function(request, response){
-	models.user.find({}, function(error, users){
-		if(error){
+var get_users = function (request, response) {
+	models.user.find({}, function (error, users) {
+		if (!__isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else {
+		else if (!__isNullOrUndefined(users)) {
 			response.send(__getResponse(users));
+		}
+		else {
+			response.send(__getResponse([]));
 		}
 	});
 }
@@ -435,7 +485,14 @@ var get_view = function(request, response){
 						port: config.getPort(),
 
 						title: request.params.view,
+
 						view: request.query.view,
+						app: request.query.app,
+
+						code: request.query.code,
+						errorUserTitle: request.query.error_user_title,
+						errorUserMessage: request.query.error_user_message,
+
 						reqid: __genRandReqId()
 					};
 					response
@@ -443,7 +500,7 @@ var get_view = function(request, response){
 						.render(request.params.view + '.html', scope);
 				}
 				else {
-					response.redirect('/404?view=' + request.params.view);
+					response.redirect('/404?view=' + encodeURIComponent(request.params.view));
 				}
 			});
 		}
@@ -451,29 +508,32 @@ var get_view = function(request, response){
 }
 
 var post_appget = function(request, response){
-	//expects: { app, version (optional) } => npm install {app}@{version}
+	//expects: { app (if app name mission, error code=400), version (optional) } => npm install {app}@{version}
 	//calls /app-reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
 }
 
 var post_appreg = function(request, response){
-	if(request.body.path){
+	if (request.body.path) {
 		var _path = utils.String.trim(request.body.path);
 		fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
-			if(error){
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else {
 				var package = JSON.parse(data);
 
-				if (!package.name) {
-					//TODO: error
+				if (__isNullOrUndefined(package.name)) {
+					var errr = new Error(errors['400']);
+					response.end(__getResponse(null, errr, 400));
+					return;
 				}
+
 				var appnm = utils.String.trim(package.name.toLowerCase());
 				models.app.findOne({ name: appnm }, function(error, app){
-					if (error){
+					if (!__isNullOrUndefined(error)) {
 						response.end(__getResponse(null, error));
 					}
-					else if(!app){
+					else if(__isNullOrUndefined(app)) {
 						
 						//TODO: copy the bolt client files specified as dependencies into the folders specified; if it fails, stop installation
 
@@ -484,17 +544,17 @@ var post_appreg = function(request, response){
 						newApp.description = package.description || "";
 						newApp.version = package.version || "";
 
-						if (package.bolt.main) newApp.main = package.bolt.main;
+						if (!__isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
 
 						newApp.files = package.bolt.files || {};
-						if (package.bolt.icon) newApp.icon = package.bolt.icon;
-						if (package.bolt.index) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
-						if (package.bolt.ini) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
-						if (package.bolt.install) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
+						if (!__isNullOrUndefined(package.bolt.icon)) newApp.icon = package.bolt.icon;
+						if (!__isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
+						if (!__isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
+						if (!__isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 						newApp.startup = package.bolt.startup || false;
 						newApp.tags = package.bolt.tags || [];
 
-						if (package.bolt.plugins) {
+						if (!__isNullOrUndefined(package.bolt.plugins)) {
 							var plugins = package.bolt.plugins;
 							for (var plugin in plugins){
 								var plug = "/" + utils.String.trimStart(utils.String.trim(plugin.toLowerCase()), "/");
@@ -504,7 +564,7 @@ var post_appreg = function(request, response){
 										app: appnm,
 										endpoint: plugins[plugin]
 									});
-									newPlugin.save(); //TDOD: how to check that two plugins dont hv d same path and app
+									newPlugin.save(); //TODO: check that two plugins dont hv d same path and app
 								}
 							}
 						}
@@ -513,22 +573,26 @@ var post_appreg = function(request, response){
 
 						newApp.package = package;
 
-						newApp.save();
-						response.send(__getResponse(newApp));
+						newApp.save(function(saveError, savedApp){
+							if (!__isNullOrUndefined(saveError)) {
+								response.end(__getResponse(null, saveError, 402));
+							}
+							else {
+								response.send(__getResponse(savedApp));
+							}
+						});
 					}
 					else{
-						var err = new Error("An app with the same name already exists!");
-						err.status = 400;
-						response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+						var err = new Error(errors['401']);
+						response.end(__getResponse(null, err, 401));
 					}
 				});
 			}
 		});
 	}
 	else {
-		var error = new Error("App path missing!");
-		error.status = 400;
-		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+		var error = new Error(errors['410']);
+		response.end(__getResponse(null, error, 410));
 	}
 }
 
@@ -546,6 +610,13 @@ var post_appstart = function(request, response){
 		.end(function(appinfoError, appinfoResponse){
 			if (appinfoError) {
 				response.end(__getResponse(null, appinfoError));
+				return;
+			}
+
+			var realResponse = appinfoResponse.body;
+			if (!__isNullOrUndefined(realResponse.error)) {
+				response.end(__getResponse(null, realResponse.error, realResponse.code, 
+					realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
 				return;
 			}
 
@@ -568,7 +639,7 @@ var post_appstart = function(request, response){
 					//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
 					//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
 					processes.createProcess(context, function(error, _context){
-						if(error){
+						if (!__isNullOrUndefined(error)) {
 							response.end(__getResponse(null, error));
 						}
 
@@ -623,7 +694,7 @@ var post_appstop = function(request, response){
 var post_role_add = function(request, response){
 	if(request.body.name){
 		models.role.findOne({ name: request.body.name }, function(error, role){
-			if (error){
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else if(!role){
@@ -655,29 +726,33 @@ var post_user_add = function(request, response){
 	if(request.body.username && request.body.password){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(error, user){
-			if (error){
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if(!user){
+			else if (__isNullOrUndefined(user)) {
 				var newUser = new models.user({ 
 					username: usrnm, 
 					passwordHash: utils.Security.hashSync(request.body.password + usrnm)
 				});
-				newUser.save();
-				delete newUser.passwordHash;
-				response.send(__getResponse(newUser));
+				newUser.save(function(saveError, savedUser){
+					if (!__isNullOrUndefined(saveError)) {
+						response.end(__getResponse(null, saveError, 202));
+					}
+					else {
+						delete savedUser.passwordHash; //TODO: not working
+						response.send(__getResponse(savedUser));
+					}
+				});
 			}
-			else{
-				var err = new Error("A user with the same username already exists!");
-				err.status = 400;
-				response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+			else {
+				var err = new Error(errors['201']);
+				response.end(__getResponse(null, err, 201));
 			}
 		});
 	}
 	else {
-		var error = new Error("Username and/or password missing!");
-		error.status = 400;
-		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+		var error = new Error(errors['200']);
+		response.end(__getResponse(null, error, 200));
 	}
 }
 
@@ -688,19 +763,18 @@ var post_user_login = function(request, response){
 			username: usrnm, 
 			passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
 		}, function(error, user){
-			if (error){
+			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if(!user){
+			else if(__isNullOrUndefined(user)){
 				request.session.reset();
-				var err = new Error("The user could not be found!");
-				err.status = 404;
-				response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
+				var err = new Error(errors['203']);
+				response.end(__getResponse(null, err, 203));
 			}
 			else{
 				user.visits+=1;
 				user.save();
-				delete user.passwordHash;
+				delete user.passwordHash; //TODO: not working
 				request.session.user = user;
 				response.locals.user = user;
 				response.send(__getResponse(user));
@@ -708,59 +782,70 @@ var post_user_login = function(request, response){
 		});
 	}
 	else {
-		var error = new Error("Username and/or password missing!");
-		error.status = 400;
-		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+		var error = new Error(errors['200']);
+		response.end(__getResponse(null, error, 200));
 	}
 }
 
 var post_user_logout = function(request, response){
 	request.session.reset();
-  	response.end(__getResponse(null, null, 200));
+  	response.end(__getResponse(null, null, 0));
 }
 
 var post_userrole_add = function(request, response){
 	if(request.body.user && request.body.role){
 		var usrnm = utils.String.trim(request.body.user.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(errorUser, user){
-			if (errorUser){
+			if (!__isNullOrUndefined(errorUser)){
 				response.end(__getResponse(null, errorUser));
 			}
-			else if(!user){
-				request.session.reset();
-				var errUser = new Error("The user could not be found!");
-				errUser.status = 404;
-				response.end(__getResponse(null, errUser, 404)); //TODO: this is one place u need to specify: error_title and error_message
+			else if(__isNullOrUndefined(user)){
+				var errUser = new Error(errors['203']);
+				response.end(__getResponse(null, errUser, 203));
 			}
 			else{
 				models.role.findOne({ name: request.body.role }, function(errorRole, role){
-					if (errorRole){
+					if (!__isNullOrUndefined(errorRole)){
 						response.end(__getResponse(null, errorRole));
 					}
-					else if(!role){
-						request.session.reset();
-						var errRole = new Error("The role could not be found!");
-						errRole.status = 404;
-						response.end(__getResponse(null, errRole, 404)); //TODO: this is one place u need to specify: error_title and error_message
+					else if(__isNullOrUndefined(role)){
+						var errRole = new Error(errors['203']);
+						response.end(__getResponse(null, errRole, 203));
 					}
 					else{
-						var newUserRoleAssoc = new models.userRoleAssoc({ 
-							role: role.name,
-							role_id: role._id, 
-							user: user.username,
-							user_id: user._id 
+						models.userRoleAssoc.findOne({ user: user.username, role: role.name }, function(errorUserRole, userRole){
+							if (!__isNullOrUndefined(errorUserRole)) {
+								response.end(__getResponse(null, errorUserRole));
+							}
+							else if (__isNullOrUndefined(userRole)) {
+								var newUserRoleAssoc = new models.userRoleAssoc({ 
+									role: role.name,
+									role_id: role._id, 
+									user: user.username,
+									user_id: user._id 
+								});
+								newUserRoleAssoc.save(function(saveError, savedUserRole){
+									if (!__isNullOrUndefined(saveError)) {
+										response.end(__getResponse(null, saveError, 312));
+									}
+									else {
+										response.send(__getResponse(savedUserRole));
+									}
+								});
+							}
+							else {
+								var err = new Error(errors['311']);
+								response.end(__getResponse(null, err, 311));
+							}
 						});
-						newUserRoleAssoc.save();
-						response.send(__getResponse(newUserRoleAssoc));
 					}
 				});
 			}
 		});
 	}
 	else {
-		var error = new Error("Username and/or password missing!");
-		error.status = 400;
-		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+		var error = new Error(errors['310']);
+		response.end(__getResponse(null, error, 310));
 	}
 }
 
@@ -884,7 +969,7 @@ app.get('/file/:app/:file', get_file_app_file);
 app.get('/file-info/:app/:file', checkUserAppFileRight, get_fileinfo_app_file);
 
 //returns an array of all endpoints, and some extra info
-app.get('/help', get_help);
+app.get('/info/help', get_info_help);//TODO: change to /bolt/help////////////////////////////////////////////////////
 //TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
 //TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
@@ -921,6 +1006,8 @@ app.get('/users', get_users);
 //TODO: app.get('/users/live', get_users_live);
 
 //---------------views
+//TODO: /lock //displays a lock screen
+
 //this UI endpoint displays the login view
 app.get('/login', checkRequestId, get_login);
 
@@ -936,8 +1023,6 @@ app.get('/:view', get_view);
 // catch 404 and forward to error handler
 app.use(function(request, response, next) {
   var error = new Error("The endpoint '" + request.path + "' could not be found!");
-  error.status = 404;
-  //response.end(__getResponse(null, error, 404));
   next(error);
 });
 
@@ -996,17 +1081,19 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 									.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/app-start')
 									.send({ app: name })
 									.end(function(appstartError, appstartResponse){
-										if (appstartError) {
+										if (!__isNullOrUndefined(appstartError)) {
 											runStartups(++index);
 											return;
 										}
 
 										var context = appstartResponse.body.body;
 
-										if (context && context.port) {
+										if (!__isNullOrUndefined(context) && !__isNullOrUndefined(context.port)) {
 											console.log("Started startup app%s%s at %s:%s",
-												(context.name ? " '" + context.name + "'" : ""), (context.path ? " (" + context.path + ")" : ""),
-												(context.host ? context.host : ""), context.port);
+												(!__isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
+												(!__isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
+												(!__isNullOrUndefined(context.host) ? context.host : ""), 
+												context.port);
 										}
 										runStartups(++index);
 									});

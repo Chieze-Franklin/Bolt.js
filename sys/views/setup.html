@@ -138,7 +138,7 @@
             		xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
             	},
             	success: function(response, status, xhr){
-            		if(response.status == 200){ //not http status but Bolt status
+            		if(response.code == 0){ 
             			//second, create an admin role
             			$.ajax({
             				url: "{{protocol}}://{{host}}:{{port}}/role/add",
@@ -146,7 +146,7 @@
             				type: "POST",
             				headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             				success: function(response2, status2, xhr2){
-            					if(response2.status == 200){ //not http status but Bolt status
+            					if(response2.code == 0){ 
             						//third, associate user and role
             						$.ajax({
             							url: "{{protocol}}://{{host}}:{{port}}/user-role/add",
@@ -154,7 +154,7 @@
             							type: "POST",
             							headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             							success: function(response3, status3, xhr3){
-            								if(response3.status == 200){ //not http status but Bolt status
+            								if(response3.code == 0){ 
             									//fourth, log user in
             									$.ajax({
             										url: "{{protocol}}://{{host}}:{{port}}/user/login",
@@ -162,7 +162,7 @@
             										type: "POST",
             										headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             										success: function(response4, status4, xhr4){
-            											if(response4.status == 200){ //not http status but Bolt status
+            											if(response4.code == 0){ 
             												window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
             											}
             											else {
