@@ -54,7 +54,7 @@ module.exports = {
 		username: { type: String, required: true, lowercase: true },
 		passwordHash : { type: String, required: true },
 
-		blocked: { type: Boolean, default: false },
+		isBlocked: { type: Boolean, default: false },
 		dateCreated: { type: Date, default: Date.now },
 		visits: { type: Number, default: 0 }
 	},

@@ -7,7 +7,7 @@ var path = require("path");
 var post_appstart_app = function(request, response){
 	var context = request.body;
 
-	var app = require(path.join('../../node_modules', context.path, context.appInfo.main));
+	var app = require(path.join('../../node_modules', context.path, context.app.main));
 	var s = app.listen(0, function(){
 		var port = s.address().port;
 		context.pid = process.pid;

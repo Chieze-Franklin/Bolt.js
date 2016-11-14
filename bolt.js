@@ -157,6 +157,10 @@ var checkUserAppFileRight = function(request, response, next){
 
 //---------API Handlers----------
 
+var api_get = function(request, response){
+	response.redirect('/api/help');
+}
+
 var api_get_appinfo_app = function(request, response){
 	var appnm = utils.String.trim(request.params.app.toLowerCase());
 	models.app.findOne({ 
@@ -173,6 +177,152 @@ var api_get_appinfo_app = function(request, response){
 			response.send(__getResponse(app));
 		}
 	});
+}
+
+var api_get_apps = function(request, response){
+	models.app.find({}, function(error, apps){
+		if (!__isNullOrUndefined(error)) {
+			response.end(__getResponse(null, error));
+		}
+		else if(!__isNullOrUndefined(apps)){
+			response.send(__getResponse(apps));
+		}
+		else{
+			response.send(__getResponse([]));
+		}
+	});
+}
+
+var api_get_apps_live = function(request, response){
+	//var apps = [];
+	//__runningContexts.forEach(function(context, index){
+	//	apps.push(context.app);
+	//});
+	//response.send(__getResponse(apps));
+	response.send(__getResponse(__runningContexts));
+}
+
+var api_get_apps_tag = function(request, response){
+	var tag = utils.String.trim(request.params.tag.toLowerCase());
+	models.app.find({ 
+		tags: tag
+	}, function(error, apps){
+		if (!__isNullOrUndefined(error)) {
+			response.end(__getResponse(null, error));
+		}
+		else if(!__isNullOrUndefined(apps)){
+			response.send(__getResponse(apps));
+		}
+		else{
+			response.send(__getResponse([]));
+		}
+	});
+}
+
+var api_get_fileinfo_app_file = function(request, response){
+	var appnm = utils.String.trim(request.params.app.toLowerCase());
+	models.app.findOne({ 
+		name: appnm
+	}, function(error, app){
+		if (!__isNullOrUndefined(error)) {
+			response.end(__getResponse(null, error));
+		}
+		else if(__isNullOrUndefined(app)){
+			var err = new Error(errors['403']);
+			response.end(__getResponse(null, err, 403));
+		}
+		else{
+			var fileInfo;
+
+			var files = app.files;
+			for (var file in files){
+				if (files.hasOwnProperty(file)){
+					if (file === request.params.file) {
+						fileInfo = {
+							name: file,
+							path: files[file]
+						};
+						break;
+					}
+				}
+			}
+
+			if (!__isNullOrUndefined(fileInfo.path)) {
+				fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, fileInfo.path);
+				fs.stat(fileInfo.fullPath, function(fsError, stats) {
+					if (!__isNullOrUndefined(fsError)) {
+						fileInfo.error = fsError;
+					}
+					else {
+						fileInfo.stats = {
+							accessTime: stats.atime,
+							creationTime: stats.birthtime,
+							isDirectory: stats.isDirectory(),
+							isFile: stats.isFile(),
+							isSocket: stats.isSocket(),
+							modifiedTime: stats.mtime,
+							size: stats.size,
+							statsChangedTime: stats.ctime,
+						};
+					}
+					response.send(__getResponse(fileInfo));
+				});
+			}
+			else {
+				response.send(__getResponse(fileInfo));
+			}
+		}
+	});
+}
+
+var api_get_help = function(request, response){
+	//response.send(app._router.stack); //run this (comment everything below) to see the structure of 'app._router.stack'
+
+	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
+
+	var system = {
+		name: config.getName(),
+		friendlyName: config.getFriendlyName(),
+		version: config.getVersion(),
+		friendlyVersion: config.getFriendlyVersion()
+	};
+	var routes = [];
+	var paths = [];
+	app._router.stack.forEach(function(r){
+		if(r.route && r.route.path){
+			var entry = {};
+			var entrySummary = "";
+			if(r.route.stack && r.route.stack.length > 0){
+				var s = r.route.stack[0];
+				if(s.method){
+					entry.method = s.method;
+					entrySummary += s.method + ": ";
+				}
+				entry.path = r.route.path;
+				entrySummary += r.route.path;
+
+				routes.push(entry);
+				paths.push(entrySummary);
+
+				/*r.route.stack.forEach(function(s){
+					if(s.method){
+						entry.method = s.method;
+						entrySummary += s.method + ": ";
+					}
+					entry.path = r.route.path;
+					entrySummary += r.route.path;
+
+					routes.push(entry);
+					paths.push(entrySummary);
+				});*/
+			}
+		}
+	});
+
+	system.paths = paths;
+	system.routes = routes;
+
+	response.send(__getResponse(system));
 }
 
 var api_get_users = function (request, response) {
@@ -219,6 +369,7 @@ var api_post_app_reg = function(request, response){
 					else if(__isNullOrUndefined(app)) {
 						
 						//TODO: copy the bolt client files specified as dependencies into the folders specified; if it fails, stop installation
+						//TODO: describe this in 'Installing an App'
 
 						var newApp = new models.app({ 
 							name: appnm,
@@ -253,6 +404,9 @@ var api_post_app_reg = function(request, response){
 						}
 
 						//TODO: appHash
+						if (!__isNullOrUndefined(package.bolt.checks)) {
+							//
+						}
 
 						newApp.package = package;
 
@@ -309,10 +463,10 @@ var api_post_app_start = function(request, response){
 
 				context.name = app.name;
 				context.path = app.path;
-				context.appInfo = app;
+				context.app = app;
 
 				//start a child process for the app
-				if(!__isNullOrUndefined(context.appInfo.main)){
+				if(!__isNullOrUndefined(context.app.main)){
 					context.host = config.getHost();
 
 					if(!processes.hasProcess(context.name)){
@@ -330,7 +484,7 @@ var api_post_app_start = function(request, response){
 							context = _context;
 
 							//pass the OS host & port to the app
-							var initUrl = context.appInfo.ini;
+							var initUrl = context.app.ini;
 							if (!__isNullOrUndefined(initUrl)) {
 								superagent
 									.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
@@ -358,34 +512,66 @@ var api_post_app_start = function(request, response){
 	}
 }
 
+var api_post_app_stop = function(request, response){
+	if (!__isNullOrUndefined(request.body.app)) {
+		var appnm = utils.String.trim(request.body.app.toLowerCase());
+		for (var index = 0; index < __runningContexts.length; index++){
+			if (__runningContexts[index].name === appnm){
+				//remove context
+				var context = __runningContexts[index];
+				__runningContexts.pop(context);
+
+				//kill process
+				processes.killProcess(context.name); //TODO: haven't tested this
+
+				response.send(__getResponse(context));
+				return;
+			}
+		}
+
+		//if execution gets here then the context wasn't found
+		//we throw error "app port missing" because that is the general error thrown when u interact with a non-running app as tho it were running
+		var error = new Error(errors['420']);
+		response.end(__getResponse(null, error, 420));
+	}
+	else {
+		var error = new Error(errors['400']);
+		response.end(__getResponse(null, error, 400));
+	}
+}
+
 var api_post_role_add = function(request, response){
 	if(!__isNullOrUndefined(request.body.name)){
 		models.role.findOne({ name: request.body.name }, function(error, role){
 			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if(!role){
+			else if(__isNullOrUndefined(role)){
 				var newRole = new models.role({ name: request.body.name });
-				if(request.body.isAdmin){
+				if(!__isNullOrUndefined(request.body.isAdmin)){
 					newRole.isAdmin = request.body.isAdmin;
 				}
-				if(request.body.description){
+				if(!__isNullOrUndefined(request.body.description)){
 					newRole.description = request.body.description;
 				}
-				newRole.save();
-				response.send(__getResponse(newRole));
+				newRole.save(function(saveError, savedRole){
+					if (!__isNullOrUndefined(saveError)) {
+						response.end(__getResponse(null, saveError, 302));
+					}
+					else {
+						response.send(__getResponse(savedRole));
+					}
+				});
 			}
 			else{
-				var err = new Error("A role with the same name already exists!");
-				err.status = 400;
-				response.end(__getResponse(null, err, 400)); //TODO: this is one place u need to specify: error_title and error_message
+				var err = new Error(errors['301']);
+				response.end(__getResponse(null, err, 301));
 			}
 		});
 	}
 	else {
-		var error = new Error("Role name missing!");
-		error.status = 400;
-		response.end(__getResponse(null, error, 400)); //TODO: this is one place u need to specify: error_title and error_message
+		var error = new Error(errors['300']);
+		response.end(__getResponse(null, error, 300));
 	}
 }
 
@@ -439,11 +625,16 @@ var api_post_user_login = function(request, response){
 				response.end(__getResponse(null, err, 203));
 			}
 			else{
-				user.visits+=1;
-				user.save();
-				delete user.passwordHash; //TODO: not working
-				request.session.user = user;
-				response.locals.user = user;
+				if (user.isBlocked) { //TODO: test this
+					request.session.reset();
+				}
+				else {
+					user.visits+=1;
+					user.save();
+					delete user.passwordHash; //TODO: not working
+					request.session.user = user;
+					response.locals.user = user;
+				}
 				response.send(__getResponse(user));
 			}
 		});
@@ -588,169 +779,55 @@ var get_app_app = function(request, response){
 				}
 				else if (!__isNullOrUndefined(context)) {
 					if(!__isNullOrUndefined(context.port)){
-						var index = (!__isNullOrUndefined(context.appInfo.index)) ? "/" + utils.String.trimStart(context.appInfo.index, "/") : "/";
+						var index = (!__isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "/";
 						response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 					}
 					else {
 						//TODO: maybe I shud show an error saying no port found for this app 
 						//but I don't want to hand-craft any user error message since that will not be localizable
 						//so I'll just be lazy here and show a 404
-						response.redirect('/404?app=' + encodeURIComponent(appnm));
+						response.redirect('/404?item=' + encodeURIComponent(appnm));
 					}
 				}
 				else {
-					response.redirect('/404?app=' + encodeURIComponent(appnm));
+					response.redirect('/404?item=' + encodeURIComponent(appnm));
 				}
 			}
 		});
 }
 
-var get_apps_tag = function(request, response){
-	var tag = utils.String.trim(request.params.tag.toLowerCase());
-	models.app.find({ 
-		tags: tag
-	}, function(error, apps){
-		if (!__isNullOrUndefined(error)) {
-			response.end(__getResponse(null, error));
-		}
-		else if(!apps){
-			var err = new Error("No apps with the tag '" + request.params.tag + "' could not be found!");
-			err.status = 404;
-			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
-		}
-		else{
-			response.send(__getResponse(apps));
-		}
-	});
-}
-
 var get_file_app_file = function(request, response){
 	superagent
-		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/file-info/' + request.params.app + '/' + request.params.file)
+		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/file-info/' + request.params.app + '/' + request.params.file)
 		.end(function(error, fileinfoResponse){
 			if (!__isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else {
+				var responseError = fileinfoResponse.body.error;
 				var fileInfo = fileinfoResponse.body.body;
 
-				if (fileInfo && fileInfo.fullPath) {
+				if (!__isNullOrUndefined(responseError)) {
+					var encodedCode = encodeURIComponent(fileinfoResponse.body.code);
+					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
+						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
+						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
+					}
+					else {
+						response.redirect('/error?code=' + encodedCode);
+					}
+				}
+				else if (!__isNullOrUndefined(fileInfo) && !__isNullOrUndefined(fileInfo.fullPath) && !__isNullOrUndefined(fileInfo.stats)) {
 					//response.writeHead(301, {Location: 'file:///' + fileInfo.fullPath});
 					//response.end();
 					response.redirect(301, 'file:///' + fileInfo.fullPath);
 				}
 				else {
-					var error = new Error("The file '" + request.params.app + '/' + request.params.file + "' could not be found!");
-					error.status = 404;
-					response.end(__getResponse(null, error, 404));
+					response.redirect('/404?item=' + encodeURIComponent(request.params.app + '/' + request.params.file));
 				}
 			}
 		});
-}
-
-var get_fileinfo_app_file = function(request, response){
-	var appnm = utils.String.trim(request.params.app.toLowerCase());
-	models.app.findOne({ 
-		name: appnm
-	}, function(error, app){
-		if (!__isNullOrUndefined(error)) {
-			response.end(__getResponse(null, error));
-		}
-		else if(!app){
-			var err = new Error("The app or file could not be found!");
-			err.status = 404;
-			response.end(__getResponse(null, err, 404)); //TODO: this is one place u need to specify: error_title and error_message
-		}
-		else{
-			var fileInfo;
-
-			var files = app.files;
-			for (var file in files){
-				if (files.hasOwnProperty(file)){
-					if (file === request.params.file) {
-						fileInfo = {
-							name: file,
-							path: files[file]
-						};
-						break;
-					}
-				}
-			}
-
-			if(fileInfo.path){
-				fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, fileInfo.path);
-				fs.stat(fileInfo.fullPath, function(fsError, stats) {
-					if (fsError) {
-						fileInfo.error = fsError;
-					}
-					else {
-						fileInfo.stats = {
-							accessTime: stats.atime,
-							creationTime: stats.birthtime,
-							isDirectory: stats.isDirectory(),
-							isFile: stats.isFile(),
-							isSocket: stats.isSocket(),
-							modifiedTime: stats.mtime,
-							size: stats.size,
-							statsChangedTime: stats.ctime,
-						};
-					}
-				});
-			}
-
-			response.send(__getResponse(fileInfo));
-		}
-	});
-}
-
-var get_info_help = function(request, response){
-	//response.send(app._router.stack); //run this (comment everything below) to see the structure of 'app._router.stack'
-
-	//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
-
-	var system = {
-		name: config.getName(),
-		friendlyName: config.getFriendlyName(),
-		version: config.getVersion(),
-		friendlyVersion: config.getFriendlyVersion()
-	};
-	var routes = [];
-	var paths = [];
-	app._router.stack.forEach(function(r){
-		if(r.route && r.route.path){
-			var entry = {};
-			var entrySummary = "";
-			if(r.route.stack && r.route.stack.length > 0){
-				var s = r.route.stack[0];
-				if(s.method){
-					entry.method = s.method;
-					entrySummary += s.method + ": ";
-				}
-				entry.path = r.route.path;
-				entrySummary += r.route.path;
-
-				routes.push(entry);
-				paths.push(entrySummary);
-
-				/*r.route.stack.forEach(function(s){
-					if(s.method){
-						entry.method = s.method;
-						entrySummary += s.method + ": ";
-					}
-					entry.path = r.route.path;
-					entrySummary += r.route.path;
-
-					routes.push(entry);
-					paths.push(entrySummary);
-				});*/
-			}
-		}
-	});
-
-	system.paths = paths;
-	system.routes = routes;
-
-	response.send(__getResponse(system));
 }
 
 var get_login = function(request, response){
@@ -814,8 +891,7 @@ var get_view = function(request, response){
 
 						title: request.params.view,
 
-						view: request.query.view,
-						app: request.query.app,
+						item: request.query.item,
 
 						code: request.query.code,
 						errorUserTitle: request.query.error_user_title,
@@ -828,40 +904,13 @@ var get_view = function(request, response){
 						.render(request.params.view + '.html', scope);
 				}
 				else {
-					response.redirect('/404?view=' + encodeURIComponent(request.params.view));
+					response.redirect('/404?item=' + encodeURIComponent(request.params.view));
 				}
 			});
 		}
 	});
 }
 
-var post_appstop = function(request, response){
-	//TODO: if (!__isNullOrUndefined(request.body.app)) 
-	var appnm = utils.String.trim(request.body.app.toLowerCase());
-	for (var index = 0; index < __runningContexts.length; index++){
-		if (__runningContexts[index].name === appnm){
-			//remove context
-			var context = __runningContexts[index];
-			__runningContexts.pop(context);
-
-			//kill process
-			processes.killProcess(context.name); //TODO: haven't tested this
-
-			response.send(__getResponse(context));
-			return;
-		}
-	}
-
-	//if it gets here then the context wasn't found
-	var error = new Error("The app '" + request.body.app + "' could not be found to be running!");
-	error.status = 404;
-	response.end(__getResponse(null, error, 404));
-}
-
-var setContentToCss = function(request, response, next) {
-	response.set('Content-Type', 'text/css');
-  	next();
-}
 //---------Endpoints
 //TODO: discuss the versioning scheme below with others
 /*
@@ -907,13 +956,18 @@ app.use(session({
 	resave: true*/				//for express-session
 }));
 app.use(function(request, response, next) {
-	if (request.session && request.session.user) {
+	if (!__isNullOrUndefined(request.session) && !__isNullOrUndefined(request.session.user)) {
 		models.user.findOne({ username: request.session.user.username }, function(error, user) {
-			if (user) {
-				delete user.passwordHash; // delete the password from the session
-				request.user = user;
-				request.session.user = user;  //refresh the session value
-				response.locals.user = user;  //make available to UI template engines
+			if (!__isNullOrUndefined(user)) {
+				if (user.isBlocked) { //TODO: test this
+					request.session.reset();
+				}
+				else {
+					delete user.passwordHash; // delete the password from the session
+					request.user = user;
+					request.session.user = user;  //refresh the session value
+					response.locals.user = user;  //make available to UI template engines
+				}
 			}
 			next();
 		});
@@ -922,6 +976,11 @@ app.use(function(request, response, next) {
 		next();
 	}
 });
+
+var setContentToCss = function(request, response, next) {
+	response.set('Content-Type', 'text/css');
+  	next();
+}
 
 app.use('/assets/plugins/*/*css', setContentToCss);
 app.use('/pages/css', setContentToCss);
@@ -935,6 +994,7 @@ app.engine('html', cons.handlebars);
 app.set('view engine', 'html');
 
 //------------API Endpoints--------------
+app.get('/api', api_get);
 
 //installs an app from an online repository (current only npm is supported)
 app.post('/api/app/get', checkAppUserPermToInstall, checkUserAdminRight, api_post_app_get);
@@ -947,11 +1007,35 @@ app.post('/api/app/reg', checkAppUserPermToInstall, checkUserAdminRight, api_pos
 //starts the server of the app with the specified name
 app.post('/api/app/start', checkUserAppRight, api_post_app_start);
 
-//TODO: /api/apps
-//TODO: /api/apps/live //gets an array of all running apps consider //TODO: so ppl can't tag their apps 'live'???
+//stops the server of the app with the specified name
+app.post('/api/app/stop', checkUserAppRight, api_post_app_stop);
 
 //gets the app info of the app with the specified name
 app.get('/api/app-info/:app', api_get_appinfo_app);
+
+//TODO: /api/app-role/add //adds an app-role association
+//TODO: /api/app-role/del 
+
+//gets an array of app-info for all installed apps
+app.get('/api/apps', api_get_apps);
+
+//gets an array of app-info of all running apps
+app.get('/api/apps/@live', api_get_apps_live);
+
+//gets an array of app-info for all installed apps with the specified tag
+app.get('/api/apps/:tag', api_get_apps_tag);
+
+//TODO: app.get('/api/config', get_config);
+//TODO: app.get('/api/config/:property', get_config_property);
+
+//TODO: app.get('/api/file-info/:file') //gets the file info of a file that can be served by any app
+//gets the file info of the file with the specified name
+app.get('/api/file-info/:app/:file', checkUserAppFileRight, api_get_fileinfo_app_file);
+
+//returns an array of all endpoints, and some extra info
+app.get('/api/help', api_get_help);
+//TODO: app.get('api/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
+//TODO: app.get('api/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
 //creates a new role
 app.post('/api/role/add', checkRequestId, api_post_role_add);
@@ -975,7 +1059,7 @@ app.post('/api/user/logout', checkRequestId, api_post_user_logout);
 //returns an array of all registered users.
 app.get('/api/users', api_get_users);
 
-//TODO: app.get('/api/users/live', api_get_users_live); //returns an array of all live (currently-logged-in) users
+//TODO: app.get('/api/users/@live', api_get_users_live); //returns an array of all live (currently-logged-in) users
 
 //TODO: app.get('/api/user-info/:user', ); //gets info abt specified user
 
@@ -992,45 +1076,20 @@ app.get('/', get);
 //this UI endpoint runs the app with the specified name (using default options)
 app.get('/app/:app', get_app_app);
 
-//gets an array of app-info for all installed apps with the specified tag
-app.get('/apps/:tag', get_apps_tag);
-
-//TODO: /app-role/add //adds an app-role association
-//TODO: /app-role/del 
-
-//stops the server of the app with the specified name
-app.post('/app-stop', checkUserAppRight, post_appstop);
-
-//TODO: app.get('/config', get_config);
-//TODO: app.get('/config/:property', get_config_property);
-
 //TODO: app.get('/file/:file') //runs a file that can be served by any app
 //runs the file with the specified name (using default options)
 //ISSUE: does not work properly because browsers seem to block it
 app.get('/file/:app/:file', get_file_app_file);
 
-//TODO: app.get('/file-info/:file') //gets the file info of a file that can be served by any app
-//gets the file info of the file with the specified name
-app.get('/file-info/:app/:file', checkUserAppFileRight, get_fileinfo_app_file);
-
-//returns an array of all endpoints, and some extra info
-app.get('/info/help', get_info_help);//TODO: change to /bolt/help////////////////////////////////////////////////////
-//TODO: app.get('/help/:endpoint', get_help_endpoint); //returns the description of an endpoint
-//TODO: app.get('/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
-
 //---------------views
-//TODO: /apps //displays a desktop/launcher
-// /help
-//TODO: /lock //displays a lock screen
-//TODO: /user???
-//TODO: /users
-//TODO: /contacts
 
 //this UI endpoint displays the login view
 app.get('/login', checkRequestId, get_login);
 
 //this UI endpoint displays the logout view
 app.get('/logout', get_logout);
+
+//TODO: /profile //where you go to change username or password
 
 //this UI endpoint displays the setup view
 app.get('/setup', checkRequestId, get_setup);

@@ -20,6 +20,16 @@ module.exports = {
 
 	'400': "App name missing",
 	'401': "An app with the same name already exists",
+	'402': "Could not save app to the database",
+	'403': "Could not retrieve app from the database",
 
-	'410': "App path missing"
+	'410': "App path missing",
+
+	'420': "App port missing",
+
+
+	'600': "File name missing",
+	'601': "A file with the same name already exists",
+	'602': "Could not save file",
+	'603': "Could not retrieve file",
 };
