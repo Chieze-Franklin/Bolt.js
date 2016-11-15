@@ -6,9 +6,32 @@ try {
 } catch (err) {
  	console.log('crypto support is disabled!');
 }
+var fs = require('fs')
 
 module.exports = {
 	Security: {
+		checksumSync: function(path, callback) {
+			if (crypto) {
+				var hash = crypto.createHash('sha256');
+				var stream = fs.createReadStream(path);
+
+				stream.on('error', function(error){
+					callback(error, null);
+				});
+
+				stream.on('data', function(data){
+					hash.update(data, 'utf8');
+				});
+
+				stream.on('end', function(data){
+					var hsh = hash.digest('hex');
+					callback(null, hsh);
+				});
+			}
+			else {
+				callback(null, path);
+			}
+		},
 		hashSync: function(word, salt){
 			if(!salt)
 				salt = word;

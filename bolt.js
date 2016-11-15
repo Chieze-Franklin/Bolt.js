@@ -32,22 +32,34 @@ var __runningContexts = [];
 //the request header to check for requests IDs
 const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 
-//holds all the randomly-generated request IDs (for native views)
-var __randReqIds = [];
-//generates a random request ID
-var __genRandReqId = function(){
-	var id = utils.String.getRandomString(24);
-	__randReqIds.push(id);
+//holds all the apps' request IDs
+var __contextToReqidMap = new Map();
+var __destroyAppReqId = function(app) {
+	if (__contextToReqidMap.has(app))
+		__contextToReqidMap.delete(app);
+}
+var __genAppReqId = function(app) {
+	if (__contextToReqidMap.has(app))
+		return __contextToReqidMap.get(app);
 
-	//trim the IDs down to 100
-	if(__randReqIds.length > 100)
-		__randReqIds.splice(0, __randReqIds.length - 100);
+	var id = utils.String.getRandomString(24);
+	__contextToReqidMap.set(app, id);
 
 	return id;
 }
-//checks if an ID is currently in the list of randomly-generated request IDs
-var __isRandReqId = function(id){
-	return (__randReqIds.indexOf(id) > -1);
+var __getAppForReqId = function(id) {
+	for (var entry of __contextToReqidMap) {
+		if (entry[1] === id) { //value === id
+			return entry[0]; //return key
+		}
+	}
+}
+var __isSystemApp = function(id) {
+	var systemApps = ['bolt']; //TODO: this list shud be gotten from the database
+	var app = __getAppForReqId(id);
+	if (__isNullOrUndefined(app))
+		return false;
+	return (systemApps.indexOf(app.toLowerCase()) > -1);
 }
 
 //constructs an appropriate response object
@@ -106,7 +118,7 @@ var __loadLoginView = function(request, response){
 		host: config.getHost(),
 		port: config.getPort(),
 
-		reqid: __genRandReqId()
+		reqid: __genAppReqId('bolt')
 	};
 	response.locals.title = "Login";
 	response
@@ -120,7 +132,7 @@ var __loadSetupView = function(request, response){
 		host: config.getHost(),
 		port: config.getPort(),
 
-		reqid: __genRandReqId(),
+		reqid: __genAppReqId('bolt'),
 		title: "Setup"
 	};
 	//response.locals.title = "Setup";
@@ -133,13 +145,12 @@ var __loadSetupView = function(request, response){
 var checkAppUserPermToInstall = function(request, response, next){
 	next(); //TODO: check if app has user's permission to install an app (remember system apps need no permission)
 }
-var checkRequestId = function(request, response, next){
+//checks to be sure the app making this request is a system app
+var checkForSystemApp = function(request, response, next){
 	var id = request.get(X_BOLT_REQ_ID);
-	if(!id || !__isRandReqId(id)) { //this would be true if the request is NOT coming from a native Bolt view
-		//TODO: check the app that sent the ID; if NOT one of the apps we are expecting
-		var error = new Error("This app has no permission to make this request");
-		error.status = 403;
-		response.end(__getResponse(null, error, 403)); //TODO: this is one place u need to specify: error_title and error_message
+	if(__isNullOrUndefined(id) || !__isSystemApp(id)) { 
+		var error = new Error(errors['504']);
+		response.end(__getResponse(null, error, 504));
 	}
 	else {
 		next();
@@ -340,7 +351,7 @@ var api_get_users = function (request, response) {
 }
 
 var api_post_app_get = function(request, response){
-	//expects: { app (if app name mission, error code=400), version (optional) } => npm install {app}@{version}
+	//expects: { app (if app name mission, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
 	//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
 	//if (!__isNullOrUndefined(request.body.app))
 }
@@ -362,9 +373,14 @@ var api_post_app_reg = function(request, response){
 				}
 
 				var appnm = utils.String.trim(package.name.toLowerCase());
-				models.app.findOne({ name: appnm }, function(error, app){
-					if (!__isNullOrUndefined(error)) {
-						response.end(__getResponse(null, error));
+				if (appnm === "bolt") { //'bolt' is a special app that is "already installed"
+					var errr = new Error(errors['401']);
+					response.end(__getResponse(null, errr, 401));
+					return;
+				}
+				models.app.findOne({ name: appnm }, function(err, app){
+					if (!__isNullOrUndefined(err)) {
+						response.end(__getResponse(null, err));
 					}
 					else if(__isNullOrUndefined(app)) {
 						
@@ -403,21 +419,42 @@ var api_post_app_reg = function(request, response){
 							}
 						}
 
-						//TODO: appHash
-						if (!__isNullOrUndefined(package.bolt.checks)) {
-							//
-						}
-
 						newApp.package = package;
 
-						newApp.save(function(saveError, savedApp){
-							if (!__isNullOrUndefined(saveError)) {
-								response.end(__getResponse(null, saveError, 402));
+						var saveNewApp = function(){
+							newApp.save(function(saveError, savedApp){
+								if (!__isNullOrUndefined(saveError)) {
+									response.end(__getResponse(null, saveError, 402));
+								}
+								else {
+									response.send(__getResponse(savedApp));
+								}
+							});
+						};
+
+						//TODO: test appHash
+						if (!__isNullOrUndefined(package.bolt.checks)) {
+							var totalHash = "";
+							var checksum = function(index){
+								if (index >= package.bolt.checks.length) {
+									newApp.appHash = totalHash;
+									saveNewApp();
+								}
+
+								var filename = package.bolt.checks[index];
+								var filepath = path.join(__dirname, 'node_modules', _path, filename);
+								utils.Security.checksumSync(filepath, function(errChecksum, hash){
+									if (!__isNullOrUndefined(hash)) {
+										totalHash += hash;
+										checksum(++index);
+									}
+								});
 							}
-							else {
-								response.send(__getResponse(savedApp));
-							}
-						});
+							checksum(0);
+						}
+						else {
+							saveNewApp();
+						}
 					}
 					else{
 						var err = new Error(errors['401']);
@@ -488,7 +525,7 @@ var api_post_app_start = function(request, response){
 							if (!__isNullOrUndefined(initUrl)) {
 								superagent
 									.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
-									.send({ host: config.getHost(), port: config.getPort() }) //TODO: pass secret here
+									.send({ host: config.getHost(), port: config.getPort(), reqid: __genAppReqId(context.name) })
 									.end(function(initError, initResponse){});
 							}
 
@@ -520,6 +557,9 @@ var api_post_app_stop = function(request, response){
 				//remove context
 				var context = __runningContexts[index];
 				__runningContexts.pop(context);
+
+				//remove all request IDs
+				__destroyAppReqId(context.name);
 
 				//kill process
 				processes.killProcess(context.name); //TODO: haven't tested this
@@ -712,7 +752,7 @@ var get = function(request, response){
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/users') //check if there's any registered user
 		.end(function(error, usersResponse){
 			if (!__isNullOrUndefined(error)) {
-				response.end(__getResponse(null, error));
+				response.redirect('/error');
 			}
 			else {
 				var responseError = usersResponse.body.error;
@@ -735,7 +775,7 @@ var get = function(request, response){
 					}
 					else { //NO user is logged in, show login view
 						//response
-						//	.set(X_BOLT_REQ_ID, __genRandReqId())
+						//	.set(X_BOLT_REQ_ID, __genAppReqId('bolt'))
 						//	.redirect('/login');
 						//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
 						__loadLoginView(request, response);
@@ -743,7 +783,7 @@ var get = function(request, response){
 				}
 				else { //if there are NO registered users, then show them the setup view
 					//response
-					//	.set(X_BOLT_REQ_ID, __genRandReqId())
+					//	.set(X_BOLT_REQ_ID, __genAppReqId('bolt'))
 					//	.redirect('/setup');
 					//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
 
@@ -801,7 +841,7 @@ var get_file_app_file = function(request, response){
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/file-info/' + request.params.app + '/' + request.params.file)
 		.end(function(error, fileinfoResponse){
 			if (!__isNullOrUndefined(error)) {
-				response.end(__getResponse(null, error));
+				response.redirect('/error');
 			}
 			else {
 				var responseError = fileinfoResponse.body.error;
@@ -821,7 +861,19 @@ var get_file_app_file = function(request, response){
 				else if (!__isNullOrUndefined(fileInfo) && !__isNullOrUndefined(fileInfo.fullPath) && !__isNullOrUndefined(fileInfo.stats)) {
 					//response.writeHead(301, {Location: 'file:///' + fileInfo.fullPath});
 					//response.end();
+
 					response.redirect(301, 'file:///' + fileInfo.fullPath);
+
+					/*var readStream = fs.createReadStream(fileInfo.fullPath);
+
+					readStream.on('open', function () {
+					    // This just pipes the read stream to the response object (which goes to the client)
+					    readStream.pipe(response);
+				  	});
+
+					readStream.on('error', function(err) {
+					    response.redirect('/error');
+					});*/
 				}
 				else {
 					response.redirect('/404?item=' + encodeURIComponent(request.params.app + '/' + request.params.file));
@@ -856,11 +908,11 @@ var get_view = function(request, response){
 	var app = null;
 	var plug = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
 	models.plugin.find({ path: plug }, function(errorPlugins, plugins){
-		if (errorPlugins){
-			response.end(__getResponse(null, errorPlugins));
+		if (!__isNullOrUndefined(errorPlugins)){
+			response.end(__getResponse(null, errorPlugins, 433));
 		}
 		//check for an app that can serve this view
-		else if(plugins && plugins.length > 0) {
+		else if(!__isNullOrUndefined(plugins) && plugins.length > 0) {
 			if (plugins.length == 1) {
 				app = plugins[0].app;
 			}
@@ -883,7 +935,7 @@ var get_view = function(request, response){
 		else {
 			var native = path.join(__dirname, 'sys/views', request.params.view + '.html');
 			fs.stat(native, function(error, stats) {
-				if (!error && stats.isFile()){
+				if (__isNullOrUndefined(error) && stats.isFile()){
 					var scope = {
 						protocol: config.getProtocol(),
 						host: config.getHost(),
@@ -897,7 +949,7 @@ var get_view = function(request, response){
 						errorUserTitle: request.query.error_user_title,
 						errorUserMessage: request.query.error_user_message,
 
-						reqid: __genRandReqId()
+						reqid: __genAppReqId('bolt')
 					};
 					response
 						.set('Content-type', 'text/html')
@@ -1038,7 +1090,7 @@ app.get('/api/help', api_get_help);
 //TODO: app.get('api/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
 //creates a new role
-app.post('/api/role/add', checkRequestId, api_post_role_add);
+app.post('/api/role/add', checkForSystemApp, api_post_role_add);
 
 //TODO: /api/role/del
 
@@ -1046,15 +1098,15 @@ app.post('/api/role/add', checkRequestId, api_post_role_add);
 //TODO: app.get('/api/user', );
 
 //adds a user to the database
-app.post('/api/user/add', checkRequestId, api_post_user_add);
+app.post('/api/user/add', checkForSystemApp, api_post_user_add);
 
 //TODO: /api/user/del
 
 //logs a user into the system
-app.post('/api/user/login', checkRequestId, api_post_user_login);
+app.post('/api/user/login', checkForSystemApp, api_post_user_login);
 
 //logs a user out of the system
-app.post('/api/user/logout', checkRequestId, api_post_user_logout);
+app.post('/api/user/logout', checkForSystemApp, api_post_user_logout);
 
 //returns an array of all registered users.
 app.get('/api/users', api_get_users);
@@ -1064,7 +1116,7 @@ app.get('/api/users', api_get_users);
 //TODO: app.get('/api/user-info/:user', ); //gets info abt specified user
 
 //adds a user-role associate to the database
-app.post('/api/user-role/add', checkRequestId, api_post_userrole_add);
+app.post('/api/user-role/add', checkForSystemApp, api_post_userrole_add);
 
 //TODO: /user-role/del
 
@@ -1084,7 +1136,7 @@ app.get('/file/:app/:file', get_file_app_file);
 //---------------views
 
 //this UI endpoint displays the login view
-app.get('/login', checkRequestId, get_login);
+app.get('/login', checkForSystemApp, get_login);
 
 //this UI endpoint displays the logout view
 app.get('/logout', get_logout);
@@ -1092,7 +1144,7 @@ app.get('/logout', get_logout);
 //TODO: /profile //where you go to change username or password
 
 //this UI endpoint displays the setup view
-app.get('/setup', checkRequestId, get_setup);
+app.get('/setup', checkForSystemApp, get_setup);
 
 //this UI endpoint displays the specified view
 app.get('/:view', get_view);

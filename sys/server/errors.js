@@ -27,6 +27,12 @@ module.exports = {
 
 	'420': "App port missing",
 
+	'432': "Could not save plugin to the database",
+	'433': "Could not retrieve plugin from the database",
+
+
+	'504': "This app is not a system app",
+
 
 	'600': "File name missing",
 	'601': "A file with the same name already exists",
