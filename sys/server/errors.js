@@ -17,6 +17,11 @@ module.exports = {
 	'312': "Could not save user-role to the database",
 	'313': "Could not retrieve user-role from the database",
 
+	'320': "App name and/or role name missing",
+	'321': "An app-role with the same app and role already exists",
+	'322': "Could not save app-role to the database",
+	'323': "Could not retrieve app-role from the database",
+
 
 	'400': "App name missing",
 	'401': "An app with the same name already exists",

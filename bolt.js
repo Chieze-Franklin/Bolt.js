@@ -403,6 +403,7 @@ var api_post_app_reg = function(request, response){
 						if (!__isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 						newApp.startup = package.bolt.startup || false;
 						newApp.tags = package.bolt.tags || [];
+						newApp.title = package.bolt.title || package.name;
 
 						if (!__isNullOrUndefined(package.bolt.plugins)) {
 							var plugins = package.bolt.plugins;
@@ -580,7 +581,66 @@ var api_post_app_stop = function(request, response){
 	}
 }
 
-var api_post_role_add = function(request, response){
+var api_post_approle = function(request, response){
+	if(!__isNullOrUndefined(request.body.app) && !__isNullOrUndefined(request.body.role)) {
+		var appnm = utils.String.trim(request.body.app.toLowerCase());
+		models.app.findOne({ name: appnm }, function(errorApp, app){
+			if (!__isNullOrUndefined(errorApp)){
+				response.end(__getResponse(null, errorApp));
+			}
+			else if(__isNullOrUndefined(app)){
+				var errApp = new Error(errors['403']);
+				response.end(__getResponse(null, errApp, 403));
+			}
+			else{
+				models.role.findOne({ name: request.body.role }, function(errorRole, role){
+					if (!__isNullOrUndefined(errorRole)){
+						response.end(__getResponse(null, errorRole));
+					}
+					else if(__isNullOrUndefined(role)){
+						var errRole = new Error(errors['303']);
+						response.end(__getResponse(null, errRole, 303));
+					}
+					else{
+						models.appRoleAssoc.findOne({ app: app.name, role: role.name }, function(errorAppRole, appRole){
+							if (!__isNullOrUndefined(errorAppRole)) {
+								response.end(__getResponse(null, errorAppRole));
+							}
+							else if (__isNullOrUndefined(appRole)) {
+								var newAppRoleAssoc = new models.appRoleAssoc({ 
+									role: role.name,
+									role_id: role._id, 
+									app: app.name,
+									app_id: app._id 
+								});
+								newAppRoleAssoc.start = request.body.start || false;
+								newAppRoleAssoc.features = request.body.features || [];
+								newAppRoleAssoc.save(function(saveError, savedAppRole){
+									if (!__isNullOrUndefined(saveError)) {
+										response.end(__getResponse(null, saveError, 322));
+									}
+									else {
+										response.send(__getResponse(savedAppRole));
+									}
+								});
+							}
+							else {
+								var err = new Error(errors['321']);
+								response.end(__getResponse(null, err, 321));
+							}
+						});
+					}
+				});
+			}
+		});
+	}
+	else {
+		var error = new Error(errors['320']);
+		response.end(__getResponse(null, error, 320));
+	}
+}
+
+var api_post_role = function(request, response){
 	if(!__isNullOrUndefined(request.body.name)){
 		models.role.findOne({ name: request.body.name }, function(error, role){
 			if (!__isNullOrUndefined(error)) {
@@ -615,7 +675,7 @@ var api_post_role_add = function(request, response){
 	}
 }
 
-var api_post_user_add = function(request, response){
+var api_post_user = function(request, response){
 	if(!__isNullOrUndefined(request.body.username) && !__isNullOrUndefined(request.body.password)){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(error, user){
@@ -690,7 +750,7 @@ var api_post_user_logout = function(request, response){
   	response.end(__getResponse(null, null, 0));
 }
 
-var api_post_userrole_add = function(request, response){
+var api_post_userrole = function(request, response){
 	if(!__isNullOrUndefined(request.body.user) && !__isNullOrUndefined(request.body.role)){
 		var usrnm = utils.String.trim(request.body.user.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(errorUser, user){
@@ -707,8 +767,8 @@ var api_post_userrole_add = function(request, response){
 						response.end(__getResponse(null, errorRole));
 					}
 					else if(__isNullOrUndefined(role)){
-						var errRole = new Error(errors['203']);
-						response.end(__getResponse(null, errRole, 203));
+						var errRole = new Error(errors['303']);
+						response.end(__getResponse(null, errRole, 303));
 					}
 					else{
 						models.userRoleAssoc.findOne({ user: user.username, role: role.name }, function(errorUserRole, userRole){
@@ -1065,8 +1125,9 @@ app.post('/api/app/stop', checkUserAppRight, api_post_app_stop);
 //gets the app info of the app with the specified name
 app.get('/api/app-info/:app', api_get_appinfo_app);
 
-//TODO: /api/app-role/add //adds an app-role association
-//TODO: /api/app-role/del 
+//adds an app-role associate to the database
+app.post('/api/app-role', checkForSystemApp, api_post_approle);
+//TODO: DEL: /api/app-role/ 
 
 //gets an array of app-info for all installed apps
 app.get('/api/apps', api_get_apps);
@@ -1090,15 +1151,15 @@ app.get('/api/help', api_get_help);
 //TODO: app.get('api/help/:endpoint/:version', get_help_endpoint_version); //returns the description of a version of an endpoint
 
 //creates a new role
-app.post('/api/role/add', checkForSystemApp, api_post_role_add);
+app.post('/api/role', checkForSystemApp, api_post_role);
 
-//TODO: /api/role/del
+//TODO: DEL /api/role
 
 //gets the current user
 //TODO: app.get('/api/user', );
 
 //adds a user to the database
-app.post('/api/user/add', checkForSystemApp, api_post_user_add);
+app.post('/api/user', checkForSystemApp, api_post_user);
 
 //TODO: /api/user/del
 
@@ -1116,7 +1177,7 @@ app.get('/api/users', api_get_users);
 //TODO: app.get('/api/user-info/:user', ); //gets info abt specified user
 
 //adds a user-role associate to the database
-app.post('/api/user-role/add', checkForSystemApp, api_post_userrole_add);
+app.post('/api/user-role', checkForSystemApp, api_post_userrole);
 
 //TODO: /user-role/del
 

@@ -10,7 +10,7 @@ module.exports = {
 		name: { type: String, required: true, lowercase: true },
 		path: { type: String, required: true },
 		main: { type: String },
-		//secretHash: { type: String, required: true },
+		title: { type: String, required: true },
 
 		description: { type: String },
 		dateCreated: { type: Date, default: Date.now },
@@ -29,6 +29,7 @@ module.exports = {
 		app_id: { type: ObjectId, required: true },
 		role: { type: String, required: true },
 		role_id: { type: ObjectId, required: true },
+		start: { type: Boolean, required: true, },
 
 		dateCreated: { type: Date, default: Date.now },
 		features: { type: [String]}
