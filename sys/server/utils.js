@@ -9,6 +9,11 @@ try {
 var fs = require('fs')
 
 module.exports = {
+	Misc : {
+		isNullOrUndefined: function(obj){
+			return (typeof obj === 'undefined' || !obj);
+		}
+	},
 	Security: {
 		checksumSync: function(path, callback) {
 			if (crypto) {

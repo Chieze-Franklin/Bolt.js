@@ -1,5 +1,3 @@
-var bodyParser = require('body-parser');
-var cons = require('consolidate');
 var exec = require('child_process').exec, child;
 var express = require("express");
 var fs = require("fs");
@@ -7,24 +5,17 @@ var http = require("http");
 var mongodb = require('mongodb');
 var mongoose = require('mongoose'), Schema = mongoose.Schema;
 var path = require("path");
-var session = require("client-sessions"/*"express-session"*/);
 var superagent = require('superagent');
 
 var config = require("./sys/server/config");
-var processes = require("./sys/server/processes");
-
-var models = require("./sys/server/models");
-var schemata = require("./sys/server/schemata");
-
+var configure = require("./sys/server/configure");
 var errors = require("./sys/server/errors");
+var models = require("./sys/server/models");
+var processes = require("./sys/server/processes");
+var schemata = require("./sys/server/schemata");
 var utils = require("./sys/server/utils");
 
 //---------Helpers
-
-//returns true if the object is null or undefined
-var __isNullOrUndefined = function(obj){
-	return (typeof obj === 'undefined' || !obj);
-}
 
 //holds all running contexts
 var __runningContexts = [];
@@ -57,7 +48,7 @@ var __getAppForReqId = function(id) {
 var __isSystemApp = function(id) {
 	var systemApps = ['bolt', 'bolt-settings']; //TODO: this list shud be gotten from the database
 	var app = __getAppForReqId(id);
-	if (__isNullOrUndefined(app))
+	if (utils.Misc.isNullOrUndefined(app))
 		return false;
 	return (systemApps.indexOf(app.toLowerCase()) > -1);
 }
@@ -70,30 +61,30 @@ var __getResponse = function(body, error, code, errorTraceId, errorUserTitle, er
 	var response = {};
 
 	//set code
-	if (!__isNullOrUndefined(code)) {
+	if (!utils.Misc.isNullOrUndefined(code)) {
 		response.code = code;
 	}
 	else {
-		if (!__isNullOrUndefined(body))
+		if (!utils.Misc.isNullOrUndefined(body))
 			response.code = 0;
-		else if (!__isNullOrUndefined(error))
+		else if (!utils.Misc.isNullOrUndefined(error))
 			response.code = 1000;
 	}
 
 	//set body
-	if (!__isNullOrUndefined(body))
+	if (!utils.Misc.isNullOrUndefined(body))
 		response.body = body;
 
 	//set error
-	if (!__isNullOrUndefined(error)){
+	if (!utils.Misc.isNullOrUndefined(error)){
 		response.error = error;
 
 		//set errorTraceId
-		if (!__isNullOrUndefined(errorTraceId))
+		if (!utils.Misc.isNullOrUndefined(errorTraceId))
 			response.errorTraceId = errorTraceId;
 
 		//set errorUserTitle
-		if (!__isNullOrUndefined(errorUserTitle))
+		if (!utils.Misc.isNullOrUndefined(errorUserTitle))
 			response.errorUserTitle = errorUserTitle; //TODO: this is not the real implementation
 		else {
 			//TODO: this is not the real implementation
@@ -101,7 +92,7 @@ var __getResponse = function(body, error, code, errorTraceId, errorUserTitle, er
 		}
 
 		//set errorUserMessage
-		if (!__isNullOrUndefined(errorUserMessage))
+		if (!utils.Misc.isNullOrUndefined(errorUserMessage))
 			response.errorUserMessage = errorUserMessage; //TODO: this is not the real implementation
 		else {
 			//TODO: this is not the real implementation
@@ -148,7 +139,7 @@ var checkAppUserPermToInstall = function(request, response, next){
 //checks to be sure the app making this request is a system app
 var checkForSystemApp = function(request, response, next){
 	var id = request.get(X_BOLT_REQ_ID);
-	if(__isNullOrUndefined(id) || !__isSystemApp(id)) { 
+	if(utils.Misc.isNullOrUndefined(id) || !__isSystemApp(id)) { 
 		var error = new Error(errors['504']);
 		response.end(__getResponse(null, error, 504));
 	}
@@ -177,10 +168,10 @@ var api_get_appinfo_app = function(request, response){
 	models.app.findOne({ 
 		name: appnm
 	}, function(error, app){
-		if (!__isNullOrUndefined(error)) {
+		if (!utils.Misc.isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else if(__isNullOrUndefined(app)){
+		else if(utils.Misc.isNullOrUndefined(app)){
 			var err = new Error(errors['403']);
 			response.end(__getResponse(null, err, 403));
 		}
@@ -192,10 +183,10 @@ var api_get_appinfo_app = function(request, response){
 
 var api_get_apps = function(request, response){
 	models.app.find({}, function(error, apps){
-		if (!__isNullOrUndefined(error)) {
+		if (!utils.Misc.isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else if(!__isNullOrUndefined(apps)){
+		else if(!utils.Misc.isNullOrUndefined(apps)){
 			response.send(__getResponse(apps));
 		}
 		else{
@@ -218,10 +209,10 @@ var api_get_apps_tag = function(request, response){
 	models.app.find({ 
 		tags: tag
 	}, function(error, apps){
-		if (!__isNullOrUndefined(error)) {
+		if (!utils.Misc.isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else if(!__isNullOrUndefined(apps)){
+		else if(!utils.Misc.isNullOrUndefined(apps)){
 			response.send(__getResponse(apps));
 		}
 		else{
@@ -235,10 +226,10 @@ var api_get_fileinfo_app_file = function(request, response){
 	models.app.findOne({ 
 		name: appnm
 	}, function(error, app){
-		if (!__isNullOrUndefined(error)) {
+		if (!utils.Misc.isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else if(__isNullOrUndefined(app)){
+		else if(utils.Misc.isNullOrUndefined(app)){
 			var err = new Error(errors['403']);
 			response.end(__getResponse(null, err, 403));
 		}
@@ -258,10 +249,10 @@ var api_get_fileinfo_app_file = function(request, response){
 				}
 			}
 
-			if (!__isNullOrUndefined(fileInfo.path)) {
+			if (!utils.Misc.isNullOrUndefined(fileInfo.path)) {
 				fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, fileInfo.path);
 				fs.stat(fileInfo.fullPath, function(fsError, stats) {
-					if (!__isNullOrUndefined(fsError)) {
+					if (!utils.Misc.isNullOrUndefined(fsError)) {
 						fileInfo.error = fsError;
 					}
 					else {
@@ -338,10 +329,10 @@ var api_get_help = function(request, response){
 
 var api_get_users = function (request, response) {
 	models.user.find({}, function (error, users) {
-		if (!__isNullOrUndefined(error)) {
+		if (!utils.Misc.isNullOrUndefined(error)) {
 			response.end(__getResponse(null, error));
 		}
-		else if (!__isNullOrUndefined(users)) {
+		else if (!utils.Misc.isNullOrUndefined(users)) {
 			response.send(__getResponse(users));
 		}
 		else {
@@ -353,7 +344,7 @@ var api_get_users = function (request, response) {
 var api_post_access = function(request, response){
 	//get app
 	var appnm;
-	if (!__isNullOrUndefined(request.body.app)) {
+	if (!utils.Misc.isNullOrUndefined(request.body.app)) {
 		appnm = utils.String.trim(request.body.app.toLowerCase());
 	}
 	else {
@@ -364,27 +355,27 @@ var api_post_access = function(request, response){
 
 	//get user
 	var username;
-	if (!__isNullOrUndefined(request.body.user)) {
+	if (!utils.Misc.isNullOrUndefined(request.body.user)) {
 		username = utils.String.trim(request.body.user.toLowerCase());
 	}
 	else {
 		//use the current user's name
-		if (!__isNullOrUndefined(request.session.user)){
+		if (!utils.Misc.isNullOrUndefined(request.session.user)){
 			username = request.session.user.username;
 		}
 	}
 
-	if (__isNullOrUndefined(username)) { //if username is still null or undefined
+	if (utils.Misc.isNullOrUndefined(username)) { //if username is still null or undefined
 		response.send(__getResponse(false));
 		return;
 	}
 
 	//get user-roles associated with the user
 	models.userRoleAssoc.find({ user: username }, function(errorUserRole, userRoles){
-		if (!__isNullOrUndefined(errorUserRole)) {
+		if (!utils.Misc.isNullOrUndefined(errorUserRole)) {
 			response.end(__getResponse(null, errorUserRole));
 		}
-		else if (!__isNullOrUndefined(userRoles)) {
+		else if (!utils.Misc.isNullOrUndefined(userRoles)) {
 			var loopThroughRoles = function(index) {
 				if (index >= userRoles.length) {
 					response.send(__getResponse(false));
@@ -394,18 +385,18 @@ var api_post_access = function(request, response){
 				//get app-roles associated with roles in user-roles and app
 				var userRole = userRoles[index];
 				models.appRoleAssoc.findOne({ app: appnm, role: userRole.role }, function(errorAppRole, appRole) {
-					if (!__isNullOrUndefined(errorAppRole)) {
+					if (!utils.Misc.isNullOrUndefined(errorAppRole)) {
 						response.end(__getResponse(null, errorAppRole));
 					}
-					else if (!__isNullOrUndefined(appRole)) {
+					else if (!utils.Misc.isNullOrUndefined(appRole)) {
 						var canStartApp = false;
 						var canAccessFeature = false;
 
-						if (!__isNullOrUndefined(appRole.start)) {
+						if (!utils.Misc.isNullOrUndefined(appRole.start)) {
 							canStartApp = appRole.start;
 						}
 
-						if (!__isNullOrUndefined(request.body.feature)) {
+						if (!utils.Misc.isNullOrUndefined(request.body.feature)) {
 							//TODO: there has to be a better way to implment case-INsensitive search
 							var lowercaseFeatures = [];
 							appRole.features.forEach(function(feature, index){
@@ -436,20 +427,20 @@ var api_post_access = function(request, response){
 var api_post_app_get = function(request, response){
 	//expects: { app (if app name mission, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
 	//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
-	//if (!__isNullOrUndefined(request.body.app))
+	//if (!utils.Misc.isNullOrUndefined(request.body.app))
 }
 
 var api_post_app_reg = function(request, response){
-	if (!__isNullOrUndefined(request.body.path)) {
+	if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 		var _path = utils.String.trim(request.body.path);
 		fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
 			else {
 				var package = JSON.parse(data);
 
-				if (__isNullOrUndefined(package.name)) {
+				if (utils.Misc.isNullOrUndefined(package.name)) {
 					var errr = new Error(errors['400']);
 					response.end(__getResponse(null, errr, 400));
 					return;
@@ -462,10 +453,10 @@ var api_post_app_reg = function(request, response){
 					return;
 				}
 				models.app.findOne({ name: appnm }, function(err, app){
-					if (!__isNullOrUndefined(err)) {
+					if (!utils.Misc.isNullOrUndefined(err)) {
 						response.end(__getResponse(null, err));
 					}
-					else if(__isNullOrUndefined(app)) {
+					else if(utils.Misc.isNullOrUndefined(app)) {
 						
 						//TODO: copy the bolt client files specified as dependencies into the folders specified; if it fails, stop installation
 						//TODO: describe this in 'Installing an App'
@@ -477,18 +468,18 @@ var api_post_app_reg = function(request, response){
 						newApp.description = package.description || "";
 						newApp.version = package.version || "";
 
-						if (!__isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
+						if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
 
 						newApp.files = package.bolt.files || {};
-						if (!__isNullOrUndefined(package.bolt.icon)) newApp.icon = package.bolt.icon;
-						if (!__isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
-						if (!__isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
-						if (!__isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
+						if (!utils.Misc.isNullOrUndefined(package.bolt.icon)) newApp.icon = package.bolt.icon;
+						if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
+						if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
+						if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 						newApp.startup = package.bolt.startup || false;
 						newApp.tags = package.bolt.tags || [];
 						newApp.title = package.bolt.title || package.name;
 
-						if (!__isNullOrUndefined(package.bolt.plugins)) {
+						if (!utils.Misc.isNullOrUndefined(package.bolt.plugins)) {
 							var plugins = package.bolt.plugins;
 							for (var plugin in plugins){
 								var plug = "/" + utils.String.trimStart(utils.String.trim(plugin.toLowerCase()), "/");
@@ -507,7 +498,7 @@ var api_post_app_reg = function(request, response){
 
 						var saveNewApp = function(){
 							newApp.save(function(saveError, savedApp){
-								if (!__isNullOrUndefined(saveError)) {
+								if (!utils.Misc.isNullOrUndefined(saveError)) {
 									response.end(__getResponse(null, saveError, 402));
 								}
 								else {
@@ -516,7 +507,7 @@ var api_post_app_reg = function(request, response){
 							});
 						};
 
-						if (!__isNullOrUndefined(package.bolt.checks)) {
+						if (!utils.Misc.isNullOrUndefined(package.bolt.checks)) {
 							var totalHash = "";
 							var checksum = function(index){
 								if (index >= package.bolt.checks.length) {
@@ -527,7 +518,7 @@ var api_post_app_reg = function(request, response){
 									var filename = package.bolt.checks[index];
 									var filepath = path.join(__dirname, 'node_modules', _path, filename);
 									utils.Security.checksumSync(filepath, function(errChecksum, hash){
-										if (!__isNullOrUndefined(hash)) {
+										if (!utils.Misc.isNullOrUndefined(hash)) {
 											totalHash += hash;
 											checksum(++index);
 										}
@@ -555,7 +546,7 @@ var api_post_app_reg = function(request, response){
 }
 
 var api_post_app_start = function(request, response){
-	if (!__isNullOrUndefined(request.body.app)) {
+	if (!utils.Misc.isNullOrUndefined(request.body.app)) {
 		var appnm = utils.String.trim(request.body.app.toLowerCase());
 		for (var index = 0; index < __runningContexts.length; index++){
 			if (__runningContexts[index].name === appnm){
@@ -567,13 +558,13 @@ var api_post_app_start = function(request, response){
 		superagent
 			.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/app-info/' + request.body.app) 
 			.end(function(appinfoError, appinfoResponse){
-				if (!__isNullOrUndefined(appinfoError)) {
+				if (!utils.Misc.isNullOrUndefined(appinfoError)) {
 					response.end(__getResponse(null, appinfoError));
 					return;
 				}
 
 				var realResponse = appinfoResponse.body;
-				if (!__isNullOrUndefined(realResponse.error)) {
+				if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
 					response.end(__getResponse(null, realResponse.error, realResponse.code, 
 						realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
 					return;
@@ -588,7 +579,7 @@ var api_post_app_start = function(request, response){
 
 				var startApp = function() {
 					//start a child process for the app
-					if(!__isNullOrUndefined(context.app.main)){
+					if(!utils.Misc.isNullOrUndefined(context.app.main)){
 						context.host = config.getHost();
 
 						if(!processes.hasProcess(context.name)){
@@ -599,7 +590,7 @@ var api_post_app_start = function(request, response){
 							//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
 							//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
 							processes.createProcess(context, function(error, _context){
-								if (!__isNullOrUndefined(error)) {
+								if (!utils.Misc.isNullOrUndefined(error)) {
 									response.end(__getResponse(null, error));
 								}
 
@@ -607,7 +598,7 @@ var api_post_app_start = function(request, response){
 
 								//pass the OS host & port to the app
 								var initUrl = context.app.ini;
-								if (!__isNullOrUndefined(initUrl)) {
+								if (!utils.Misc.isNullOrUndefined(initUrl)) {
 									initUrl = "/" + utils.String.trimStart(initUrl, "/");
 									superagent
 										.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
@@ -630,7 +621,7 @@ var api_post_app_start = function(request, response){
 				}
 
 				//check the app hash
-				if (!__isNullOrUndefined(app.appHash)) {
+				if (!utils.Misc.isNullOrUndefined(app.appHash)) {
 					var totalHash = "";
 					var checksum = function(index){
 						if (index >= app.package.bolt.checks.length) {
@@ -648,7 +639,7 @@ var api_post_app_start = function(request, response){
 							var filename = app.package.bolt.checks[index];
 							var filepath = path.join(__dirname, 'node_modules', app.path, filename);
 							utils.Security.checksumSync(filepath, function(errChecksum, hash){
-								if (!__isNullOrUndefined(hash)) {
+								if (!utils.Misc.isNullOrUndefined(hash)) {
 									totalHash += hash;
 									checksum(++index);
 								}
@@ -669,7 +660,7 @@ var api_post_app_start = function(request, response){
 }
 
 var api_post_app_stop = function(request, response){
-	if (!__isNullOrUndefined(request.body.app)) {
+	if (!utils.Misc.isNullOrUndefined(request.body.app)) {
 		var appnm = utils.String.trim(request.body.app.toLowerCase());
 		for (var index = 0; index < __runningContexts.length; index++){
 			if (__runningContexts[index].name === appnm){
@@ -700,31 +691,31 @@ var api_post_app_stop = function(request, response){
 }
 
 var api_post_approle = function(request, response){
-	if(!__isNullOrUndefined(request.body.app) && !__isNullOrUndefined(request.body.role)) {
+	if(!utils.Misc.isNullOrUndefined(request.body.app) && !utils.Misc.isNullOrUndefined(request.body.role)) {
 		var appnm = utils.String.trim(request.body.app.toLowerCase());
 		models.app.findOne({ name: appnm }, function(errorApp, app){
-			if (!__isNullOrUndefined(errorApp)){
+			if (!utils.Misc.isNullOrUndefined(errorApp)){
 				response.end(__getResponse(null, errorApp));
 			}
-			else if(__isNullOrUndefined(app)){
+			else if(utils.Misc.isNullOrUndefined(app)){
 				var errApp = new Error(errors['403']);
 				response.end(__getResponse(null, errApp, 403));
 			}
 			else{
 				models.role.findOne({ name: request.body.role }, function(errorRole, role){
-					if (!__isNullOrUndefined(errorRole)){
+					if (!utils.Misc.isNullOrUndefined(errorRole)){
 						response.end(__getResponse(null, errorRole));
 					}
-					else if(__isNullOrUndefined(role)){
+					else if(utils.Misc.isNullOrUndefined(role)){
 						var errRole = new Error(errors['303']);
 						response.end(__getResponse(null, errRole, 303));
 					}
 					else{
 						models.appRoleAssoc.findOne({ app: app.name, role: role.name }, function(errorAppRole, appRole){
-							if (!__isNullOrUndefined(errorAppRole)) {
+							if (!utils.Misc.isNullOrUndefined(errorAppRole)) {
 								response.end(__getResponse(null, errorAppRole));
 							}
-							else if (__isNullOrUndefined(appRole)) {
+							else if (utils.Misc.isNullOrUndefined(appRole)) {
 								var newAppRoleAssoc = new models.appRoleAssoc({ 
 									role: role.name,
 									role_id: role._id, 
@@ -734,7 +725,7 @@ var api_post_approle = function(request, response){
 								newAppRoleAssoc.start = request.body.start || false;
 								newAppRoleAssoc.features = request.body.features || [];
 								newAppRoleAssoc.save(function(saveError, savedAppRole){
-									if (!__isNullOrUndefined(saveError)) {
+									if (!utils.Misc.isNullOrUndefined(saveError)) {
 										response.end(__getResponse(null, saveError, 322));
 									}
 									else {
@@ -759,21 +750,21 @@ var api_post_approle = function(request, response){
 }
 
 var api_post_role = function(request, response){
-	if(!__isNullOrUndefined(request.body.name)){
+	if(!utils.Misc.isNullOrUndefined(request.body.name)){
 		models.role.findOne({ name: request.body.name }, function(error, role){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if(__isNullOrUndefined(role)){
+			else if(utils.Misc.isNullOrUndefined(role)){
 				var newRole = new models.role({ name: request.body.name });
-				if(!__isNullOrUndefined(request.body.isAdmin)){
+				if(!utils.Misc.isNullOrUndefined(request.body.isAdmin)){
 					newRole.isAdmin = request.body.isAdmin;
 				}
-				if(!__isNullOrUndefined(request.body.description)){
+				if(!utils.Misc.isNullOrUndefined(request.body.description)){
 					newRole.description = request.body.description;
 				}
 				newRole.save(function(saveError, savedRole){
-					if (!__isNullOrUndefined(saveError)) {
+					if (!utils.Misc.isNullOrUndefined(saveError)) {
 						response.end(__getResponse(null, saveError, 302));
 					}
 					else {
@@ -794,19 +785,19 @@ var api_post_role = function(request, response){
 }
 
 var api_post_user = function(request, response){
-	if(!__isNullOrUndefined(request.body.username) && !__isNullOrUndefined(request.body.password)){
+	if(!utils.Misc.isNullOrUndefined(request.body.username) && !utils.Misc.isNullOrUndefined(request.body.password)){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(error, user){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if (__isNullOrUndefined(user)) {
+			else if (utils.Misc.isNullOrUndefined(user)) {
 				var newUser = new models.user({ 
 					username: usrnm, 
 					passwordHash: utils.Security.hashSync(request.body.password + usrnm)
 				});
 				newUser.save(function(saveError, savedUser){
-					if (!__isNullOrUndefined(saveError)) {
+					if (!utils.Misc.isNullOrUndefined(saveError)) {
 						response.end(__getResponse(null, saveError, 202));
 					}
 					else {
@@ -828,16 +819,16 @@ var api_post_user = function(request, response){
 }
 
 var api_post_user_login = function(request, response){
-	if(!__isNullOrUndefined(request.body.username) && !__isNullOrUndefined(request.body.password)){
+	if(!utils.Misc.isNullOrUndefined(request.body.username) && !utils.Misc.isNullOrUndefined(request.body.password)){
 		var usrnm = utils.String.trim(request.body.username.toLowerCase());
 		models.user.findOne({ 
 			username: usrnm, 
 			passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
 		}, function(error, user){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(__getResponse(null, error));
 			}
-			else if(__isNullOrUndefined(user)){
+			else if(utils.Misc.isNullOrUndefined(user)){
 				request.session.reset();
 				var err = new Error(errors['203']);
 				response.end(__getResponse(null, err, 203));
@@ -869,31 +860,31 @@ var api_post_user_logout = function(request, response){
 }
 
 var api_post_userrole = function(request, response){
-	if(!__isNullOrUndefined(request.body.user) && !__isNullOrUndefined(request.body.role)){
+	if(!utils.Misc.isNullOrUndefined(request.body.user) && !utils.Misc.isNullOrUndefined(request.body.role)){
 		var usrnm = utils.String.trim(request.body.user.toLowerCase());
 		models.user.findOne({ username: usrnm }, function(errorUser, user){
-			if (!__isNullOrUndefined(errorUser)){
+			if (!utils.Misc.isNullOrUndefined(errorUser)){
 				response.end(__getResponse(null, errorUser));
 			}
-			else if(__isNullOrUndefined(user)){
+			else if(utils.Misc.isNullOrUndefined(user)){
 				var errUser = new Error(errors['203']);
 				response.end(__getResponse(null, errUser, 203));
 			}
 			else{
 				models.role.findOne({ name: request.body.role }, function(errorRole, role){
-					if (!__isNullOrUndefined(errorRole)){
+					if (!utils.Misc.isNullOrUndefined(errorRole)){
 						response.end(__getResponse(null, errorRole));
 					}
-					else if(__isNullOrUndefined(role)){
+					else if(utils.Misc.isNullOrUndefined(role)){
 						var errRole = new Error(errors['303']);
 						response.end(__getResponse(null, errRole, 303));
 					}
 					else{
 						models.userRoleAssoc.findOne({ user: user.username, role: role.name }, function(errorUserRole, userRole){
-							if (!__isNullOrUndefined(errorUserRole)) {
+							if (!utils.Misc.isNullOrUndefined(errorUserRole)) {
 								response.end(__getResponse(null, errorUserRole));
 							}
-							else if (__isNullOrUndefined(userRole)) {
+							else if (utils.Misc.isNullOrUndefined(userRole)) {
 								var newUserRoleAssoc = new models.userRoleAssoc({ 
 									role: role.name,
 									role_id: role._id, 
@@ -901,7 +892,7 @@ var api_post_userrole = function(request, response){
 									user_id: user._id 
 								});
 								newUserRoleAssoc.save(function(saveError, savedUserRole){
-									if (!__isNullOrUndefined(saveError)) {
+									if (!utils.Misc.isNullOrUndefined(saveError)) {
 										response.end(__getResponse(null, saveError, 312));
 									}
 									else {
@@ -929,16 +920,16 @@ var get = function(request, response){
 	superagent
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/users') //check if there's any registered user
 		.end(function(error, usersResponse){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.redirect('/error');
 			}
 			else {
 				var responseError = usersResponse.body.error;
 				var users = usersResponse.body.body;
 
-				if (!__isNullOrUndefined(responseError)) {
+				if (!utils.Misc.isNullOrUndefined(responseError)) {
 					var encodedCode = encodeURIComponent(appstartResponse.body.code);
-					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+					if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
 						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
 						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
 						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
@@ -947,8 +938,8 @@ var get = function(request, response){
 						response.redirect('/error?code=' + encodedCode);
 					}
 				}
-				else if (!__isNullOrUndefined(users) && users.length > 0){ //if there are registered users,...
-					if (!__isNullOrUndefined(request.session) && !__isNullOrUndefined(request.session.user)) { //a user is logged in, load the home view
+				else if (!utils.Misc.isNullOrUndefined(users) && users.length > 0){ //if there are registered users,...
+					if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) { //a user is logged in, load the home view
 						response.redirect('/home');
 					}
 					else { //NO user is logged in, show login view
@@ -977,16 +968,16 @@ var get_app_app = function(request, response){
 		.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/app/start')
 		.send({ app: appnm })
 		.end(function(error, appstartResponse){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.redirect('/error');
 			}
 			else {
 				var responseError = appstartResponse.body.error;
 				var context = appstartResponse.body.body;
 
-				if (!__isNullOrUndefined(responseError)) {
+				if (!utils.Misc.isNullOrUndefined(responseError)) {
 					var encodedCode = encodeURIComponent(appstartResponse.body.code);
-					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+					if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
 						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
 						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
 						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
@@ -995,9 +986,9 @@ var get_app_app = function(request, response){
 						response.redirect('/error?code=' + encodedCode);
 					}
 				}
-				else if (!__isNullOrUndefined(context)) {
-					if(!__isNullOrUndefined(context.port)){
-						var index = (!__isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "/";
+				else if (!utils.Misc.isNullOrUndefined(context)) {
+					if(!utils.Misc.isNullOrUndefined(context.port)){
+						var index = (!utils.Misc.isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "/";
 						response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
 					}
 					else {
@@ -1018,16 +1009,16 @@ var get_file_app_file = function(request, response){
 	superagent
 		.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/file-info/' + request.params.app + '/' + request.params.file)
 		.end(function(error, fileinfoResponse){
-			if (!__isNullOrUndefined(error)) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.redirect('/error');
 			}
 			else {
 				var responseError = fileinfoResponse.body.error;
 				var fileInfo = fileinfoResponse.body.body;
 
-				if (!__isNullOrUndefined(responseError)) {
+				if (!utils.Misc.isNullOrUndefined(responseError)) {
 					var encodedCode = encodeURIComponent(fileinfoResponse.body.code);
-					if(!__isNullOrUndefined(responseError.errorUserTitle) && !__isNullOrUndefined(responseError.errorUserMessage)) {
+					if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
 						var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
 						var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
 						response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
@@ -1036,7 +1027,7 @@ var get_file_app_file = function(request, response){
 						response.redirect('/error?code=' + encodedCode);
 					}
 				}
-				else if (!__isNullOrUndefined(fileInfo) && !__isNullOrUndefined(fileInfo.fullPath) && !__isNullOrUndefined(fileInfo.stats)) {
+				else if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.fullPath) && !utils.Misc.isNullOrUndefined(fileInfo.stats)) {
 					//response.writeHead(301, {Location: 'file:///' + fileInfo.fullPath});
 					//response.end();
 
@@ -1086,11 +1077,11 @@ var get_view = function(request, response){
 	var app = null;
 	var plug = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
 	models.plugin.find({ path: plug }, function(errorPlugins, plugins){
-		if (!__isNullOrUndefined(errorPlugins)){
+		if (!utils.Misc.isNullOrUndefined(errorPlugins)){
 			response.end(__getResponse(null, errorPlugins, 433));
 		}
 		//check for an app that can serve this view
-		else if(!__isNullOrUndefined(plugins) && plugins.length > 0) {
+		else if(!utils.Misc.isNullOrUndefined(plugins) && plugins.length > 0) {
 			if (plugins.length == 1) {
 				app = plugins[0].app;
 			}
@@ -1113,7 +1104,7 @@ var get_view = function(request, response){
 		else {
 			var native = path.join(__dirname, 'sys/views', request.params.view + '.html');
 			fs.stat(native, function(error, stats) {
-				if (__isNullOrUndefined(error) && stats.isFile()){
+				if (utils.Misc.isNullOrUndefined(error) && stats.isFile()){
 					var scope = {
 						protocol: config.getProtocol(),
 						host: config.getHost(),
@@ -1165,58 +1156,7 @@ When a request comes in, it is (naturally) passed to the first handler. Every ha
 		end
 */
 
-var app = express();
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(function (request, response, next) {
-  response.header('Access-Control-Allow-Origin', '*');
-  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-
-  next();
-});
-app.use(session({
-	cookieName: 'session',
-	secret: config.getSessionSecret(),
-	duration: 24 * 60 * 60 * 1000,
-	activeDuration: 24 * 60 * 60 * 1000
-
-	/*saveUninitialized: true, 	//for express-session
-	resave: true*/				//for express-session
-}));
-app.use(function(request, response, next) {
-	if (!__isNullOrUndefined(request.session) && !__isNullOrUndefined(request.session.user)) {
-		models.user.findOne({ username: request.session.user.username }, function(error, user) {
-			if (!__isNullOrUndefined(user)) {
-				if (user.isBlocked) { //TODO: test this
-					request.session.reset();
-				}
-				else {
-					delete user.passwordHash; // delete the password from the session
-					request.user = user;
-					request.session.user = user;  //refresh the session value
-					response.locals.user = user;  //make available to UI template engines
-				}
-			}
-			next();
-		});
-	} 
-	else {
-		next();
-	}
-});
-app.use('/api', function (request, response, next) {
-  response.set('Content-Type', 'application/json');
-  next();
-});
-
-app.use('/assets', express.static(__dirname + '/sys/views/assets'));
-app.use('/pages', express.static(__dirname + '/sys/views/pages'));
-app.use('/client', express.static(__dirname + '/sys/client'));
-
-app.set('views', __dirname + '/sys/views');
-app.engine('html', cons.handlebars);
-app.set('view engine', 'html');
+var app = configure(express());
 
 //------------API Endpoints--------------
 app.get('/api', api_get);
@@ -1389,18 +1329,18 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 										.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/app/start')
 										.send({ app: name })
 										.end(function(appstartError, appstartResponse){
-											if (!__isNullOrUndefined(appstartError)) {
+											if (!utils.Misc.isNullOrUndefined(appstartError)) {
 												runStartups(++index);
 												return;
 											}
 
 											var context = appstartResponse.body.body;
 
-											if (!__isNullOrUndefined(context) && !__isNullOrUndefined(context.port)) {
+											if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
 												console.log("Started startup app%s%s at %s:%s",
-													(!__isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
-													(!__isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
-													(!__isNullOrUndefined(context.host) ? context.host : ""), 
+													(!utils.Misc.isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
+													(!utils.Misc.isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
+													(!utils.Misc.isNullOrUndefined(context.host) ? context.host : ""), 
 													context.port);
 											}
 											runStartups(++index);
