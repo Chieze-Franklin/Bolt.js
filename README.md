@@ -9,6 +9,7 @@ With Bolt.js you get to run your JavaScript web apps and websites in an environm
 * Clone or pull the project to your repository.
 * Run <code>npm install</code> to install dependencies.
 * Download the appropriate MongoDB files into the appropriate folder in */sys/bins*.
+* Configure Bolt as required in *sys/server/config.json*.
 * Run <code>node bolt</code>.
 
 ## Resources

@@ -55,7 +55,7 @@ var __getAppForReqId = function(id) {
 	}
 }
 var __isSystemApp = function(id) {
-	var systemApps = ['bolt']; //TODO: this list shud be gotten from the database
+	var systemApps = ['bolt', 'bolt-settings']; //TODO: this list shud be gotten from the database
 	var app = __getAppForReqId(id);
 	if (__isNullOrUndefined(app))
 		return false;
@@ -350,6 +350,89 @@ var api_get_users = function (request, response) {
 	});
 }
 
+var api_post_access = function(request, response){
+	//get app
+	var appnm;
+	if (!__isNullOrUndefined(request.body.app)) {
+		appnm = utils.String.trim(request.body.app.toLowerCase());
+	}
+	else {
+		var error = new Error(errors['400']);
+		response.end(__getResponse(null, error, 400));
+		return;
+	}
+
+	//get user
+	var username;
+	if (!__isNullOrUndefined(request.body.user)) {
+		username = utils.String.trim(request.body.user.toLowerCase());
+	}
+	else {
+		//use the current user's name
+		if (!__isNullOrUndefined(request.session.user)){
+			username = request.session.user.username;
+		}
+	}
+
+	if (__isNullOrUndefined(username)) { //if username is still null or undefined
+		response.send(__getResponse(false));
+		return;
+	}
+
+	//get user-roles associated with the user
+	models.userRoleAssoc.find({ user: username }, function(errorUserRole, userRoles){
+		if (!__isNullOrUndefined(errorUserRole)) {
+			response.end(__getResponse(null, errorUserRole));
+		}
+		else if (!__isNullOrUndefined(userRoles)) {
+			var loopThroughRoles = function(index) {
+				if (index >= userRoles.length) {
+					response.send(__getResponse(false));
+					return;
+				}
+
+				//get app-roles associated with roles in user-roles and app
+				var userRole = userRoles[index];
+				models.appRoleAssoc.findOne({ app: appnm, role: userRole.role }, function(errorAppRole, appRole) {
+					if (!__isNullOrUndefined(errorAppRole)) {
+						response.end(__getResponse(null, errorAppRole));
+					}
+					else if (!__isNullOrUndefined(appRole)) {
+						var canStartApp = false;
+						var canAccessFeature = false;
+
+						if (!__isNullOrUndefined(appRole.start)) {
+							canStartApp = appRole.start;
+						}
+
+						if (!__isNullOrUndefined(request.body.feature)) {
+							//TODO: there has to be a better way to implment case-INsensitive search
+							var lowercaseFeatures = [];
+							appRole.features.forEach(function(feature, index){
+								lowercaseFeatures.push(feature.toLowerCase());
+							});
+							canAccessFeature = (lowercaseFeatures.indexOf(request.body.feature.toLowerCase()) > -1);
+						}
+						else { //if the request doesn't specify the feature to check, then just set canAccessFeature = true
+							canAccessFeature = true;
+						}
+						
+						response.send(__getResponse(canStartApp && canAccessFeature));
+					}
+					else {
+						loopThroughRoles(++index);
+					}
+				});
+			}
+
+			loopThroughRoles(0);
+		}
+		else {
+			response.send(__getResponse(false));
+		}
+	});
+}
+
 var api_post_app_get = function(request, response){
 	//expects: { app (if app name mission, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
 	//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
@@ -433,23 +516,23 @@ var api_post_app_reg = function(request, response){
 							});
 						};
 
-						//TODO: test appHash
 						if (!__isNullOrUndefined(package.bolt.checks)) {
 							var totalHash = "";
 							var checksum = function(index){
 								if (index >= package.bolt.checks.length) {
-									newApp.appHash = totalHash;
+									newApp.appHash = utils.Security.hashSync(totalHash); //hash the total hash (primarily to make it shorter)
 									saveNewApp();
 								}
-
-								var filename = package.bolt.checks[index];
-								var filepath = path.join(__dirname, 'node_modules', _path, filename);
-								utils.Security.checksumSync(filepath, function(errChecksum, hash){
-									if (!__isNullOrUndefined(hash)) {
-										totalHash += hash;
-										checksum(++index);
-									}
-								});
+								else {
+									var filename = package.bolt.checks[index];
+									var filepath = path.join(__dirname, 'node_modules', _path, filename);
+									utils.Security.checksumSync(filepath, function(errChecksum, hash){
+										if (!__isNullOrUndefined(hash)) {
+											totalHash += hash;
+											checksum(++index);
+										}
+									});
+								}
 							}
 							checksum(0);
 						}
@@ -503,45 +586,80 @@ var api_post_app_start = function(request, response){
 				context.path = app.path;
 				context.app = app;
 
-				//start a child process for the app
-				if(!__isNullOrUndefined(context.app.main)){
-					context.host = config.getHost();
+				var startApp = function() {
+					//start a child process for the app
+					if(!__isNullOrUndefined(context.app.main)){
+						context.host = config.getHost();
 
-					if(!processes.hasProcess(context.name)){
-						//pass the context (and a callback) to processes.createProcess()
-						//processes.createProcess() will start a new instance of app_process as a child process
-						//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
-						//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
-						//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
-						//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
-						processes.createProcess(context, function(error, _context){
-							if (!__isNullOrUndefined(error)) {
-								response.end(__getResponse(null, error));
-							}
+						if(!processes.hasProcess(context.name)){
+							//pass the context (and a callback) to processes.createProcess()
+							//processes.createProcess() will start a new instance of app_process as a child process
+							//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
+							//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
+							//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
+							//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
+							processes.createProcess(context, function(error, _context){
+								if (!__isNullOrUndefined(error)) {
+									response.end(__getResponse(null, error));
+								}
 
-							context = _context;
+								context = _context;
 
-							//pass the OS host & port to the app
-							var initUrl = context.app.ini;
-							if (!__isNullOrUndefined(initUrl)) {
-								superagent
-									.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
-									.send({ host: config.getHost(), port: config.getPort(), reqid: __genAppReqId(context.name) })
-									.end(function(initError, initResponse){});
-							}
+								//pass the OS host & port to the app
+								var initUrl = context.app.ini;
+								if (!__isNullOrUndefined(initUrl)) {
+									initUrl = "/" + utils.String.trimStart(initUrl, "/");
+									superagent
+										.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
+										.send({protocol: config.getProtocol(), host: config.getHost(), port: config.getPort(), reqid: __genAppReqId(context.name)})
+										.end(function(initError, initResponse){});
+								}
 
-							__runningContexts.push(context);
+								__runningContexts.push(context);
+								response.send(__getResponse(context));
+							});
+						}
+						else{
+							context.pid = processes.getAppPid(context.name);
+							context.port = processes.getAppPort(context.name);
 							response.send(__getResponse(context));
-						});
+						}
 					}
-					else{
-						context.pid = processes.getAppPid(context.name);
-						context.port = processes.getAppPort(context.name);
+					else
 						response.send(__getResponse(context));
-					}
 				}
-				else
-					response.send(__getResponse(context));
+
+				//check the app hash
+				if (!__isNullOrUndefined(app.appHash)) {
+					var totalHash = "";
+					var checksum = function(index){
+						if (index >= app.package.bolt.checks.length) {
+							var _appHash =  utils.Security.hashSync(totalHash);
+							if (app.appHash == _appHash) {
+								startApp();
+							}
+							else {
+								var hashError = new Error(errors['404']);
+								response.end(__getResponse(null, hashError, 404));
+								return;
+							}
+						}
+						else {
+							var filename = app.package.bolt.checks[index];
+							var filepath = path.join(__dirname, 'node_modules', app.path, filename);
+							utils.Security.checksumSync(filepath, function(errChecksum, hash){
+								if (!__isNullOrUndefined(hash)) {
+									totalHash += hash;
+									checksum(++index);
+								}
+							});
+						}
+					}
+					checksum(0);
+				}
+				else {
+					startApp();
+				}
 			});
 	}
 	else {
@@ -1055,7 +1173,6 @@ app.use(function (request, response, next) {
   response.header('Access-Control-Allow-Origin', '*');
   response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
 
-  response.set('Content-Type', 'application/json');
   next();
 });
 app.use(session({
@@ -1088,14 +1205,10 @@ app.use(function(request, response, next) {
 		next();
 	}
 });
-
-var setContentToCss = function(request, response, next) {
-	response.set('Content-Type', 'text/css');
-  	next();
-}
-
-app.use('/assets/plugins/*/*css', setContentToCss);
-app.use('/pages/css', setContentToCss);
+app.use('/api', function (request, response, next) {
+  response.set('Content-Type', 'application/json');
+  next();
+});
 
 app.use('/assets', express.static(__dirname + '/sys/views/assets'));
 app.use('/pages', express.static(__dirname + '/sys/views/pages'));
@@ -1107,6 +1220,10 @@ app.set('view engine', 'html');
 
 //------------API Endpoints--------------
 app.get('/api', api_get);
+
+app.post('/api/access', api_post_access);
+//TODO: /api/access/:user/:app
+//TODO: /api/access/:user/:app/:feature
 
 //installs an app from an online repository (current only npm is supported)
 app.post('/api/app/get', checkAppUserPermToInstall, checkUserAdminRight, api_post_app_get);
@@ -1265,30 +1382,30 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 								if(index >= startups.length){
 									console.log('============================================');
 									console.log('');
-									return;
 								}
-								
-								var name = startups[index];
-								superagent
-									.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/app/start')
-									.send({ app: name })
-									.end(function(appstartError, appstartResponse){
-										if (!__isNullOrUndefined(appstartError)) {
+								else {
+									var name = startups[index];
+									superagent
+										.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/app/start')
+										.send({ app: name })
+										.end(function(appstartError, appstartResponse){
+											if (!__isNullOrUndefined(appstartError)) {
+												runStartups(++index);
+												return;
+											}
+
+											var context = appstartResponse.body.body;
+
+											if (!__isNullOrUndefined(context) && !__isNullOrUndefined(context.port)) {
+												console.log("Started startup app%s%s at %s:%s",
+													(!__isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
+													(!__isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
+													(!__isNullOrUndefined(context.host) ? context.host : ""), 
+													context.port);
+											}
 											runStartups(++index);
-											return;
-										}
-
-										var context = appstartResponse.body.body;
-
-										if (!__isNullOrUndefined(context) && !__isNullOrUndefined(context.port)) {
-											console.log("Started startup app%s%s at %s:%s",
-												(!__isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
-												(!__isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
-												(!__isNullOrUndefined(context.host) ? context.host : ""), 
-												context.port);
-										}
-										runStartups(++index);
-									});
+										});
+								}
 							}
 
 							runStartups(0);

@@ -27,6 +27,7 @@ module.exports = {
 	'401': "An app with the same name already exists",
 	'402': "Could not save app to the database",
 	'403': "Could not retrieve app from the database",
+	'404': "Could not start app due to security concerns",
 
 	'410': "App path missing",
 

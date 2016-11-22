@@ -131,7 +131,7 @@
 
             //first, add the user
             $.ajax({
-            	url: "{{protocol}}://{{host}}:{{port}}/api/user/add",
+            	url: "{{protocol}}://{{host}}:{{port}}/api/user",
             	data: { username: email, password: password },
             	type: "POST",
             	beforeSend: function(xhr) {
@@ -141,7 +141,7 @@
             		if(response.code == 0){ 
             			//second, create an admin role
             			$.ajax({
-            				url: "{{protocol}}://{{host}}:{{port}}/api/role/add",
+            				url: "{{protocol}}://{{host}}:{{port}}/api/role",
             				data: { name: "admin", isAdmin: true, description: "Administrator" },
             				type: "POST",
             				headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -149,7 +149,7 @@
             					if(response2.code == 0){ 
             						//third, associate user and role
             						$.ajax({
-            							url: "{{protocol}}://{{host}}:{{port}}/api/user-role/add",
+            							url: "{{protocol}}://{{host}}:{{port}}/api/user-role",
             							data: { user: response.body.username, role: response2.body.name },
             							type: "POST",
             							headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -175,7 +175,7 @@
             								}
             								else {
             									//TODO: error
-            									console.log("/user-role/add");console.log(response3);
+            									console.log("/user-role");console.log(response3);
             								}
             							},
             							error: function(xhr3, status3, err3){}
@@ -183,7 +183,7 @@
             					}
             					else {
             						//TODO: error
-            						console.log("/role/add");console.log(response2);
+            						console.log("/role");console.log(response2);
             					}
             				},
             				error: function(xhr2, status2, err2){}
@@ -191,7 +191,7 @@
             		}
             		else {
             			//TODO: error
-            			console.log("/user/add");console.log(response);
+            			console.log("/user");console.log(response);
             		}
             	},
             	error: function(xhr, status, err){}
