@@ -602,7 +602,13 @@ var api_post_app_start = function(request, response){
 									initUrl = "/" + utils.String.trimStart(initUrl, "/");
 									superagent
 										.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
-										.send({protocol: config.getProtocol(), host: config.getHost(), port: config.getPort(), reqid: __genAppReqId(context.name)})
+										.send({ 
+											protocol: config.getProtocol(), 
+											host: config.getHost(), 
+											port: config.getPort(), 
+											appPort: context.port,
+											reqid: __genAppReqId(context.name)
+										})
 										.end(function(initError, initResponse){});
 								}
 
@@ -1289,7 +1295,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 	//start mongodb 
 	if (process.platform === 'win32') {
-		var mongodbPath = path.join(__dirname, 'sys/bins/win32/mongod.exe');
+		var mongodbPath = path.join(__dirname, 'sys/bins/mongodb/win32/mongod.exe');
 		var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
 		child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port ' + config.getDbPort());
 
