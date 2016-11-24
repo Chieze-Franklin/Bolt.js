@@ -131,7 +131,7 @@
 
             //first, add the user
             $.ajax({
-            	url: "{{protocol}}://{{host}}:{{port}}/api/user",
+            	url: "{{protocol}}://{{host}}:{{port}}/api/users",
             	data: { username: email, password: password },
             	type: "POST",
             	beforeSend: function(xhr) {
@@ -141,7 +141,7 @@
             		if(response.code == 0){ 
             			//second, create an admin role
             			$.ajax({
-            				url: "{{protocol}}://{{host}}:{{port}}/api/role",
+            				url: "{{protocol}}://{{host}}:{{port}}/api/roles",
             				data: { name: "admin", isAdmin: true, description: "Administrator" },
             				type: "POST",
             				headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -149,7 +149,7 @@
             					if(response2.code == 0){ 
             						//third, associate user and role
             						$.ajax({
-            							url: "{{protocol}}://{{host}}:{{port}}/api/user-role",
+            							url: "{{protocol}}://{{host}}:{{port}}/api/user-roles",
             							data: { user: response.body.username, role: response2.body.name },
             							type: "POST",
             							headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -157,7 +157,7 @@
             								if(response3.code == 0){ 
             									//fourth, log user in
             									$.ajax({
-            										url: "{{protocol}}://{{host}}:{{port}}/api/user/login",
+            										url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
             										data: { username: email, password: password },
             										type: "POST",
             										headers: {'X-Bolt-Req-Id': '{{reqid}}'},

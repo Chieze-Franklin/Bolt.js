@@ -44,4 +44,7 @@ module.exports = {
 	'601': "A file with the same name already exists",
 	'602': "Could not save file",
 	'603': "Could not retrieve file",
+
+	'700': "Endpoint missing",
+	'703': "Could not find endpoint"
 };

@@ -120,7 +120,7 @@
             * Perform some validation here.
             */
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/user/login",
+              url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
               data: { username: email, password: password },
               type: "POST",
               beforeSend: function(xhr) {

@@ -1,16 +1,18 @@
 ## Bolt.js
 
-Bolt.js is a Node.js-based runtime environment written in JavaScript.
+Bolt.js is a Node.js-based app runtime environment written in JavaScript.
 
-With Bolt.js you get to run your JavaScript web apps and websites in an environment that feels like an operating system.
+With Bolt.js you get to run your JavaScript web apps and websites in an environment rich with all the necessary support your app may need.
 
 ## Getting Started
 
 * Clone or pull the project to your repository.
 * Run <code>npm install</code> to install dependencies.
-* Download the appropriate MongoDB files into the appropriate folder in */sys/bins*.
-* Configure Bolt as required in *sys/server/config.json*.
+* Download the appropriate MongoDB files into the appropriate folder in */sys/bins/mongodb*.
+* Ensure the path */sys/data/mongodb* exists.
+* Configure Bolt as required in */sys/server/config.json*.
 * Run <code>node bolt</code>.
+* On your browser, navigate to <code>{{config-host}}:{{config-port}}</code> to start working in the Bolt environment.
 
 ## Resources
 Get up to speed on the whole Bolt thingy at [the Bolt wiki](https://github.com/Chieze-Franklin/Bolt.js/wiki).

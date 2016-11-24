@@ -40,8 +40,8 @@
       <div class="row-xs-height">
         <div class="col-xs-height col-middle">
           <div class="error-container text-center">
-            <h1 class="error-number">No Settings App</h1>
-            <p>You have no <b>Settings</b> app installed. You can download one online or sideload an already-downloaded copy.
+            <h1 class="error-number">No Home App</h1>
+            <p>You have no <b>Home</b> app installed. You can download one online or sideload an already-downloaded copy.
             </p>
             <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="download">
                 <i class="fa fa-cloud-download"></i> 
@@ -77,13 +77,13 @@
         $(document).ready(function(){
             $("#download").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/get",
-                  data: { app: "bolt-settings" },
+                  url: "{{protocol}}://{{host}}:{{port}}/app-get",
+                  data: { app: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){
                     if(response.code == 0){
-                      window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                      window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
                     }
                     else {
                       //TODO: error
@@ -96,13 +96,13 @@
 
             $("#sideload").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
-                  data: { path: "bolt-settings" },
+                  url: "{{protocol}}://{{host}}:{{port}}/app-reg",
+                  data: { app: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){
                     if(response.code == 0){
-                      window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                      window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
                     }
                     else {
                       //TODO: error

@@ -1,5 +1,3 @@
-'use strict';
-
 var crypto;
 try {
  	crypto = require('crypto');
@@ -7,18 +5,68 @@ try {
  	console.log('crypto support is disabled!');
 }
 var fs = require('fs')
+var path = require("path");
 
 module.exports = {
 	Misc : {
+		//constructs an appropriate response object
+		createResponse: function(body, error, code, errorTraceId, errorUserTitle, errorUserMessage){
+			//TODO: support errorTraceId
+			//TODO: errorUserTitle and errorUserMessage should be change from strings to ints (==code) to support localization
+
+			var response = {};
+
+			//set code
+			if (!this.isNullOrUndefined(code)) {
+				response.code = code;
+			}
+			else {
+				if (!this.isNullOrUndefined(body))
+					response.code = 0;
+				else if (!this.isNullOrUndefined(error))
+					response.code = 1000;
+			}
+
+			//set body
+			if (!this.isNullOrUndefined(body))
+				response.body = body;
+
+			//set error
+			if (!this.isNullOrUndefined(error)){
+				response.error = error;
+
+				//set errorTraceId
+				if (!this.isNullOrUndefined(errorTraceId))
+					response.errorTraceId = errorTraceId;
+
+				//set errorUserTitle
+				if (!this.isNullOrUndefined(errorUserTitle))
+					response.errorUserTitle = errorUserTitle; //TODO: this is not the real implementation
+				else {
+					//TODO: this is not the real implementation
+					response.errorUserTitle = response.code;
+				}
+
+				//set errorUserMessage
+				if (!this.isNullOrUndefined(errorUserMessage))
+					response.errorUserMessage = errorUserMessage; //TODO: this is not the real implementation
+				else {
+					//TODO: this is not the real implementation
+					response.errorUserMessage = errors[response.code];
+				}
+			}
+
+			return JSON.stringify(response);
+		},
 		isNullOrUndefined: function(obj){
 			return (typeof obj === 'undefined' || !obj);
 		}
 	},
 	Security: {
-		checksumSync: function(path, callback) {
+		checksumSync: function(_path, callback) {
 			if (crypto) {
 				var hash = crypto.createHash('sha256');
-				var stream = fs.createReadStream(path);
+				var stream = fs.createReadStream(_path);
 
 				stream.on('error', function(error){
 					callback(error, null);
@@ -34,7 +82,7 @@ module.exports = {
 				});
 			}
 			else {
-				callback(null, path);
+				callback(null, _path);
 			}
 		},
 		hashSync: function(word, salt){
