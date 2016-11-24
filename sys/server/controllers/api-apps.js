@@ -7,6 +7,8 @@ var models = require("../models");
 var processes = require("../processes");
 var utils = require("../utils");
 
+var __node_modulesDir = path.join(__dirname + './../../../node_modules');
+
 //holds all running contexts
 var __runningContexts = [];
 
@@ -68,7 +70,7 @@ module.exports = {
 	postReg: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 			var _path = utils.String.trim(request.body.path);
-			fs.readFile(path.join(__dirname, 'node_modules', _path, 'package.json'), function (error, data) {
+			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error));
 				}
@@ -151,7 +153,7 @@ module.exports = {
 									}
 									else {
 										var filename = package.bolt.checks[index];
-										var filepath = path.join(__dirname, 'node_modules', _path, filename);
+										var filepath = path.join(__node_modulesDir, _path, filename);
 										utils.Security.checksumSync(filepath, function(errChecksum, hash){
 											if (!utils.Misc.isNullOrUndefined(hash)) {
 												totalHash += hash;
@@ -241,7 +243,7 @@ module.exports = {
 												host: config.getHost(), 
 												port: config.getPort(), 
 												appPort: context.port,
-												reqid: __genAppReqId(context.name)
+												reqid: request.genAppReqId(context.name)
 											})
 											.end(function(initError, initResponse){});
 									}
@@ -277,7 +279,7 @@ module.exports = {
 							}
 							else {
 								var filename = app.package.bolt.checks[index];
-								var filepath = path.join(__dirname, 'node_modules', app.path, filename);
+								var filepath = path.join(__node_modulesDir, app.path, filename);
 								utils.Security.checksumSync(filepath, function(errChecksum, hash){
 									if (!utils.Misc.isNullOrUndefined(hash)) {
 										totalHash += hash;

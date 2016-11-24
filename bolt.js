@@ -160,7 +160,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 							startup: true
 						}, function(err, apps){
 							var startups = [];
-							if(!err && apps){
+							if(utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(apps)){
 								apps.forEach(function(app){
 									startups.push(app.name);
 								});

@@ -7,6 +7,10 @@ try {
 var fs = require('fs')
 var path = require("path");
 
+var __isNullOrUndefined = function(obj){
+	return (typeof obj === 'undefined' || !obj);
+}
+
 module.exports = {
 	Misc : {
 		//constructs an appropriate response object
@@ -17,30 +21,30 @@ module.exports = {
 			var response = {};
 
 			//set code
-			if (!this.isNullOrUndefined(code)) {
+			if (!__isNullOrUndefined(code)) {
 				response.code = code;
 			}
 			else {
-				if (!this.isNullOrUndefined(body))
+				if (!__isNullOrUndefined(body))
 					response.code = 0;
-				else if (!this.isNullOrUndefined(error))
+				else if (!__isNullOrUndefined(error))
 					response.code = 1000;
 			}
 
 			//set body
-			if (!this.isNullOrUndefined(body))
+			if (!__isNullOrUndefined(body))
 				response.body = body;
 
 			//set error
-			if (!this.isNullOrUndefined(error)){
+			if (!__isNullOrUndefined(error)){
 				response.error = error;
 
 				//set errorTraceId
-				if (!this.isNullOrUndefined(errorTraceId))
+				if (!__isNullOrUndefined(errorTraceId))
 					response.errorTraceId = errorTraceId;
 
 				//set errorUserTitle
-				if (!this.isNullOrUndefined(errorUserTitle))
+				if (!__isNullOrUndefined(errorUserTitle))
 					response.errorUserTitle = errorUserTitle; //TODO: this is not the real implementation
 				else {
 					//TODO: this is not the real implementation
@@ -48,7 +52,7 @@ module.exports = {
 				}
 
 				//set errorUserMessage
-				if (!this.isNullOrUndefined(errorUserMessage))
+				if (!__isNullOrUndefined(errorUserMessage))
 					response.errorUserMessage = errorUserMessage; //TODO: this is not the real implementation
 				else {
 					//TODO: this is not the real implementation
@@ -58,13 +62,11 @@ module.exports = {
 
 			return JSON.stringify(response);
 		},
-		isNullOrUndefined: function(obj){
-			return (typeof obj === 'undefined' || !obj);
-		}
+		isNullOrUndefined: __isNullOrUndefined
 	},
 	Security: {
 		checksumSync: function(_path, callback) {
-			if (crypto) {
+			if (!__isNullOrUndefined(crypto)) {
 				var hash = crypto.createHash('sha256');
 				var stream = fs.createReadStream(_path);
 

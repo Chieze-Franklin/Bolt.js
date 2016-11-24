@@ -8,7 +8,7 @@ module.exports = {
 		response.redirect('/api/help');
 	},
 	getHelp: function(request, response){
-		//response.send(app._router.stack); //run this (comment everything below) to see the structure of 'app._router.stack'
+		//response.send(request.app._router.stack); return; //run this to see the structure of 'app._router.stack'
 
 		//TODO: consider making it possible to know the state of an endpoint: deprecated, stable, internal, unstable
 
@@ -20,34 +20,62 @@ module.exports = {
 		};
 		var routes = [];
 		var paths = [];
-		app._router.stack.forEach(function(r){
+		request.app._router.stack.forEach(function(r){
+			var entry = {};
+			var entrySummary = "";
+			var route;
+
 			if(r.route && r.route.path){
-				var entry = {};
-				var entrySummary = "";
-				if(r.route.stack && r.route.stack.length > 0){
-					var s = r.route.stack[0];
-					if(s.method){
-						entry.method = s.method;
-						entrySummary += s.method + ": ";
+				route = r.route;
+
+				if(route.stack && route.stack.length > 0){
+					
+					var handler = route.stack[0];
+					if(handler.method){
+						entry.method = handler.method;
+						entrySummary += handler.method + ": ";
 					}
-					entry.path = r.route.path;
-					entrySummary += r.route.path;
+
+					entry.path = route.path;
+					entrySummary += route.path;
 
 					routes.push(entry);
 					paths.push(entrySummary);
 
-					/*r.route.stack.forEach(function(s){
-						if(s.method){
-							entry.method = s.method;
-							entrySummary += s.method + ": ";
+					/*route.stack.forEach(function(handler){
+						if(handler.method){
+							entry.method = handler.method;
+							entrySummary += handler.method + ": ";
 						}
-						entry.path = r.route.path;
-						entrySummary += r.route.path;
+						entry.path = route.path;
+						entrySummary += route.path;
 
 						routes.push(entry);
 						paths.push(entrySummary);
 					});*/
 				}
+			}
+			else if(r.name === 'router'){
+				route = r.handle;
+				console.log(route); //TODO:
+				/*/r.handle.stack.forEach(function(stackEntry){
+					route = stackEntry.route;
+
+					if(route && route.path && route.stack && route.stack.length > 0){
+						console.log(route);
+						var handler = route.stack[0];
+						if(handler.method){
+							entry.method = handler.method;
+							entrySummary += handler.method + ": ";
+						}
+
+						entry.path = route.path;
+						entrySummary += route.path;
+
+						routes.push(entry);
+						paths.push(entrySummary);
+					}
+				});/*/
 			}
 		});
 
