@@ -1,6 +1,5 @@
 var exec = require('child_process').exec, child;
 var express = require("express");
-var fs = require("fs");
 var http = require("http");
 var mongodb = require('mongodb');
 var mongoose = require('mongoose'), Schema = mongoose.Schema;
@@ -9,7 +8,6 @@ var superagent = require('superagent');
 
 var config = require("./sys/server/config");
 var configure = require("./sys/server/configure");
-var errors = require("./sys/server/errors");
 var models = require("./sys/server/models");
 var utils = require("./sys/server/utils");
 
@@ -186,8 +184,8 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 											if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
 												console.log("Started startup app%s%s at %s:%s",
-													(!utils.Misc.isNullOrUndefined(context.name) ? " '" + context.name + "'" : ""), 
-													(!utils.Misc.isNullOrUndefined(context.path) ? " (" + context.path + ")" : ""),
+													(!utils.Misc.isNullOrUndefined(context.app.title) ? " '" + context.app.title + "'" : ""), 
+													(!utils.Misc.isNullOrUndefined(context.name) ? " (" + context.name + ")" : ""),
 													(!utils.Misc.isNullOrUndefined(context.host) ? context.host : ""), 
 													context.port);
 											}

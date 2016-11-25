@@ -129,7 +129,7 @@ module.exports = {
 
 			//if an app that can serve this view is found
 			if (app) {
-				response.redirect('/app/' + app);
+				response.redirect('/apps/' + app);
 			}
 			//check for a native view
 			else {

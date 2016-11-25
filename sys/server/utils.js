@@ -7,6 +7,8 @@ try {
 var fs = require('fs')
 var path = require("path");
 
+var errors = require("./errors");
+
 var __isNullOrUndefined = function(obj){
 	return (typeof obj === 'undefined' || !obj);
 }
