@@ -1,6 +1,7 @@
 var superagent = require('superagent');
 
 var config = require("../config");
+var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
@@ -26,6 +27,7 @@ module.exports = {
 	post: function(request, response){
 		if(!utils.Misc.isNullOrUndefined(request.body.app) && !utils.Misc.isNullOrUndefined(request.body.role)) {
 			var appnm = utils.String.trim(request.body.app.toLowerCase());
+			var rlnm = utils.String.trim(request.body.role.toLowerCase());
 			models.app.findOne({ name: appnm }, function(errorApp, app){
 				if (!utils.Misc.isNullOrUndefined(errorApp)){
 					response.end(utils.Misc.createResponse(null, errorApp));
@@ -35,7 +37,7 @@ module.exports = {
 					response.end(utils.Misc.createResponse(null, errApp, 403));
 				}
 				else{
-					models.role.findOne({ name: request.body.role }, function(errorRole, role){
+					models.role.findOne({ name: rlnm }, function(errorRole, role){
 						if (!utils.Misc.isNullOrUndefined(errorRole)){
 							response.end(utils.Misc.createResponse(null, errorRole));
 						}

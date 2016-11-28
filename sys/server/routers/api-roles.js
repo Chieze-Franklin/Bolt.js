@@ -10,6 +10,9 @@ var router = express.Router();
 //returns an array of role objects matching the specified criteria
 router.get('/', apiRolesCtrlr.get);
 
+//gets the role object with the specified name
+router.get('/:role', apiRolesCtrlr.getRole);
+
 //adds a role to the database
 router.post('/', checksCtrlr.forSystemApp, apiRolesCtrlr.post);
 

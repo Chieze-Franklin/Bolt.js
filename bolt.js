@@ -26,9 +26,6 @@ var uiViewsRouter = require('./sys/server/routers/ui-views');
 
 //---------Helpers
 
-//the request header to check for requests IDs
-const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
-
 //holds all the apps' request IDs
 var __contextToReqidMap = new Map();
 var __systemApps = ['bolt', 'bolt-settings']; //TODO: this list shud be gotten from the database
@@ -116,7 +113,7 @@ app.use(function(request, response, next) {
   var error = new Error("The endpoint '" + request.path + "' could not be found!");
   response
   	.set('Content-Type', 'application/json')
-  	.end(utils.Misc.createResponse(null, error, 703));
+  	.end(utils.Misc.createResponse(null, error, 103));
 });
 
 var server = app.listen(config.getPort(), config.getHost(), function(){

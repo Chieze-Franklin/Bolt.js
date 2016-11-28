@@ -5,12 +5,16 @@ var apiUserRolesCtrlr = require('../controllers/api-user-roles');
 
 var router = express.Router();
 
-//TODO: DEL: / //usage: ?user=frank
-
 //returns an array of user-role objects matching the specified criteria
 router.get('/', apiUserRolesCtrlr.get);
 
 //adds a user-role association to the database
 router.post('/', checksCtrlr.forSystemApp, apiUserRolesCtrlr.post);
+
+//deletes an array of user-role objects matching the specified criteria
+router.delete('/', checksCtrlr.forSystemApp, apiUserRolesCtrlr.delete);
+
+//updates an array of user-role objects matching the specified criteria
+router.put('/', checksCtrlr.forSystemApp, apiUserRolesCtrlr.put);
 
 module.exports = router;

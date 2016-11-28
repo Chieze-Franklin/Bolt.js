@@ -1,10 +1,16 @@
 'use strict';
 
 module.exports = {
+	'100': "Endpoint not specified",
+	'103': "Could not find endpoint",
+
 	'200': "Username and/or password missing",
 	'201': "A user with the same username already exists",
 	'202': "Could not save user to the database",
 	'203': "Could not retrieve user from the database",
+
+	'212': "Could not log user in",
+	'213': "Could not get logged-in user",
 
 
 	'300': "Role name missing",
@@ -43,8 +49,5 @@ module.exports = {
 	'600': "File name missing",
 	'601': "A file with the same name already exists",
 	'602': "Could not save file",
-	'603': "Could not retrieve file",
-
-	'700': "Endpoint missing",
-	'703': "Could not find endpoint"
+	'603': "Could not retrieve file"
 };

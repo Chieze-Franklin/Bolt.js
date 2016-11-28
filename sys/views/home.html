@@ -40,6 +40,7 @@
       <div class="row-xs-height">
         <div class="col-xs-height col-middle">
           <div class="error-container text-center">
+            <h1 class="error-number" id="username"></h1>
             <h1 class="error-number">No Home App</h1>
             <p>You have no <b>Home</b> app installed. You can download one online or sideload an already-downloaded copy.
             </p>
@@ -75,9 +76,27 @@
     <script src="pages/js/pages.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function(){
+            //get current user
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{port}}/api/users/@current",
+              type: "GET",
+              headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+              success: function(response, status, xhr){
+                if(response.code == 0){
+                  var user = response.body;
+                  if(user) $("#username").html("Welcome " + user.username);
+                }
+                else {
+                  //TODO: error
+                  console.log(response);
+                }
+              },
+              error: function(xhr, status, err){}
+            });
+
             $("#download").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/get",
+                  url: "{{protocol}}://{{host}}:{{port}}/api/apps/get",
                   data: { app: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
@@ -96,7 +115,7 @@
 
             $("#sideload").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/reg",
+                  url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
                   data: { app: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},

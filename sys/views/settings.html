@@ -77,7 +77,7 @@
         $(document).ready(function(){
             $("#download").click(function(){
                 $.ajax({
-                  url: "{{protocol}}://{{host}}:{{port}}/api/app/get",
+                  url: "{{protocol}}://{{host}}:{{port}}/api/apps/get",
                   data: { app: "bolt-settings" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},

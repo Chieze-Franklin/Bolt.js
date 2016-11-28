@@ -142,7 +142,7 @@
             			//second, create an admin role
             			$.ajax({
             				url: "{{protocol}}://{{host}}:{{port}}/api/roles",
-            				data: { name: "admin", isAdmin: true, description: "Administrator" },
+            				data: { name: "admin", isAdmin: true, title: "Administrator", description: "Administrator" },
             				type: "POST",
             				headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             				success: function(response2, status2, xhr2){

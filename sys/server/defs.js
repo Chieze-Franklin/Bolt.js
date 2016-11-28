@@ -32,7 +32,18 @@ module.exports = {
 		start: { type: Boolean, required: true, },
 
 		dateCreated: { type: Date, default: Date.now },
-		features: { type: [String]}
+		features: { type: [String]},
+		files: { type: [String]}
+	},
+	appUserAssoc : {
+		app: { type: String, required: true },
+		app_id: { type: ObjectId, required: true },
+		user: { type: String, required: true },
+		user_id: { type: ObjectId, required: true },
+
+		dateCreated: { type: Date, default: Date.now },
+		starts: { type: Number, default: 0 },
+		lastStart: { type: Date, default: Date.now }
 	},
 	boltSecret : {
 		name: { type: String, required: true },
@@ -42,11 +53,13 @@ module.exports = {
 		path: { type: String, required: true },
 		app: { type: String, required: true },
 		isDefault: { type: Boolean, default: false },
+		type: { type: String, required: true },
 		endpoint: { type: String, required: true }
 	},
 	role : {
 		name: { type: String, required: true },
 		isAdmin: { type: Boolean, default: false },
+		title: { type: String, required: true },
 
 		description: { type: String },
 		dateCreated: { type: Date, default: Date.now }

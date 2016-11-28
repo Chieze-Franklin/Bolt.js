@@ -3,6 +3,7 @@ var path = require("path");
 var superagent = require('superagent');
 
 var config = require("../config");
+var errors = require("../errors");
 var models = require("../models");
 var processes = require("../processes");
 var utils = require("../utils");
@@ -126,6 +127,16 @@ module.exports = {
 											app: appnm,
 											endpoint: plugins[plugin]
 										});
+										//set type
+										if (utils.String.startsWith(plug, "/data/")) {
+											newPlugin.type = "data";
+										}
+										else if (utils.String.startsWith(plug, "/acts/")) {
+											newPlugin.type = "action";
+										}
+										else {
+											newPlugin.type = "view";
+										}
 										newPlugin.save(); //TODO: check that two plugins dont hv d same path and app
 									}
 								}
@@ -139,6 +150,7 @@ module.exports = {
 										response.end(utils.Misc.createResponse(null, saveError, 402));
 									}
 									else {
+										//TODO: POST necessary info to savedApp.install endpoint
 										response.send(utils.Misc.createResponse(savedApp));
 									}
 								});

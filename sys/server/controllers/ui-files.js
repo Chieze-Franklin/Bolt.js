@@ -3,6 +3,7 @@ var path = require("path");
 var superagent = require('superagent');
 
 var config = require("../config");
+var errors = require("../errors");
 var utils = require("../utils");
 
 module.exports = {

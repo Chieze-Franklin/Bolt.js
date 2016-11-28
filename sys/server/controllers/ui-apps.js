@@ -1,6 +1,7 @@
 var superagent = require('superagent');
 
 var config = require("../config");
+var errors = require("../errors");
 var utils = require("../utils");
 
 module.exports = {
@@ -30,8 +31,16 @@ module.exports = {
 					}
 					else if (!utils.Misc.isNullOrUndefined(context)) {
 						if(!utils.Misc.isNullOrUndefined(context.port)){
-							var index = (!utils.Misc.isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "/";
-							response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index);
+							var index = (!utils.Misc.isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "";
+							var query = "";
+							if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) { //a user is logged in
+								query += "userid=" + request.session.user._id;
+							}
+							/*query = "&protocol=" + config.getProtocol()
+									+ "&host=" + config.getHost()
+									+ "&port=" + config.getPort()
+									+ "&appPort=" + context.port;*/
+							response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + index + "?" + query);
 						}
 						else {
 							//TODO: maybe I shud show an error saying no port found for this app 

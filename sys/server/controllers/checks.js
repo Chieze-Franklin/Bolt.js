@@ -1,4 +1,8 @@
+var errors = require("../errors");
 var utils = require("../utils");
+
+//the request header to check for requests IDs
+const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 
 var __getAppFromReqId = function(id, request) {
 	for (var entry of request.contextToReqidMap) {
@@ -10,7 +14,6 @@ var __getAppFromReqId = function(id, request) {
 
 var __isSystemApp = function(id, request) {
 	var systemApps = request.systemApps;
-	console.log(request.systemApps);
 	var app = __getAppFromReqId(id, request);
 	if (utils.Misc.isNullOrUndefined(app))
 		return false;

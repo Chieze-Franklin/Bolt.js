@@ -112,6 +112,10 @@ module.exports = {
 				return Date.now.toString();
 			}
 		},
+		startsWith: function(word, chars, start){
+			if (__isNullOrUndefined(start)) start = 0;
+			return word.indexOf(chars) == start;
+		},
 		trim: function(word, char){
 			return this.trimStart(this.trimEnd(word, char), char);
 		},

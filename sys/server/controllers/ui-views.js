@@ -3,6 +3,7 @@ var path = require("path");
 var superagent = require('superagent');
 
 var config = require("../config");
+var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
@@ -14,7 +15,7 @@ var __loadLoginView = function(request, response){
 		host: config.getHost(),
 		port: config.getPort(),
 
-		reqid: request.redid
+		reqid: request.reqid
 	};
 	response.locals.title = "Login";
 	response
