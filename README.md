@@ -16,7 +16,7 @@ With Bolt.js you get to run your JavaScript web apps and websites in an environm
 * On your browser, navigate to <code>{{config-host}}:{{config-port}}</code> to start working in the Bolt environment.
 
 ## Resources
-Get up to speed on the whole Bolt thingy at [the Bolt wiki](https://github.com/Chieze-Franklin/Bolt.js/wiki).
+Get up to speed on the whole Bolt thingy on the official [Bolt.js book](https://chieze-franklin.gitbooks.io/bolt-js/content/).
 
 ## Contribute
 
