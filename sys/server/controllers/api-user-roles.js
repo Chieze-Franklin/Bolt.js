@@ -17,9 +17,9 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(userRoles)) {
-				models.userRoleAssoc.remove(searchCriteria, function (remError) {
-					if (!utils.Misc.isNullOrUndefined(remError)) {
-						response.end(utils.Misc.createResponse(null, remError));
+				models.userRoleAssoc.remove(searchCriteria, function (removeError) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
 						response.send(utils.Misc.createResponse(userRoles));
@@ -53,7 +53,7 @@ module.exports = {
 		if(!utils.Misc.isNullOrUndefined(request.body.user) && !utils.Misc.isNullOrUndefined(request.body.role)){
 			var usrnm = utils.String.trim(request.body.user.toLowerCase());
 			var rlnm = utils.String.trim(request.body.role.toLowerCase());
-			models.user.findOne({ username: usrnm }, function(errorUser, user){
+			models.user.findOne({ name: usrnm }, function(errorUser, user){
 				if (!utils.Misc.isNullOrUndefined(errorUser)){
 					response.end(utils.Misc.createResponse(null, errorUser));
 				}
@@ -71,7 +71,7 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, errRole, 303));
 						}
 						else{
-							models.userRoleAssoc.findOne({ user: user.username, role: role.name }, function(errorUserRole, userRole){
+							models.userRoleAssoc.findOne({ user: user.name, role: role.name }, function(errorUserRole, userRole){
 								if (!utils.Misc.isNullOrUndefined(errorUserRole)) {
 									response.end(utils.Misc.createResponse(null, errorUserRole));
 								}
@@ -79,7 +79,7 @@ module.exports = {
 									var newUserRoleAssoc = new models.userRoleAssoc({ 
 										role: role.name,
 										role_id: role._id, 
-										user: user.username,
+										user: user.name,
 										user_id: user._id 
 									});
 									newUserRoleAssoc.save(function(saveError, savedUserRole){
@@ -105,33 +105,5 @@ module.exports = {
 			var error = new Error(errors['310']);
 			response.end(utils.Misc.createResponse(null, error, 310));
 		}
-	},
-	put: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
-
-		models.userRoleAssoc.find(searchCriteria, function (error, userRoles) {
-			if (!utils.Misc.isNullOrUndefined(error)) {
-				response.end(utils.Misc.createResponse(null, error));
-			}
-			else if (!utils.Misc.isNullOrUndefined(userRoles)) {
-				models.userRoleAssoc.update(searchCriteria, 
-					{ $set: request.body }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
-					{ upsert: false },
-					function (remError) {
-					if (!utils.Misc.isNullOrUndefined(remError)) {
-						response.end(utils.Misc.createResponse(null, remError));
-					}
-					else {
-						response.send(utils.Misc.createResponse(userRoles));
-					}
-				});
-			}
-			else {
-				response.send(utils.Misc.createResponse([]));
-			}
-		});	
 	}
 };

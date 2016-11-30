@@ -84,7 +84,7 @@
               success: function(response, status, xhr){
                 if(response.code == 0){
                   var user = response.body;
-                  if(user) $("#username").html("Welcome " + user.username);
+                  if(user) $("#username").html("Welcome " + user.name);
                 }
                 else {
                   //TODO: error

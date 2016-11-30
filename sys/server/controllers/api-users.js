@@ -11,7 +11,7 @@ var __users = [];
 var __usernamesToLoginsMap = new Map();
 //note when a user logs in
 var __registerLogin = function(user) {
-	var username = user.username;
+	var username = user.name;
 	if (__usernamesToLoginsMap.has(username)) {
 		var logins = __usernamesToLoginsMap.get(username);
 		__usernamesToLoginsMap.delete(username); //just to be sure none exists before we run __usernamesToLoginsMap.set(...); below
@@ -24,7 +24,7 @@ var __registerLogin = function(user) {
 }
 //note when a user logs out
 var __registerLogout = function(user) {
-	var username = user.username;
+	var username = user.name;
 	if (__usernamesToLoginsMap.has(username)) {
 		var logins = __usernamesToLoginsMap.get(username);
 		__usernamesToLoginsMap.delete(username); //just to be sure none exists before we run __usernamesToLoginsMap.set(...); below
@@ -48,15 +48,16 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(users)) {
-				models.user.remove(searchCriteria, function (remError) {
-					if (!utils.Misc.isNullOrUndefined(remError)) {
-						response.end(utils.Misc.createResponse(null, remError));
+				models.user.remove(searchCriteria, function (removeError) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
 						users.forEach(function(user){
 							//delete user-roles
-							models.userRoleAssoc.remove({ user: user.username }, function(userRoleRemError){});
-							//TODO: delete app-user
+							models.userRoleAssoc.remove({ user: user.name }, function(userRoleRemoveError){});
+							//delete app-users
+							models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
 						});
 						response.send(utils.Misc.createResponse(users));
 					}
@@ -68,8 +69,8 @@ module.exports = {
 		});
 	},
 	deleteUser: function(request, response){
-		var usrnm = utils.String.trim(request.params.user.toLowerCase());
-		var searchCriteria = { username: usrnm };
+		var usrnm = utils.String.trim(request.params.name.toLowerCase());
+		var searchCriteria = { name: usrnm };
 		models.user.findOne(searchCriteria, function(error, user){
 			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(utils.Misc.createResponse(null, error));
@@ -79,14 +80,16 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 203));
 			}
 			else{
-				models.user.remove(searchCriteria, function (remError) {
-					if (!utils.Misc.isNullOrUndefined(remError)) {
-						response.end(utils.Misc.createResponse(null, remError));
+				models.user.remove(searchCriteria, function (removeError) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
 						//delete user-roles
-						models.userRoleAssoc.remove({ user: user.username }, function(userRoleRemError){});
-						//TODO: delete app-user
+						models.userRoleAssoc.remove({ user: user.name }, function(userRoleRemoveError){});
+						//delete app-users
+						models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
+
 						response.send(utils.Misc.createResponse(user));
 					}
 				});
@@ -124,9 +127,9 @@ module.exports = {
 		response.send(utils.Misc.createResponse(__users));
 	},
 	getUser: function(request, response){
-		var usrnm = utils.String.trim(request.params.user.toLowerCase());
+		var usrnm = utils.String.trim(request.params.name.toLowerCase());
 		models.user.findOne({ 
-			username: usrnm
+			name: usrnm
 		}, function(error, user){
 			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(utils.Misc.createResponse(null, error));
@@ -141,17 +144,18 @@ module.exports = {
 		});
 	},
 	post: function(request, response){
-		if(!utils.Misc.isNullOrUndefined(request.body.username) && !utils.Misc.isNullOrUndefined(request.body.password)){
-			var usrnm = utils.String.trim(request.body.username.toLowerCase());
-			models.user.findOne({ username: usrnm }, function(error, user){
+		if(!utils.Misc.isNullOrUndefined(request.body.name) && !utils.Misc.isNullOrUndefined(request.body.password)){
+			var usrnm = utils.String.trim(request.body.name.toLowerCase());
+			models.user.findOne({ name: usrnm }, function(error, user){
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error));
 				}
 				else if (utils.Misc.isNullOrUndefined(user)) {
 					var newUser = new models.user({ 
-						username: usrnm, 
+						name: usrnm, 
 						passwordHash: utils.Security.hashSync(request.body.password + usrnm)
 					});
+					newUser.displayName = request.body.displayName || request.body.name;
 					newUser.save(function(saveError, savedUser){
 						if (!utils.Misc.isNullOrUndefined(saveError)) {
 							response.end(utils.Misc.createResponse(null, saveError, 202));
@@ -174,10 +178,10 @@ module.exports = {
 		}
 	},
 	postLogin: function(request, response){
-		if(!utils.Misc.isNullOrUndefined(request.body.username) && !utils.Misc.isNullOrUndefined(request.body.password)){
-			var usrnm = utils.String.trim(request.body.username.toLowerCase());
+		if(!utils.Misc.isNullOrUndefined(request.body.name) && !utils.Misc.isNullOrUndefined(request.body.password)){
+			var usrnm = utils.String.trim(request.body.name.toLowerCase());
 			models.user.findOne({ 
-				username: usrnm, 
+				name: usrnm, 
 				passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
 			}, function(error, user){
 				if (!utils.Misc.isNullOrUndefined(error)) {
@@ -191,17 +195,22 @@ module.exports = {
 				else{
 					if (user.isBlocked) { //TODO: test this
 						request.session.reset();
+
+						var userBlockedError = new Error(errors['212']);
+						response.end(utils.Misc.createResponse(null, userBlockedError, 212));
 					}
 					else {
 						user.visits+=1;
+						user.lastVisit = Date.now;
 						user.save(function(saveError, savedUser){});
 						delete user.passwordHash; //TODO: not working
 						request.user = user;
 						request.session.user = user;
 						response.locals.user = user; //make available to UI template engines
+
+						__registerLogin(user);
+						response.send(utils.Misc.createResponse(user));//TODO: one day I may change this to return a (JSON web) token
 					}
-					__registerLogin(user);
-					response.send(utils.Misc.createResponse(user));
 				}
 			});
 		}
@@ -223,48 +232,65 @@ module.exports = {
 			searchCriteria = request.query;
 		}
 
-		models.user.find(searchCriteria, function (error, users) {
-			if (!utils.Misc.isNullOrUndefined(error)) {
-				response.end(utils.Misc.createResponse(null, error));
-			}
-			else if (!utils.Misc.isNullOrUndefined(users)) {
-				models.user.update(searchCriteria,
-					{ $set: request.body }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
-					{ upsert: false }, 
-					function (putError) {
-					if (!utils.Misc.isNullOrUndefined(putError)) {
-						response.end(utils.Misc.createResponse(null, putError));
-					}
-					else {
-						response.send(utils.Misc.createResponse(users));
-					}
-				});
+		var updateObject = {};
+		if (!utils.Misc.isNullOrUndefined(request.body.displayNamedisplayName)) {
+			updateObject.displayName = request.body.displayName;
+		}
+		if (!utils.Misc.isNullOrUndefined(request.body.isBlocked)) {
+			updateObject.isBlocked = request.body.isBlocked;
+		}
+
+		models.user.update(searchCriteria,
+			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+			{ upsert: false }, 
+			function (updateError) {
+			if (!utils.Misc.isNullOrUndefined(updateError)) {
+				response.end(utils.Misc.createResponse(null, updateError));
 			}
 			else {
-				response.send(utils.Misc.createResponse([]));
+				models.user.find(searchCriteria, function (error, users) {
+					if (!utils.Misc.isNullOrUndefined(error)) {
+						response.end(utils.Misc.createResponse(null, error));
+					}
+					else if (!utils.Misc.isNullOrUndefined(users)) {
+						response.send(utils.Misc.createResponse(users));
+					}
+					else {
+						response.send(utils.Misc.createResponse([]));
+					}
+				});
 			}
 		});
 	},
 	putUser: function(request, response){
-		var usrnm = utils.String.trim(request.params.user.toLowerCase());
-		var searchCriteria = { username: usrnm };
-		models.user.findOne(searchCriteria, function(error, user){
-			if (!utils.Misc.isNullOrUndefined(error)) {
-				response.end(utils.Misc.createResponse(null, error));
+		var usrnm = utils.String.trim(request.params.name.toLowerCase());
+		var searchCriteria = { name: usrnm };
+
+		var updateObject = {};
+		if (!utils.Misc.isNullOrUndefined(request.body.displayName)) {
+			updateObject.displayName = request.body.displayName;
+		}
+		if (!utils.Misc.isNullOrUndefined(request.body.isBlocked)) {
+			updateObject.isBlocked = request.body.isBlocked;
+		}
+
+		models.user.update(searchCriteria,
+			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+			{ upsert: false }, 
+			function (updateError) {
+			if (!utils.Misc.isNullOrUndefined(updateError)) {
+				response.end(utils.Misc.createResponse(null, updateError));
 			}
-			else if(utils.Misc.isNullOrUndefined(user)){
-				var err = new Error(errors['203']);
-				response.end(utils.Misc.createResponse(null, err, 203));
-			}
-			else{
-				models.user.update(searchCriteria,
-					{ $set: request.body }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
-					{ upsert: false }, 
-					function (putError) {
-					if (!utils.Misc.isNullOrUndefined(putError)) {
-						response.end(utils.Misc.createResponse(null, putError));
+			else {
+				models.user.findOne(searchCriteria, function(error, user){
+					if (!utils.Misc.isNullOrUndefined(error)) {
+						response.end(utils.Misc.createResponse(null, error));
 					}
-					else {
+					else if(utils.Misc.isNullOrUndefined(user)){
+						var err = new Error(errors['203']);
+						response.end(utils.Misc.createResponse(null, err, 203));
+					}
+					else{
 						response.send(utils.Misc.createResponse(user));
 					}
 				});

@@ -23,7 +23,7 @@ router.get('/@current', apiUsersCtrlr.getCurrent);
 router.get('/@live', apiUsersCtrlr.getLive);
 
 //gets the user object of the user with the specified name
-router.get('/:user', apiUsersCtrlr.getUser);
+router.get('/:name', apiUsersCtrlr.getUser);
 
 //adds a user to the database
 router.post('/', checksCtrlr.forSystemApp, apiUsersCtrlr.post);
@@ -38,12 +38,12 @@ router.post('/logout', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogout);
 router.delete('/', checksCtrlr.forSystemApp, apiUsersCtrlr.delete);
 
 //deletes a user from the database
-router.delete('/:user', checksCtrlr.forSystemApp, apiUsersCtrlr.deleteUser);
+router.delete('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.deleteUser);
 
 //updates an array of user objects matching the specified criteria
 router.put('/', checksCtrlr.forSystemApp, apiUsersCtrlr.put);
 
 //updates a user in the database
-router.put('/:user', checksCtrlr.forSystemApp, apiUsersCtrlr.putUser);
+router.put('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.putUser);
 
 module.exports = router;

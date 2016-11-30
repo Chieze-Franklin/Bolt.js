@@ -120,9 +120,9 @@
         Bolt.Config.setPort("{{port}}");
         Bolt.Config.setProtocol("{{protocol}}");
 
-        var email,password, con_password;
+        var username,password, con_password;
         $("#submit").click(function(){
-            email=$("#username").val();
+            username=$("#username").val();
             password=$("#password").val();
             con_password=$("#confirm_password").val();
             /*
@@ -132,7 +132,7 @@
             //first, add the user
             $.ajax({
             	url: "{{protocol}}://{{host}}:{{port}}/api/users",
-            	data: { username: email, password: password },
+            	data: { name: username, password: password },
             	type: "POST",
             	beforeSend: function(xhr) {
             		xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
@@ -150,7 +150,7 @@
             						//third, associate user and role
             						$.ajax({
             							url: "{{protocol}}://{{host}}:{{port}}/api/user-roles",
-            							data: { user: response.body.username, role: response2.body.name },
+            							data: { user: response.body.name, role: response2.body.name },
             							type: "POST",
             							headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             							success: function(response3, status3, xhr3){
@@ -158,7 +158,7 @@
             									//fourth, log user in
             									$.ajax({
             										url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
-            										data: { username: email, password: password },
+            										data: { name: username, password: password },
             										type: "POST",
             										headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             										success: function(response4, status4, xhr4){

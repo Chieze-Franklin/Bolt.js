@@ -13,4 +13,7 @@ router.get('/', apiAppRolesCtrlr.get);
 //adds an app-role association to the database
 router.post('/', checksCtrlr.forSystemApp, apiAppRolesCtrlr.post);
 
+//deletes an array of app-role objects matching the specified criteria
+router.delete('/', checksCtrlr.forSystemApp, apiAppRolesCtrlr.delete);
+
 module.exports = router;

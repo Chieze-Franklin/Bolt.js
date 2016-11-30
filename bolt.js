@@ -170,7 +170,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 									var name = startups[index];
 									superagent
 										.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-										.send({ app: name })
+										.send({ name: name })
 										.end(function(appstartError, appstartResponse){
 											if (!utils.Misc.isNullOrUndefined(appstartError)) {
 												runStartups(++index);

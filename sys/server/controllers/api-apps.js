@@ -33,7 +33,7 @@ module.exports = {
 		});
 	},
 	getApp: function(request, response){
-		var appnm = utils.String.trim(request.params.app.toLowerCase());
+		var appnm = utils.String.trim(request.params.name.toLowerCase());
 		models.app.findOne({ 
 			name: appnm
 		}, function(error, app){
@@ -63,9 +63,9 @@ module.exports = {
 	},*/
 	post: function(request, response){
 		//TODO:
-		//expects: { app (if app name mission, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
+		//expects: { app (if app name (.body.name) missing, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
 		//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
-		//if (!utils.Misc.isNullOrUndefined(request.body.app))
+		//if (!utils.Misc.isNullOrUndefined(request.body.name))
 		response.send();
 	},
 	postReg: function(request, response){
@@ -103,6 +103,7 @@ module.exports = {
 								name: appnm,
 								path: _path
 							});
+							newApp.displayName = package.bolt.displayName || package.name;
 							newApp.description = package.description || "";
 							newApp.version = package.version || "";
 
@@ -115,7 +116,6 @@ module.exports = {
 							if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 							newApp.startup = package.bolt.startup || false;
 							newApp.tags = package.bolt.tags || [];
-							newApp.title = package.bolt.title || package.name;
 
 							if (!utils.Misc.isNullOrUndefined(package.bolt.plugins)) {
 								var plugins = package.bolt.plugins;
@@ -194,8 +194,8 @@ module.exports = {
 		}
 	},
 	postStart: function(request, response){
-		if (!utils.Misc.isNullOrUndefined(request.body.app)) {
-			var appnm = utils.String.trim(request.body.app.toLowerCase());
+		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
+			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){
 				if (__runningContexts[index].name === appnm){
 					response.send(utils.Misc.createResponse(__runningContexts[index]));
@@ -204,7 +204,7 @@ module.exports = {
 			}
 
 			superagent
-				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/' + request.body.app) 
+				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/' + request.body.name) 
 				.end(function(appinfoError, appinfoResponse){
 					if (!utils.Misc.isNullOrUndefined(appinfoError)) {
 						response.end(utils.Misc.createResponse(null, appinfoError));
@@ -313,8 +313,8 @@ module.exports = {
 		}
 	},
 	postStop: function(request, response){
-		if (!utils.Misc.isNullOrUndefined(request.body.app)) {
-			var appnm = utils.String.trim(request.body.app.toLowerCase());
+		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
+			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){
 				if (__runningContexts[index].name === appnm){
 					//remove context

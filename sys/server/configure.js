@@ -16,7 +16,8 @@ module.exports = function(app) {
 
 	app.use(function (request, response, next) {
 	  response.header('Access-Control-Allow-Origin', '*');
-	  response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-Bolt-Req-Id, X-Bolt-API-Ver');
+	  response.header('Access-Control-Allow-Headers', 
+	  	'Origin, X-Requested-With, Content-Type, Accept, X-Bolt-Req-Id, X-Bolt-Locale, X-Bolt-API-Ver, X-Bolt-Perm-Token, X-Bolt-User-Token');
 	  response.header('Access-Control-Allow-Methods', 'DELETE, GET, POST, PUT');
 
 	  next();
@@ -33,13 +34,13 @@ module.exports = function(app) {
 	}));
 	app.use(function(request, response, next) {
 		if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) {
-			models.user.findOne({ username: request.session.user.username }, function(error, user) {
+			models.user.findOne({ name: request.session.user.name }, function(error, user) {
 				if (!utils.Misc.isNullOrUndefined(user)) {
 					if (user.isBlocked) { //TODO: test this
 						request.session.reset();
 					}
 					else {
-						delete user.passwordHash; // delete the password from the session
+						delete user.passwordHash; //TODO: not working
 						request.user = user;
 						request.session.user = user;  //refresh the session value
 						response.locals.user = user;  //make available to UI template engines

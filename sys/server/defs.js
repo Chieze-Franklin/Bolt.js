@@ -10,7 +10,7 @@ module.exports = {
 		name: { type: String, required: true, lowercase: true },
 		path: { type: String, required: true },
 		main: { type: String },
-		title: { type: String, required: true },
+		displayName: { type: String, required: true },
 
 		description: { type: String },
 		dateCreated: { type: Date, default: Date.now },
@@ -46,7 +46,7 @@ module.exports = {
 		lastStart: { type: Date, default: Date.now }
 	},
 	boltSecret : {
-		name: { type: String, required: true },
+		name: { type: String, required: true, lowercase: true },
 		value: { type: String, required: true }
 	},
 	plugin : {
@@ -57,19 +57,21 @@ module.exports = {
 		endpoint: { type: String, required: true }
 	},
 	role : {
-		name: { type: String, required: true },
+		name: { type: String, required: true, lowercase: true },
 		isAdmin: { type: Boolean, default: false },
-		title: { type: String, required: true },
+		displayName: { type: String, required: true },
 
 		description: { type: String },
 		dateCreated: { type: Date, default: Date.now }
 	},
 	user : {
-		username: { type: String, required: true, lowercase: true },
+		name: { type: String, required: true, lowercase: true },
+		displayName: { type: String, required: true },
 		passwordHash : { type: String, required: true },
 
 		isBlocked: { type: Boolean, default: false },
 		dateCreated: { type: Date, default: Date.now },
+		lastVisit: { type: Date, default: Date.now },
 		visits: { type: Number, default: 0 }
 	},
 	userRoleAssoc : {

@@ -26,7 +26,7 @@ module.exports = {
 		else {
 			//use the current user's name
 			if (!utils.Misc.isNullOrUndefined(request.session.user)){
-				username = request.session.user.username;
+				username = request.session.user.name;
 			}
 		}
 
@@ -108,7 +108,7 @@ module.exports = {
 		else {
 			//use the current user's name
 			if (!utils.Misc.isNullOrUndefined(request.session.user)){
-				username = request.session.user.username;
+				username = request.session.user.name;
 			}
 		}
 

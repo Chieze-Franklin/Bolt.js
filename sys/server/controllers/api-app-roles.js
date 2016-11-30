@@ -6,6 +6,31 @@ var models = require("../models");
 var utils = require("../utils");
 
 module.exports = {
+	delete: function(request, response){
+		var searchCriteria = {};
+		if (!utils.Misc.isNullOrUndefined(request.query)) {
+			searchCriteria = request.query;
+		}
+
+		models.appRoleAssoc.find(searchCriteria, function (error, appRoles) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
+				response.end(utils.Misc.createResponse(null, error));
+			}
+			else if (!utils.Misc.isNullOrUndefined(appRoles)) {
+				models.appRoleAssoc.remove(searchCriteria, function (removeError) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
+					}
+					else {
+						response.send(utils.Misc.createResponse(appRoles));
+					}
+				});
+			}
+			else {
+				response.send(utils.Misc.createResponse([]));
+			}
+		});	
+	},
 	get: function(request, response){
 		var searchCriteria = {};
 		if (!utils.Misc.isNullOrUndefined(request.query)) {

@@ -12,7 +12,7 @@ router.get('/', apiAppsCtrlr.get);
 router.get('/@live', apiAppsCtrlr.getLive);
 
 //gets the app object of the app with the specified name
-router.get('/:app', apiAppsCtrlr.getApp);
+router.get('/:name', apiAppsCtrlr.getApp);
 
 //installs an app from an online repository (current only npm is supported)
 router.post('/', checksCtrlr.forUserPermToInstall, checksCtrlr.forAdminRight, apiAppsCtrlr.post);

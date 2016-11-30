@@ -6,10 +6,10 @@ var utils = require("../utils");
 
 module.exports = {
 	getApp: function(request, response){
-		var appnm = utils.String.trim(request.params.app.toLowerCase());
+		var appnm = utils.String.trim(request.params.name.toLowerCase());
 		superagent
 			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-			.send({ app: appnm })
+			.send({ name: appnm })
 			.end(function(error, appstartResponse){
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.redirect('/error');
