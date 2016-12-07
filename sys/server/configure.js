@@ -8,6 +8,7 @@ var config = require("./config");
 var models = require("./models");
 var utils = require("./utils");
 
+var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');
 
 module.exports = function(app) {
@@ -59,9 +60,11 @@ module.exports = function(app) {
 	  next();
 	});
 
+	app.use('/public', express.static(__publicdir));
+
 	app.use('/assets', express.static(__sysdir + '/views/assets'));
 	app.use('/pages', express.static(__sysdir + '/views/pages'));
-	app.use('/client', express.static(__sysdir + '/client'));
+	app.use('/client', express.static(__sysdir + '/client')); //TODO: this shud go
 
 	app.set('views', __sysdir + '/views');
 	app.engine('html', cons.handlebars);

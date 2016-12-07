@@ -7,6 +7,8 @@ var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
+var __publicDir = path.join(__dirname + './../../../public');
+
 module.exports = {
 	getAppFile: function(request, response){
 		var appnm = utils.String.trim(request.params.app.toLowerCase());
@@ -37,8 +39,10 @@ module.exports = {
 				}
 
 				if (!utils.Misc.isNullOrUndefined(fileInfo.path)) {
-					fileInfo.fullPath = path.join(__dirname, 'node_modules', app.path, fileInfo.path);
-					fs.stat(fileInfo.fullPath, function(fsError, stats) {
+					fileInfo.publicPath = config.getProtocol() + "://" + config.getHost() + ":" + config.getPort() 
+						+ "/public/" + app.name + "/" + fileInfo.path;
+					fileInfo.staticPath = path.join(__publicDir, app.path, fileInfo.path);
+					fs.stat(fileInfo.staticPath, function(fsError, stats) {
 						if (!utils.Misc.isNullOrUndefined(fsError)) {
 							fileInfo.error = fsError;
 						}

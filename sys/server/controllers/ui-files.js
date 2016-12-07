@@ -29,22 +29,8 @@ module.exports = {
 							response.redirect('/error?code=' + encodedCode);
 						}
 					}
-					else if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.fullPath) && !utils.Misc.isNullOrUndefined(fileInfo.stats)) {
-						//response.writeHead(301, {Location: 'file:///' + fileInfo.fullPath});
-						//response.end();
-
-						response.redirect(301, 'file:///' + fileInfo.fullPath);
-
-						/*var readStream = fs.createReadStream(fileInfo.fullPath);
-
-						readStream.on('open', function () {
-						    // This just pipes the read stream to the response object (which goes to the client)
-						    readStream.pipe(response);
-					  	});
-
-						readStream.on('error', function(err) {
-						    response.redirect('/error');
-						});*/
+					else if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.publicPath) && !utils.Misc.isNullOrUndefined(fileInfo.stats)) {
+						response.redirect(fileInfo.publicPath);
 					}
 					else {
 						response.redirect('/404?item=' + encodeURIComponent(request.params.app + '/' + request.params.file));

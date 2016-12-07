@@ -9,20 +9,6 @@ var utils = require("../utils");
 
 var __sysdir = path.join(__dirname + './../../../sys');
 
-var __loadLoginView = function(request, response){
-	var scope = {
-		protocol: config.getProtocol(),
-		host: config.getHost(),
-		port: config.getPort(),
-
-		reqid: request.reqid
-	};
-	response.locals.title = "Login";
-	response
-		.set('Content-type', 'text/html')
-		.render('login.html', scope);
-}
-
 var __loadSetupView = function(request, response){
 	var scope = {
 		protocol: config.getProtocol(),
@@ -62,16 +48,7 @@ module.exports = {
 						}
 					}
 					else if (!utils.Misc.isNullOrUndefined(users) && users.length > 0){ //if there are registered users,...
-						if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) { //a user is logged in, load the home view
-							response.redirect('/home');
-						}
-						else { //NO user is logged in, show login view
-							//response
-							//	.set(X_BOLT_REQ_ID, __genAppReqId('bolt'))
-							//	.redirect('/login');
-							//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
-							__loadLoginView(request, response);
-						}
+						response.redirect('/login');
 					}
 					else { //if there are NO registered users, then show them the setup view
 						//response
@@ -85,7 +62,20 @@ module.exports = {
 			});	
 	},
 	getLogin: function(request, response){
-		__loadLoginView(request, response);
+		var scope = {
+			protocol: config.getProtocol(),
+			host: config.getHost(),
+			port: config.getPort(),
+
+			success: request.query.success,
+			failure: request.query.failure,
+
+			reqid: request.reqid
+		};
+		response.locals.title = "Login";
+		response
+			.set('Content-type', 'text/html')
+			.render('login.html', scope);
 	},
 	getLogout: function(request, response){
 		var scope = {
@@ -99,6 +89,24 @@ module.exports = {
 		response
 			.set('Content-type', 'text/html')
 			.render('logout.html', scope);
+	},
+	getRequest: function(request, response){
+		var scope = {
+			protocol: config.getProtocol(),
+			host: config.getHost(),
+			port: config.getPort(),
+
+			app: request.query.app,
+			success: request.query.success,
+			failure: request.query.failure,
+			permissions: request.query.permissions,
+
+			reqid: request.reqid
+		};
+		response.locals.title = "Request";
+		response
+			.set('Content-type', 'text/html')
+			.render('request.html', scope);
 	},
 	getSetup: function(request, response){
 		__loadSetupView(request, response);
@@ -115,13 +123,13 @@ module.exports = {
 			//check for an app that can serve this view
 			else if(!utils.Misc.isNullOrUndefined(plugins) && plugins.length > 0) {
 				if (plugins.length == 1) {
-					app = plugins[0].app;
+					app = plugins[0].app + '?route=' + plugins[0].route;
 				}
 				else {
 					for (var index = 0; index < plugins.length; index++) {
 						var plugin = plugins[index];
 						if (plugin.isDefault) {
-							app = plugin.app;
+							app = plugin.app + '?route=' + encodeURIComponent(plugin.route);
 							break;
 						}
 					}

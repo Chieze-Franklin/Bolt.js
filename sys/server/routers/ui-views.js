@@ -9,10 +9,13 @@ var router = express.Router();
 router.get('/', uiViewsCtrlr.get);
 
 //this endpoint displays the login view
-router.get('/login', checksCtrlr.forSystemApp, uiViewsCtrlr.getLogin);
+router.get('/login', uiViewsCtrlr.getLogin);
 
 //this endpoint displays the logout view
 router.get('/logout', uiViewsCtrlr.getLogout);
+
+//this endpoint displays the request view
+router.get('/request', uiViewsCtrlr.getRequest);
 
 //this endpoint displays the setup view
 router.get('/setup', checksCtrlr.forSystemApp, uiViewsCtrlr.getSetup);

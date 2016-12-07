@@ -54,7 +54,7 @@ module.exports = {
 		app: { type: String, required: true },
 		isDefault: { type: Boolean, default: false },
 		type: { type: String, required: true },
-		endpoint: { type: String, required: true }
+		route: { type: String, required: true }
 	},
 	role : {
 		name: { type: String, required: true, lowercase: true },

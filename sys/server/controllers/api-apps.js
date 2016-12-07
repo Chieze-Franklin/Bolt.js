@@ -125,7 +125,7 @@ module.exports = {
 										var newPlugin = new models.plugin({
 											path: plug,
 											app: appnm,
-											endpoint: plugins[plugin]
+											route: plugins[plugin]
 										});
 										//set type
 										if (utils.String.startsWith(plug, "/data/")) {

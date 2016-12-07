@@ -103,10 +103,32 @@
     <!-- END VENDOR JS -->
     <script src="pages/js/pages.min.js"></script>
     <script>
+    function redirect(user){
+      var success_redirect = "{{success}}";
+      if(success_redirect) {
+        window.location.href = success_redirect + "?userid=" + user._id;
+      }
+      else {
+        window.location.href = "{{protocol}}://{{host}}:{{port}}/home";
+      }
+    }
+
     $(function()
     {
         //$('#form-login').validate()
+        $.ajax({
+          url: "{{protocol}}://{{host}}:{{port}}/api/users/@current",
+          type: "GET",
+          headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              redirect(response.body);
+            }
+          },
+          error: function(xhr, status, err){}
+        });
     })
+
     $(document).ready(function(){
         Bolt.Config.setHost("{{host}}");
         Bolt.Config.setPort("{{port}}");
@@ -128,7 +150,7 @@
               },
               success: function(response, status, xhr){
                 if(response.code == 0){
-                  window.location.href="{{protocol}}://{{host}}:{{port}}/home";
+                  redirect(response.body);
                 }
                 else {
                   //TODO: error

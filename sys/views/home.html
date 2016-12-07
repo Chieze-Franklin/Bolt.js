@@ -84,7 +84,7 @@
               success: function(response, status, xhr){
                 if(response.code == 0){
                   var user = response.body;
-                  if(user) $("#username").html("Welcome " + user.name);
+                  if(user) $("#username").html("Welcome " + user.displayName);
                 }
                 else {
                   //TODO: error
@@ -97,7 +97,7 @@
             $("#download").click(function(){
                 $.ajax({
                   url: "{{protocol}}://{{host}}:{{port}}/api/apps/get",
-                  data: { app: "bolt-home" },
+                  data: { name: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){
@@ -116,7 +116,7 @@
             $("#sideload").click(function(){
                 $.ajax({
                   url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
-                  data: { app: "bolt-home" },
+                  data: { path: "bolt-home" },
                   type: "POST",
                   headers: {'X-Bolt-Req-Id': '{{reqid}}'},
                   success: function(response, status, xhr){

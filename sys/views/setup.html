@@ -64,6 +64,14 @@
           <div>
             <!-- START Form Control-->
             <div class="form-group form-group-default">
+              <label>Name</label>
+              <div class="controls">
+                <input type="text" name="displayname" id="displayname" placeholder="Display Name" class="form-control" required>
+              </div>
+            </div>
+            <!-- END Form Control-->
+            <!-- START Form Control-->
+            <div class="form-group form-group-default">
               <label>Login</label>
               <div class="controls">
                 <input type="text" name="username" id="username" placeholder="User Name" class="form-control" required>
@@ -120,8 +128,9 @@
         Bolt.Config.setPort("{{port}}");
         Bolt.Config.setProtocol("{{protocol}}");
 
-        var username,password, con_password;
+        var displayname, username, password, con_password;
         $("#submit").click(function(){
+            displayname=$("#displayname").val();
             username=$("#username").val();
             password=$("#password").val();
             con_password=$("#confirm_password").val();
@@ -132,7 +141,7 @@
             //first, add the user
             $.ajax({
             	url: "{{protocol}}://{{host}}:{{port}}/api/users",
-            	data: { name: username, password: password },
+            	data: { name: username, password: password, displayName: displayname },
             	type: "POST",
             	beforeSend: function(xhr) {
             		xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
@@ -142,7 +151,7 @@
             			//second, create an admin role
             			$.ajax({
             				url: "{{protocol}}://{{host}}:{{port}}/api/roles",
-            				data: { name: "admin", isAdmin: true, title: "Administrator", description: "Administrator" },
+            				data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Administrator" },
             				type: "POST",
             				headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             				success: function(response2, status2, xhr2){
