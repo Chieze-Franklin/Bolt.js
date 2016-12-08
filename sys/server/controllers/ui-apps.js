@@ -41,10 +41,17 @@ module.exports = {
 							response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + route);
 						}
 						else {
+							/* OLD METHOD (feel free to delete this commented section (don't even know why I'm relectant to do so))
 							//TODO: maybe I shud show an error saying no port found for this app 
 							//but I don't want to hand-craft any user error message since that will not be localizable
 							//so I'll just be lazy here and show a 404
 							response.redirect('/404?item=' + encodeURIComponent(appnm));
+							*/
+
+							/*NEW METHOD*/
+							//if context.port is missing, it's probably because this app has no server
+							//so we (quite lazily) assume it has a public file called "index"
+							response.redirect('/files/' + appnm + '/index');
 						}
 					}
 					else {
