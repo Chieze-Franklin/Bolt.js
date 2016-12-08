@@ -33,6 +33,7 @@
     "express": "~4.14.0",
     "handlebars": "^4.0.5",
     "hbs": "~4.0.0",
+    "jwt-simple": "^0.5.1",
     "mongodb": "^2.2.11",
     "mongoose": "^4.6.5",
     "multer": "^1.2.0",

@@ -45,6 +45,8 @@ module.exports = {
 
 	'504': "This app is not a system app",
 
+	'510': "Object to tokenize missing",
+
 
 	'600': "File name missing",
 	'601': "A file with the same name already exists",

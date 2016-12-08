@@ -32,7 +32,13 @@ module.exports = {
 	},
 	//checks to be sure the app making this request is a system app
 	forSystemApp: function(request, response, next){
-		var id = request.get(X_BOLT_REQ_ID);
+		var id;
+		if (!utils.Misc.isNullOrUndefined(request.reqid)) {
+			id = request.reqid;
+		}
+		else {
+			id = request.get(X_BOLT_REQ_ID);
+		}
 		if(utils.Misc.isNullOrUndefined(id) || !__isSystemApp(id, request)) { 
 			var error = new Error(errors['504']);
 			response.end(utils.Misc.createResponse(null, error, 504));

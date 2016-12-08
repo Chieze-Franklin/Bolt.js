@@ -106,7 +106,20 @@
     function redirect(user){
       var success_redirect = "{{success}}";
       if(success_redirect) {
-        window.location.href = success_redirect + "?userid=" + user._id;
+        $.ajax({
+          url: "{{protocol}}://{{host}}:{{port}}/api/tokens",
+          data: { object: user._id },
+          type: "POST",
+          headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              var token = response.body;
+              window.location.href = success_redirect + "?user=" + token;
+            }
+            //TODO: else
+          },
+          error: function(xhr, status, err){}
+        });
       }
       else {
         window.location.href = "{{protocol}}://{{host}}:{{port}}/home";

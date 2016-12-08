@@ -17,6 +17,7 @@ var apiAppsRouter = require('./sys/server/routers/api-apps');
 var apiChecksRouter = require('./sys/server/routers/api-checks');
 var apiFilesRouter = require('./sys/server/routers/api-files');
 var apiRolesRouter = require('./sys/server/routers/api-roles');
+var apiTokensRouter = require('./sys/server/routers/api-tokens');
 var apiUserRolesRouter = require('./sys/server/routers/api-user-roles');
 var apiUsersRouter = require('./sys/server/routers/api-users');
 
@@ -93,6 +94,8 @@ app.use('/api/files', apiFilesRouter);
 
 app.use('/api/roles', apiRolesRouter);
 
+app.use('/api/tokens', apiTokensRouter);
+
 app.use('/api/user-roles', apiUserRolesRouter);
 
 app.use('/api/users', apiUsersRouter);
@@ -120,6 +123,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
 	var port = server.address().port;
 	console.log("Bolt Server listening at http://%s:%s", host, port);
+	console.log('');
 
 	//listen for 'uncaughtException' so it doesnt crash our system
 	process.on('uncaughtException', function(error){

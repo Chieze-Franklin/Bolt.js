@@ -36,6 +36,9 @@ var __registerLogout = function(user) {
 	}
 }
 
+const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
+const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
+
 module.exports = {
 	delete: function(request, response){
 		var searchCriteria = {};
@@ -117,6 +120,30 @@ module.exports = {
 	getCurrent: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.session.user)) {
 			response.send(utils.Misc.createResponse(request.session.user));
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) {
+			var reqid = request.get(X_BOLT_REQ_ID); //TODO: return error if this is not provided
+			var token = request.get(X_BOLT_USER_TOKEN); //TODO: return error if this is not provided
+			superagent
+				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/tokens/' + encodeURIComponent(token))
+				.end(function(tokenError, tokenResponse){
+					var realResponse = tokenResponse.body;
+					var userid = realResponse.body;
+					models.user.findOne({ 
+						_id: userid
+					}, function(error, user){
+						if (!utils.Misc.isNullOrUndefined(error)) {
+							response.end(utils.Misc.createResponse(null, error));
+						}
+						else if(utils.Misc.isNullOrUndefined(user)){
+							var err = new Error(errors['203']);
+							response.end(utils.Misc.createResponse(null, err, 203));
+						}
+						else{
+							response.send(utils.Misc.createResponse(user));
+						}
+					});
+				});
 		}
 		else {
 			var error = new Error(errors['213']);
