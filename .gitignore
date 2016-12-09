@@ -4,7 +4,7 @@ __raw/
 _github.io/_notes/
 node_modules/*
 public/
-!public/bolt
+!./public/bolt/
 sys/bins/mongodb/darwin/*
 sys/bins/mongodb/linux/*
 sys/bins/mongodb/win32/*

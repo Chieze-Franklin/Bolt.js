@@ -9,7 +9,7 @@
     <link rel="apple-touch-icon" sizes="76x76" href="public/bolt/pages/pages/ico/76.png">
     <link rel="apple-touch-icon" sizes="120x120" href="public/bolt/pages/pages/ico/120.png">
     <link rel="apple-touch-icon" sizes="152x152" href="public/bolt/pages/pages/ico/152.png">
-    <link rel="icon" type="image/x-icon" href="public/bolt/pages/pages/ico/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-touch-fullscreen" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -35,22 +35,44 @@
     }
     </script>
   </head>
-  <body class="fixed-header error-page">
-    <div class="container-xs-height full-height">
-      <div class="row-xs-height">
-        <div class="col-xs-height col-middle">
-          <div class="error-container text-center">
-            <h1 class="error-number">{{title}} {{code}}</h1>
-            <h2 class="semi-bold">{{errorUserTitle}}</h2>
-            <p>
-                {{errorUserMessage}}
-            </p>
-            <p>Contact your system administrator.</p>
+  <body class="fixed-header ">
+    <div class="register-container full-height sm-p-t-30">
+      <div class="container-sm-height full-height">
+        <div class="row row-sm-height">
+          <div class="col-sm-12 col-sm-height col-middle">
+            <h2>{{title}}</h2>
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group form-group-default">
+                  <h4>{{displayName}}</h4>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group form-group-default">
+                  <label>Role Description</label>
+                  <input type="text" name="description" id="description" placeholder="simple description" class="form-control">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="checkbox check-success checkbox-circle">
+                  <input name="isadmin" id="isadmin" type="checkbox">
+                  <label for="isadmin">Is Admin</label>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-cons m-t-10" name="submit" id="submit">Create new role</button>
           </div>
         </div>
       </div>
     </div>
-    <!-- END PAGE CONTAINER -->
+    
     <!-- BEGIN VENDOR JS -->
     <script src="public/bolt/pages/assets/plugins/pace/pace.min.js" type="text/javascript"></script>
     <script src="public/bolt/pages/assets/plugins/jquery/jquery-1.11.1.min.js" type="text/javascript"></script>
@@ -66,7 +88,44 @@
     <script type="text/javascript" src="public/bolt/pages/assets/plugins/select2/js/select2.full.min.js"></script>
     <script type="text/javascript" src="public/bolt/pages/assets/plugins/classie/classie.js"></script>
     <script src="public/bolt/pages/assets/plugins/switchery/js/switchery.min.js" type="text/javascript"></script>
+    <script src="public/bolt/pages/assets/plugins/jquery-validation/js/jquery.validate.min.js" type="text/javascript"></script>
     <!-- END VENDOR JS -->
     <script src="public/bolt/pages/pages/js/pages.min.js"></script>
+    <script>
+    $(function()
+    {
+      $('#form-register').validate()
+    })
+    $(document).ready(function(){
+        var title, description, isadmin;
+        $("#submit").click(function(){
+            title=$("#title").val();
+            description=$("#description").val();
+            isadmin=$("#isadmin").is(":checked");
+            var name = title.toLowerCase(); //TODO: remove spaces and other chars
+            /*
+            * Perform some validation here.
+            */
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{bolt_port}}/api/roles",
+              data: { name: name, title: title, description: description, isAdmin: isadmin },
+              type: "POST",
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+              },
+              success: function(response, status, xhr){
+                if(response.code == 0){
+                  window.location.href="{{protocol}}://{{host}}:{{my_port}}/roles";
+                }
+                else {
+                  //TODO: error
+                  console.log(response);
+                }
+              },
+              error: function(xhr, status, err){}
+            });
+        });
+      });
+    </script>
   </body>
 </html>

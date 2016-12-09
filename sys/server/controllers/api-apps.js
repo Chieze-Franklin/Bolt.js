@@ -9,6 +9,7 @@ var processes = require("../processes");
 var utils = require("../utils");
 
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
+var __publicDir = path.join(__dirname + './../../../public');
 
 //holds all running contexts
 var __runningContexts = [];
@@ -95,9 +96,6 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, err));
 						}
 						else if(utils.Misc.isNullOrUndefined(app)) {
-							
-							//TODO: copy the bolt client files specified as dependencies into the folders specified; if it fails, stop installation
-							//TODO: describe this in 'Installing an App'
 
 							var newApp = new models.app({ 
 								name: appnm,
@@ -114,7 +112,8 @@ module.exports = {
 							if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
 							if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
 							if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
-							newApp.startup = package.bolt.startup || false;
+							newApp.startup = request.body.startup || (package.bolt.startup || false);
+							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
 
 							if (!utils.Misc.isNullOrUndefined(package.bolt.plugins)) {
@@ -139,6 +138,23 @@ module.exports = {
 										}
 										newPlugin.save(); //TODO: check that two plugins dont hv d same path and app
 									}
+								}
+							}
+
+							if (!utils.Misc.isNullOrUndefined(package.bolt.public)) {
+								var public = package.bolt.public;
+								
+								if (public.constructor === Array) { //if (public instanceof Array) //if (Array.isArray(public))
+									public.forEach(function(publicPath, index){
+										var source = path.join(__node_modulesDir, _path, publicPath);
+										var target = path.join(__publicDir, _path, publicPath);
+									});
+								}
+								else {
+									public.paths.forEach(function(publicPath, index){
+										var source = path.join(__node_modulesDir, _path, publicPath);
+										var target = path.join(__publicDir, _path, publicPath);
+									});
 								}
 							}
 
@@ -185,6 +201,25 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, err, 401));
 						}
 					});
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['410']);
+			response.end(utils.Misc.createResponse(null, error, 410));
+		}
+	},
+	postRegPackage: function(request, response){
+		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
+			var _path = utils.String.trim(request.body.path);
+			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else {
+					var package = JSON.parse(data);
+
+					response.send(utils.Misc.createResponse(package));
 				}
 			});
 		}

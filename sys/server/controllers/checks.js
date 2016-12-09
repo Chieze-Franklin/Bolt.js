@@ -12,14 +12,6 @@ var __getAppFromReqId = function(id, request) {
 	}
 }
 
-var __isSystemApp = function(id, request) {
-	var systemApps = request.systemApps;
-	var app = __getAppFromReqId(id, request);
-	if (utils.Misc.isNullOrUndefined(app))
-		return false;
-	return (systemApps.indexOf(app.toLowerCase()) > -1);
-}
-
 module.exports = {
 	forAdminRight: function(request, response, next){
 		next(); //TODO: check if user has admin privilege
@@ -39,12 +31,29 @@ module.exports = {
 		else {
 			id = request.get(X_BOLT_REQ_ID);
 		}
-		if(utils.Misc.isNullOrUndefined(id) || !__isSystemApp(id, request)) { 
-			var error = new Error(errors['504']);
-			response.end(utils.Misc.createResponse(null, error, 504));
+
+		var name = __getAppFromReqId(id, request);
+		var appnm = utils.String.trim(name.toLowerCase());
+
+		if (appnm == 'bolt') {
+			//native views
+			next();
 		}
 		else {
-			next();
+			models.app.findOne({ 
+				name: appnm, system: true
+			}, function(error, app){
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else if(utils.Misc.isNullOrUndefined(app)){
+					var error = new Error(errors['504']);
+					response.end(utils.Misc.createResponse(null, error, 504));
+				}
+				else{
+					next();
+				}
+			});
 		}
 	},
 	forUserPermToInstall: function(request, response, next){

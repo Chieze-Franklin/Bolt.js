@@ -62,10 +62,6 @@ module.exports = function(app) {
 
 	app.use('/public', express.static(__publicdir));
 
-	app.use('/assets', express.static(__sysdir + '/views/assets'));
-	app.use('/pages', express.static(__sysdir + '/views/pages'));
-	app.use('/client', express.static(__sysdir + '/client')); //TODO: this shud go
-
 	app.set('views', __sysdir + '/views');
 	app.engine('html', cons.handlebars);
 	app.set('view engine', 'html');

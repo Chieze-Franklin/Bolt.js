@@ -21,6 +21,7 @@ module.exports = {
 		install: { type: String, default: '/' },
 		package: { type: Object, required: true },
 		startup: { type: Boolean, default: false },
+		system: { type: Boolean, default: false },
 		tags: { type: [String]},
 		version: { type: String }
 	},

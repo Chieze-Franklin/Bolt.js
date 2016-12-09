@@ -29,7 +29,6 @@ var uiViewsRouter = require('./sys/server/routers/ui-views');
 
 //holds all the apps' request IDs
 var __contextToReqidMap = new Map();
-var __systemApps = ['bolt', 'bolt-settings']; //TODO: this list shud be gotten from the database
 
 var __destroyAppReqId = function(app) {
 	if (__contextToReqidMap.has(app))
@@ -78,7 +77,6 @@ app.use(function(request, response, next) {
 	request.destroyAppReqId = __destroyAppReqId; //TODO: test this
 	request.genAppReqId = __genAppReqId; //TODO: test this
 	request.reqid = __genAppReqId('bolt');
-	request.systemApps = __systemApps;
 
   	next();
 });

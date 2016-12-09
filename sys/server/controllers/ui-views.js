@@ -7,6 +7,7 @@ var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
+var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __sysdir = path.join(__dirname + './../../../sys');
 
 var __loadSetupView = function(request, response){
