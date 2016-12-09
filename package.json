@@ -31,6 +31,7 @@
     "consolidate": "^0.14.1",
     "cookie-parser": "^1.4.3",
     "express": "~4.14.0",
+    "fs-extra": "^1.0.0",
     "handlebars": "^4.0.5",
     "hbs": "~4.0.0",
     "jwt-simple": "^0.5.1",

@@ -1,4 +1,5 @@
 var fs = require('fs');
+var fse = require('fs-extra');
 var path = require("path");
 var superagent = require('superagent');
 
@@ -147,13 +148,35 @@ module.exports = {
 								if (public.constructor === Array) { //if (public instanceof Array) //if (Array.isArray(public))
 									public.forEach(function(publicPath, index){
 										var source = path.join(__node_modulesDir, _path, publicPath);
-										var target = path.join(__publicDir, _path, publicPath);
+										var destination = path.join(__publicDir, _path, publicPath);
+										fse.copy(source, destination, { clobber: false }, function(copyError){//TODO: what shud I do if there's an error?
+											if(copyError) console.log("copy:", copyError);
+										});
 									});
 								}
 								else {
+									var destRoot = path.join(__publicDir, _path);
+									var overwrite = public.overwrite || false;
+
+									if (public.clean){
+										fse.emptyDir(destRoot, function(emptyError){//TODO: what shud I do if there's an error?
+											if(emptyError) console.log("empty:", emptyError);
+										});
+									}
+
 									public.paths.forEach(function(publicPath, index){
 										var source = path.join(__node_modulesDir, _path, publicPath);
-										var target = path.join(__publicDir, _path, publicPath);
+										var destination = path.join(__publicDir, _path, publicPath);
+										if (public.move) {
+											fse.move(source, destination, { clobber: overwrite }, function(copyError){//TODO: what shud I do if there's an error?
+												if(copyError) console.log("copy:", copyError);
+											});
+										}
+										else {
+											fse.copy(source, destination, { clobber: overwrite }, function(copyError){//TODO: what shud I do if there's an error?
+												if(copyError) console.log("copy:", copyError);
+											});
+										}
 									});
 								}
 							}
