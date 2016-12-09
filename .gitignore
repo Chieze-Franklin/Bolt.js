@@ -3,7 +3,7 @@ __dump/
 __raw/
 _github.io/_notes/
 node_modules/*
-public/
+public/ctl-*
 !./public/bolt/
 sys/bins/mongodb/darwin/*
 sys/bins/mongodb/linux/*
