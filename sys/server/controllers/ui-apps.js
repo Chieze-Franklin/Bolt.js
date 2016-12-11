@@ -33,12 +33,18 @@ module.exports = {
 						if(!utils.Misc.isNullOrUndefined(context.port)){
 							var route = "";
 							if (!utils.Misc.isNullOrUndefined(request.query.route)) { 
-								route = request.query.route;
+								route = "/" + utils.String.trimStart(request.query.route, "/");
 							}
 							else {
 								route = (!utils.Misc.isNullOrUndefined(context.app.index)) ? "/" + utils.String.trimStart(context.app.index, "/") : "";
 							}
-							response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + route);
+
+							var query = "";
+							if (!utils.Misc.isNullOrUndefined(request.query.query)) { 
+								query = "?" + utils.String.trimStart(request.query.query, "?");
+							}
+
+							response.redirect(config.getProtocol() + '://' + context.host + ':' + context.port + route + query);
 						}
 						else {
 							/* OLD METHOD (feel free to delete this commented section (don't even know why I'm relectant to do so))

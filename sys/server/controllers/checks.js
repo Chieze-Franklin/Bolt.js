@@ -20,7 +20,7 @@ module.exports = {
 		next(); //TODO: check if user has right to start :app (dont check if it's a startup app)
 	},
 	forAppFileRight: function(request, response, next){
-		next(); //TODO: check if user has right to access this :file
+		next(); //TODO: check (app-role.files) if user has right to access this :file
 	},
 	//checks to be sure the app making this request is a system app
 	forSystemApp: function(request, response, next){

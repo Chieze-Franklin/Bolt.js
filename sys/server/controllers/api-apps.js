@@ -109,10 +109,10 @@ module.exports = {
 							if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
 
 							newApp.files = package.bolt.files || {};
-							if (!utils.Misc.isNullOrUndefined(package.bolt.icon)) newApp.icon = package.bolt.icon;
 							if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
 							if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
 							if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
+							if (!utils.Misc.isNullOrUndefined(package.bolt.order)) newApp.order = package.bolt.order;
 							newApp.startup = request.body.startup || (package.bolt.startup || false);
 							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
@@ -149,18 +149,18 @@ module.exports = {
 									public.forEach(function(publicPath, index){
 										var source = path.join(__node_modulesDir, _path, publicPath);
 										var destination = path.join(__publicDir, _path, publicPath);
-										fse.copy(source, destination, { clobber: false }, function(copyError){//TODO: what shud I do if there's an error?
-											if(copyError) console.log("copy:", copyError);
+										fse.copy(source, destination, { clobber: true }, function(copyError){
+											//TODO: what shud I do if there's an error?
 										});
 									});
 								}
 								else {
 									var destRoot = path.join(__publicDir, _path);
-									var overwrite = public.overwrite || false;
+									var overwrite = public.overwrite || true;
 
 									if (public.clean){
-										fse.emptyDir(destRoot, function(emptyError){//TODO: what shud I do if there's an error?
-											if(emptyError) console.log("empty:", emptyError);
+										fse.emptyDir(destRoot, function(emptyError){
+											//TODO: what shud I do if there's an error?
 										});
 									}
 
@@ -168,13 +168,13 @@ module.exports = {
 										var source = path.join(__node_modulesDir, _path, publicPath);
 										var destination = path.join(__publicDir, _path, publicPath);
 										if (public.move) {
-											fse.move(source, destination, { clobber: overwrite }, function(copyError){//TODO: what shud I do if there's an error?
-												if(copyError) console.log("copy:", copyError);
+											fse.move(source, destination, { clobber: overwrite }, function(moveError){
+												//TODO: what shud I do if there's an error?
 											});
 										}
 										else {
-											fse.copy(source, destination, { clobber: overwrite }, function(copyError){//TODO: what shud I do if there's an error?
-												if(copyError) console.log("copy:", copyError);
+											fse.copy(source, destination, { clobber: overwrite }, function(copyError){
+												//TODO: what shud I do if there's an error?
 											});
 										}
 									});

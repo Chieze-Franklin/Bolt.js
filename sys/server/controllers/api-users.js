@@ -36,7 +36,6 @@ var __registerLogout = function(user) {
 	}
 }
 
-const X_BOLT_REQ_ID = 'X-Bolt-Req-Id';
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
 
 module.exports = {
@@ -117,17 +116,27 @@ module.exports = {
 			}
 		});
 	},
-	getCurrent: function(request, response){
+	getCurrent: function(request, response){ //TODO: delete user.passwordHash
 		if (!utils.Misc.isNullOrUndefined(request.session.user)) {
 			response.send(utils.Misc.createResponse(request.session.user));
 		}
 		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) {
-			var reqid = request.get(X_BOLT_REQ_ID); //TODO: return error if this is not provided
-			var token = request.get(X_BOLT_USER_TOKEN); //TODO: return error if this is not provided
+			var token = request.get(X_BOLT_USER_TOKEN);
 			superagent
 				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/tokens/' + encodeURIComponent(token))
 				.end(function(tokenError, tokenResponse){
+					if (!utils.Misc.isNullOrUndefined(tokenError)) {
+						response.end(utils.Misc.createResponse(null, tokenError));
+						return;
+					}
+
 					var realResponse = tokenResponse.body;
+					if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
+						response.end(utils.Misc.createResponse(null, realResponse.error, realResponse.code, 
+							realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
+						return;
+					}
+					
 					var userid = realResponse.body;
 					models.user.findOne({ 
 						_id: userid
@@ -236,7 +245,7 @@ module.exports = {
 						response.locals.user = user; //make available to UI template engines
 
 						__registerLogin(user);
-						response.send(utils.Misc.createResponse(user));//TODO: one day I may change this to return a (JSON web) token
+						response.send(utils.Misc.createResponse(user));
 					}
 				}
 			});

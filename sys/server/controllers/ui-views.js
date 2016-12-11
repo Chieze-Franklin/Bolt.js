@@ -1,6 +1,7 @@
 var fs = require("fs");
 var path = require("path");
 var superagent = require('superagent');
+var url = require('url');
 
 var config = require("../config");
 var errors = require("../errors");
@@ -123,14 +124,17 @@ module.exports = {
 			}
 			//check for an app that can serve this view
 			else if(!utils.Misc.isNullOrUndefined(plugins) && plugins.length > 0) {
+				var rawQuery = url.parse(request.url).query;
 				if (plugins.length == 1) {
-					app = plugins[0].app + '?route=' + plugins[0].route;
+					app = plugins[0].app + '?route=' + encodeURIComponent(plugins[0].route) 
+						+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
 				}
 				else {
 					for (var index = 0; index < plugins.length; index++) {
 						var plugin = plugins[index];
 						if (plugin.isDefault) {
-							app = plugin.app + '?route=' + encodeURIComponent(plugin.route);
+							app = plugin.app + '?route=' + encodeURIComponent(plugin.route)
+								+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
 							break;
 						}
 					}
@@ -138,7 +142,7 @@ module.exports = {
 			}
 
 			//if an app that can serve this view is found
-			if (app) {
+			if (!utils.Misc.isNullOrUndefined(app)) {
 				response.redirect('/apps/' + app);
 			}
 			//check for a native view
