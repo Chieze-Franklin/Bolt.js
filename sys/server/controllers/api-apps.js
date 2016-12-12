@@ -92,6 +92,18 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, errr, 401));
 						return;
 					}
+
+					if (!utils.Misc.isNullOrUndefined(package.bolt.target)) {
+						var target = package.bolt.target;
+						var min = config.getMinimumVersion();
+						var version = config.getVersion();
+						if (target < min || target > version) {
+							var errr = new Error(errors['414']);
+							response.end(utils.Misc.createResponse(null, errr, 414));
+							return;
+						}
+					}
+
 					models.app.findOne({ name: appnm }, function(err, app){
 						if (!utils.Misc.isNullOrUndefined(err)) {
 							response.end(utils.Misc.createResponse(null, err));

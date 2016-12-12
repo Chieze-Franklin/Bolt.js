@@ -48,6 +48,9 @@ module.exports = {
 	getHost : function(){
 		return getConfig().host;
 	},
+	getMinimumVersion : function(){
+		return getConfig().minimumVersion;
+	},
 	getMultiWindow : function(){
 		return getConfig().multiWindow;
 	},
