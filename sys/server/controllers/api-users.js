@@ -191,7 +191,26 @@ module.exports = {
 						name: usrnm, 
 						passwordHash: utils.Security.hashSync(request.body.password + usrnm)
 					});
-					newUser.displayName = request.body.displayName || request.body.name;
+
+					newUser.displayName = request.body.displayName || request.body.dn || request.body.name;
+					if (!utils.Misc.isNullOrUndefined(request.body.email)) newUser.email = request.body.email;
+					if (!utils.Misc.isNullOrUndefined(request.body.phone)) newUser.phone = request.body.phone;
+
+					var file;
+					if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;
+					else if (!utils.Misc.isNullOrUndefined(request.files)) {
+						for(var index = 0; index < request.files.length; index++) {
+							if ("dp" == request.files[index].fieldname || "displayPic" == request.files[index].fieldname) {
+								file = request.files[index];
+								break;
+							}
+						}
+					}
+					if (!utils.Misc.isNullOrUndefined(file)) {
+						//I can easily use file.path but file.path uses '\' as path separator, with which Mozilla doesn't work well sometimes
+						newUser.displayPic = file.destination + file.filename;
+					}
+
 					newUser.save(function(saveError, savedUser){
 						if (!utils.Misc.isNullOrUndefined(saveError)) {
 							response.end(utils.Misc.createResponse(null, saveError, 202));

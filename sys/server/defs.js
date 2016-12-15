@@ -70,9 +70,12 @@ module.exports = {
 		displayName: { type: String, required: true },
 		passwordHash : { type: String, required: true },
 
-		isBlocked: { type: Boolean, default: false },
+		displayPic: { type: String },
+		email: { type: String },
 		dateCreated: { type: Date, default: Date.now },
+		isBlocked: { type: Boolean, default: false },
 		lastVisit: { type: Date, default: Date.now },
+		phone: { type: String },
 		visits: { type: Number, default: 0 }
 	},
 	userRoleAssoc : {

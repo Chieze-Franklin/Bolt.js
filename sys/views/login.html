@@ -24,7 +24,6 @@
     <link href="public/bolt/pages/pages/css/pages-icons.css" rel="stylesheet" type="text/css">
     <link class="main-stylesheet" href="public/bolt/pages/pages/css/pages.css" rel="stylesheet" type="text/css" />
     <!--BOLT-->
-    <script type="text/javascript" src="../client/bolt.config-0.1.0.js"></script>
     <!--[if lte IE 9]>
         <link href="public/bolt/pages/pages/css/ie9.css" rel="stylesheet" type="text/css" />
     <![endif]-->
@@ -143,10 +142,6 @@
     })
 
     $(document).ready(function(){
-        Bolt.Config.setHost("{{host}}");
-        Bolt.Config.setPort("{{port}}");
-        Bolt.Config.setProtocol("{{protocol}}");
-
         var username,password;
         $("#submit").click(function(){
             username=$("#username").val();

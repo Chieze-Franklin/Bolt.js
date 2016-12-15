@@ -10,10 +10,18 @@ var appUserAssocSchema = new Schema(defs.appUserAssoc);
 var boltSecretSchema = new Schema(defs.boltSecret);
 var pluginSchema = new Schema(defs.plugin);
 var roleSchema = new Schema(defs.role);
+
 var userSchema = new Schema(defs.user);
+userSchema.virtual('dn')
+	.get(function(){ return this.displayName; })
+	.set(function(dn){ this.displayName = dn; });
+userSchema.virtual('dp')
+	.get(function(){ return this.displayPic; })
+	.set(function(dp){ this.displayPic = dp; });
 //userSchema.statics.getRoles = function(){
 //	userRoleSchema.find({ user_id: this._id }, { role_id: 1 });
 //}
+
 var userRoleAssocSchema = new Schema(defs.userRoleAssoc);
 
 module.exports = {

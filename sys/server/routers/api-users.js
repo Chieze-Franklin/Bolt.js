@@ -1,4 +1,5 @@
 var express = require('express');
+var multer = require('multer'), upload = multer({dest: 'public/bolt/users/'});
 
 var checksCtrlr = require('../controllers/checks');
 var apiUsersCtrlr = require('../controllers/api-users');
@@ -26,7 +27,7 @@ router.get('/@live', apiUsersCtrlr.getLive);
 router.get('/:name', apiUsersCtrlr.getUser);
 
 //adds a user to the database
-router.post('/', checksCtrlr.forSystemApp, apiUsersCtrlr.post);
+router.post('/', checksCtrlr.forSystemApp, upload.any(), apiUsersCtrlr.post);
 
 //logs a user into the system
 router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);

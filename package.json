@@ -38,7 +38,7 @@
     "lodash": "^4.11.1",
     "mongodb": "^2.2.11",
     "mongoose": "^4.6.5",
-    "multer": "^1.2.0",
+    "multer": "^1.2.1",
     "mustache": "^2.2.1",
     "socket.io": "^1.5.1",
     "superagent": "^2.3.0",
