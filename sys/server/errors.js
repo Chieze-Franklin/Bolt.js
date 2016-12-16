@@ -28,6 +28,10 @@ module.exports = {
 	'322': "Could not save app-role to the database",
 	'323': "Could not retrieve app-role from the database",
 
+	'334': "User has no right to start this app",
+	'335': "User has no right to access this app feature",
+	'336': "User has no right to access this app file",
+
 
 	'400': "App name missing",
 	'401': "An app with the same name already exists",

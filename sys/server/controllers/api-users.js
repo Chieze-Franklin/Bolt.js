@@ -37,6 +37,7 @@ var __registerLogout = function(user) {
 }
 
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
+const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
 
 module.exports = {
 	delete: function(request, response){
@@ -117,11 +118,30 @@ module.exports = {
 		});
 	},
 	getCurrent: function(request, response){ //TODO: delete user.passwordHash
-		if (!utils.Misc.isNullOrUndefined(request.session.user)) {
+		if (!utils.Misc.isNullOrUndefined(request.user)) {
 			response.send(utils.Misc.createResponse(request.session.user));
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_NAME))) {
+			var username = request.get(X_BOLT_USER_NAME);
+
+			models.user.findOne({ 
+				name: username
+			}, function(error, user){
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else if(utils.Misc.isNullOrUndefined(user)){
+					var err = new Error(errors['203']);
+					response.end(utils.Misc.createResponse(null, err, 203));
+				}
+				else{
+					response.send(utils.Misc.createResponse(user));
+				}
+			});
 		}
 		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) {
 			var token = request.get(X_BOLT_USER_TOKEN);
+			
 			superagent
 				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/tokens/' + encodeURIComponent(token))
 				.end(function(tokenError, tokenResponse){
@@ -256,15 +276,15 @@ module.exports = {
 					}
 					else {
 						user.visits+=1;
-						user.lastVisit = Date.now;
+						user.lastVisit = new Date();
 						user.save(function(saveError, savedUser){});
-						delete user.passwordHash; //TODO: not working
 						request.user = user;
-						request.session.user = user;
-						response.locals.user = user; //make available to UI template engines
+						delete request.user.passwordHash; //TODO: not working
+						request.session.user = request.user;
+						response.locals.user = request.user; //make available to UI template engines
 
-						__registerLogin(user);
-						response.send(utils.Misc.createResponse(user));
+						__registerLogin(request.user);
+						response.send(utils.Misc.createResponse(request.user));
 					}
 				}
 			});

@@ -272,7 +272,7 @@ module.exports = {
 					return;
 				}
 			}
-
+			
 			superagent
 				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/' + request.body.name) 
 				.end(function(appinfoError, appinfoResponse){

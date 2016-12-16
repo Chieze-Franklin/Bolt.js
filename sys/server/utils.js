@@ -10,7 +10,7 @@ var path = require("path");
 var errors = require("./errors");
 
 var __isNullOrUndefined = function(obj){
-	return (typeof obj === 'undefined' || !obj);
+	return (typeof obj === 'undefined' || obj === null);
 }
 
 module.exports = {

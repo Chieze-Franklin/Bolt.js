@@ -28,7 +28,8 @@ module.exports = function(app) {
 		cookieName: 'session',
 		secret: config.getSessionSecret(),
 		duration: 24 * 60 * 60 * 1000,
-		activeDuration: 24 * 60 * 60 * 1000
+		activeDuration: 24 * 60 * 60 * 1000,
+		//httpOnly: false
 
 		/*saveUninitialized: true, 	//for express-session
 		resave: true*/				//for express-session
@@ -41,10 +42,10 @@ module.exports = function(app) {
 						request.session.reset();
 					}
 					else {
-						delete user.passwordHash; //TODO: not working
 						request.user = user;
-						request.session.user = user;  //refresh the session value
-						response.locals.user = user;  //make available to UI template engines
+						delete request.user.passwordHash; //TODO: not working
+						request.session.user = request.user;  //refresh the session value
+						response.locals.user = request.user;  //make available to UI template engines
 					}
 				}
 				next();

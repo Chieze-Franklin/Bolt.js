@@ -4,11 +4,19 @@ var config = require("../config");
 var errors = require("../errors");
 var utils = require("../utils");
 
+const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
+const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
+
 module.exports = {
 	getApp: function(request, response){
 		var appnm = utils.String.trim(request.params.name.toLowerCase());
-		superagent
-			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+
+		var smthn = superagent.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start');
+		if(!utils.Misc.isNullOrUndefined(request.user.name)) smthn = smthn.set(X_BOLT_USER_NAME, request.user.name);
+		else if(!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_NAME))) smthn = smthn.set(X_BOLT_USER_NAME, request.get(X_BOLT_USER_NAME));
+		if(!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) smthn = smthn.set(X_BOLT_USER_TOKEN, request.get(X_BOLT_USER_TOKEN));
+		
+		smthn
 			.send({ name: appnm })
 			.end(function(error, appstartResponse){
 				if (!utils.Misc.isNullOrUndefined(error)) {
