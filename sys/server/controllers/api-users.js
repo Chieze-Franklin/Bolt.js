@@ -1,3 +1,5 @@
+var fs = require('fs');
+var path = require('path');
 var superagent = require('superagent');
 
 var config = require("../config");
@@ -227,8 +229,19 @@ module.exports = {
 						}
 					}
 					if (!utils.Misc.isNullOrUndefined(file)) {
-						//I can easily use file.path but file.path uses '\' as path separator, with which Mozilla doesn't work well sometimes
-						newUser.displayPic = file.destination + file.filename;
+						//since multer seems not to add extensions, I'm doing it manually here
+						var tempPath = path.resolve(file.path),
+							targetPath = path.resolve(file.path + path.extname(file.originalname));
+						fs.rename(tempPath, targetPath, function(renameError){
+							//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
+							//with which Mozilla doesn't work well sometimes
+							if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
+								newUser.displayPic = file.destination + file.filename;
+							}
+							else {
+								newUser.displayPic = file.destination + file.filename + path.extname(file.originalname);
+							}
+						});
 					}
 
 					newUser.save(function(saveError, savedUser){

@@ -1,6 +1,6 @@
 var express = require('express');
 var multer = require('multer'), 
-	storage =   multer.diskStorage({
+	/*storage =   multer.diskStorage({
 	  destination: function (req, file, callback) {
 	    callback(null, 'public/bolt/users/');
 	  },
@@ -8,7 +8,7 @@ var multer = require('multer'),
 	    callback(null, file.fieldname + '-' + Date.now());
 	  }
 	}),
-	upload = multer({ storage : storage});
+	upload = multer({ storage : storage})*/upload = multer({ dest : 'public/bolt/users/'});
 
 var checksCtrlr = require('../controllers/checks');
 var apiUsersCtrlr = require('../controllers/api-users');
@@ -36,7 +36,7 @@ router.get('/@live', apiUsersCtrlr.getLive);
 router.get('/:name', apiUsersCtrlr.getUser);
 
 //adds a user to the database
-router.post('/', checksCtrlr.forSystemApp, upload.fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}]), apiUsersCtrlr.post);
+router.post('/', checksCtrlr.forSystemApp, upload.any()/*fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}])*/, apiUsersCtrlr.post);
 
 //logs a user into the system
 router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);
