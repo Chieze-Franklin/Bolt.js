@@ -30,7 +30,8 @@ module.exports = {
 						}
 					}
 					else if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.publicPath) && !utils.Misc.isNullOrUndefined(fileInfo.stats)) {
-						response.redirect(fileInfo.publicPath);
+						//response.redirect(fileInfo.publicPath);
+						response.sendFile(fileInfo.staticPath);
 					}
 					else {
 						response.redirect('/404?item=' + encodeURIComponent(request.params.app + '/' + request.params.file));
