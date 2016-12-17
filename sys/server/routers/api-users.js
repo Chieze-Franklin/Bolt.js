@@ -54,6 +54,6 @@ router.delete('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.deleteUser);
 router.put('/', checksCtrlr.forSystemApp, apiUsersCtrlr.put);
 
 //updates a user in the database
-router.put('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.putUser);
+router.put('/:name', checksCtrlr.forSystemApp, upload.any()/*fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}])*/, apiUsersCtrlr.putUser);
 
 module.exports = router;
