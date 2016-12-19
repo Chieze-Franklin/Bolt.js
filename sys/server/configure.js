@@ -42,8 +42,7 @@ module.exports = function(app) {
 						request.session.reset();
 					}
 					else {
-						request.user = user;
-						delete request.user.passwordHash; //TODO: not working
+						request.user = utils.Misc.sanitizeUser(user);
 						request.session.user = request.user;  //refresh the session value
 						response.locals.user = request.user;  //make available to UI template engines
 					}

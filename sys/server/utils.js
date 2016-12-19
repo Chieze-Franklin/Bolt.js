@@ -13,6 +13,32 @@ var __isNullOrUndefined = function(obj){
 	return (typeof obj === 'undefined' || obj === null);
 }
 
+var __sanitizeModel = function(model, propsToRemove) {
+	var _model = {};
+	if(!__isNullOrUndefined(model)) _model = model.toJSON();
+	propsToRemove.forEach(function(prop){
+		delete _model[prop];
+	});
+	return _model;
+},
+__sanitizeModels = function(models, propsToRemove) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeModel(model, propsToRemove));
+	});
+	return _models;
+},
+__sanitizeUser = function(model) {
+	return __sanitizeModel(model, ['__v', 'passwordHash']);
+},
+__sanitizeUsers = function(models) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeUser(model));
+	});
+	return _models;
+};
+
 module.exports = {
 	Misc : {
 		//constructs an appropriate response object
@@ -64,6 +90,10 @@ module.exports = {
 
 			return JSON.stringify(response);
 		},
+		sanitizeModel: __sanitizeModel,
+		sanitizeModels: __sanitizeModels,
+		sanitizeUser: __sanitizeUser,
+		sanitizeUsers: __sanitizeUsers,
 		isNullOrUndefined: __isNullOrUndefined
 	},
 	Security: {

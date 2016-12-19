@@ -7,6 +7,8 @@ var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
+var __updatableProps = ["displayName", "email", "isBlocked", "phone"];
+
 var __users = [];
 //considering users can log in and out on different devices and browsers, this maps a user to the number of current log-ins
 //when the number gets to zero we remove the user from this map
@@ -64,7 +66,7 @@ module.exports = {
 							//delete app-users
 							models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
 						});
-						response.send(utils.Misc.createResponse(users));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUsers(users)));
 					}
 				});
 			}
@@ -99,7 +101,7 @@ module.exports = {
 							fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
 						}
 
-						response.send(utils.Misc.createResponse(user));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 					}
 				});
 			}
@@ -116,14 +118,14 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(users)) {
-				response.send(utils.Misc.createResponse(users));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeUsers(users)));
 			}
 			else {
 				response.send(utils.Misc.createResponse([]));
 			}
 		});
 	},
-	getCurrent: function(request, response){ //TODO: delete user.passwordHash
+	getCurrent: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.user)) {
 			response.send(utils.Misc.createResponse(request.session.user));
 		}
@@ -141,7 +143,7 @@ module.exports = {
 					response.end(utils.Misc.createResponse(null, err, 203));
 				}
 				else{
-					response.send(utils.Misc.createResponse(user));
+					response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 				}
 			});
 		}
@@ -175,7 +177,7 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, err, 203));
 						}
 						else{
-							response.send(utils.Misc.createResponse(user));
+							response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 						}
 					});
 				});
@@ -201,7 +203,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 203));
 			}
 			else{
-				response.send(utils.Misc.createResponse(user));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 			}
 		});
 	},
@@ -228,8 +230,7 @@ module.exports = {
 								response.end(utils.Misc.createResponse(null, saveError, 202));
 							}
 							else {
-								delete savedUser.passwordHash; //TODO: not working
-								response.send(utils.Misc.createResponse(savedUser));
+								response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(savedUser)));
 							}
 						});
 					}
@@ -301,8 +302,7 @@ module.exports = {
 						user.visits+=1;
 						user.lastVisit = new Date();
 						user.save(function(saveError, savedUser){});
-						request.user = user;
-						delete request.user.passwordHash; //TODO: not working
+						request.user = utils.Misc.sanitizeUser(user);
 						request.session.user = request.user;
 						response.locals.user = request.user; //make available to UI template engines
 
@@ -331,11 +331,13 @@ module.exports = {
 		}
 
 		var updateObject = {};
-		if (!utils.Misc.isNullOrUndefined(request.body.displayNamedisplayName)) {
-			updateObject.displayName = request.body.displayName;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.isBlocked)) {
-			updateObject.isBlocked = request.body.isBlocked;
+		var putObject = request.body;
+		for (var prop in putObject) {
+			if (putObject.hasOwnProperty(prop)) {
+				if(__updatableProps.indexOf(prop) != -1) {
+					updateObject[prop] = putObject[prop];
+				}
+			}
 		}
 
 		models.user.update(searchCriteria,
@@ -351,7 +353,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, error));
 					}
 					else if (!utils.Misc.isNullOrUndefined(users)) {
-						response.send(utils.Misc.createResponse(users));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUsers(users)));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -365,11 +367,13 @@ module.exports = {
 		var searchCriteria = { name: usrnm };
 
 		var updateObject = {};
-		if (!utils.Misc.isNullOrUndefined(request.body.displayName)) {
-			updateObject.displayName = request.body.displayName;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.isBlocked)) {
-			updateObject.isBlocked = request.body.isBlocked;
+		var putObject = request.body;
+		for (var prop in putObject) {
+			if (putObject.hasOwnProperty(prop)) {
+				if(__updatableProps.indexOf(prop) != -1) {
+					updateObject[prop] = putObject[prop];
+				}
+			}
 		}
 
 		var file;
@@ -422,7 +426,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, err, 203));
 					}
 					else{
-						response.send(utils.Misc.createResponse(user));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 					}
 				});
 			}
