@@ -9,7 +9,6 @@ var utils = require("../utils");
 module.exports = {
 	getObject: function(request, response){
 		var object = jwt.decode(request.params.token, config.getSessionSecret());
-
 		response.send(utils.Misc.createResponse(object));
 	},
 	post: function(request, response){

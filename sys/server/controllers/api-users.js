@@ -330,15 +330,7 @@ module.exports = {
 			searchCriteria = request.query;
 		}
 
-		var updateObject = {};
-		var putObject = request.body;
-		for (var prop in putObject) {
-			if (putObject.hasOwnProperty(prop)) {
-				if(__updatableProps.indexOf(prop) != -1) {
-					updateObject[prop] = putObject[prop];
-				}
-			}
-		}
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
 		models.user.update(searchCriteria,
 			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
@@ -366,15 +358,7 @@ module.exports = {
 		var usrnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: usrnm };
 
-		var updateObject = {};
-		var putObject = request.body;
-		for (var prop in putObject) {
-			if (putObject.hasOwnProperty(prop)) {
-				if(__updatableProps.indexOf(prop) != -1) {
-					updateObject[prop] = putObject[prop];
-				}
-			}
-		}
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
 		var file;
 		if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;

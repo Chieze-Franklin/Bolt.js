@@ -5,6 +5,8 @@ var errors = require("../errors");
 var models = require("../models");
 var utils = require("../utils");
 
+var __updatableProps = ["description", "displayName", "isAdmin"];
+
 module.exports = {
 	delete: function(request, response){
 		var searchCriteria = {};
@@ -28,7 +30,7 @@ module.exports = {
 							//delete app-roles
 							models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
 						});
-						response.send(utils.Misc.createResponse(roles));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRoles(roles)));
 					}
 				});
 			}
@@ -59,7 +61,7 @@ module.exports = {
 						//delete app-roles
 						models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
 
-						response.send(utils.Misc.createResponse(role));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(role)));
 					}
 				});
 			}
@@ -76,7 +78,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(roles)) {
-				response.send(utils.Misc.createResponse(roles));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeRoles(roles)));
 			}
 			else {
 				response.send(utils.Misc.createResponse([]));
@@ -96,7 +98,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 303));
 			}
 			else{
-				response.send(utils.Misc.createResponse(role));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(role)));
 			}
 		});
 	},
@@ -121,7 +123,7 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, saveError, 302));
 						}
 						else {
-							response.send(utils.Misc.createResponse(savedRole));
+							response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(savedRole)));
 						}
 					});
 				}
@@ -142,16 +144,7 @@ module.exports = {
 			searchCriteria = request.query;
 		}
 
-		var updateObject = {};
-		if (!utils.Misc.isNullOrUndefined(request.body.description)) {
-			updateObject.description = request.body.description;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.displayName)) {
-			updateObject.displayName = request.body.displayName;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.isAdmin)) {
-			updateObject.isAdmin = request.body.isAdmin;
-		}
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
 		models.role.update(searchCriteria,
 			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
@@ -166,7 +159,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, error));
 					}
 					else if (!utils.Misc.isNullOrUndefined(roles)) {
-						response.send(utils.Misc.createResponse(roles));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRoles(roles)));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -179,16 +172,7 @@ module.exports = {
 		var usrnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: usrnm };
 
-		var updateObject = {};
-		if (!utils.Misc.isNullOrUndefined(request.body.description)) {
-			updateObject.description = request.body.description;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.displayName)) {
-			updateObject.displayName = request.body.displayName;
-		}
-		if (!utils.Misc.isNullOrUndefined(request.body.isAdmin)) {
-			updateObject.isAdmin = request.body.isAdmin;
-		}
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
 		models.role.update(searchCriteria,
 			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
@@ -207,7 +191,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, err, 303));
 					}
 					else{
-						response.send(utils.Misc.createResponse(role));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(role)));
 					}
 				});
 			}

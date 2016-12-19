@@ -13,9 +13,23 @@ var __isNullOrUndefined = function(obj){
 	return (typeof obj === 'undefined' || obj === null);
 }
 
+var __extractModel = function(model, propsToGet) {
+	var _model = model;
+	if(!__isNullOrUndefined(model) && !__isNullOrUndefined(model.toJSON)) _model = model.toJSON();
+	var _object = {};
+	for (var prop in _model) {
+		if (_model.hasOwnProperty(prop)) {
+			if(propsToGet.indexOf(prop) != -1) {
+				_object[prop] = _model[prop];
+			}
+		}
+	}
+	return _object;
+}
+
 var __sanitizeModel = function(model, propsToRemove) {
-	var _model = {};
-	if(!__isNullOrUndefined(model)) _model = model.toJSON();
+	var _model = model;
+	if(!__isNullOrUndefined(model) && !__isNullOrUndefined(model.toJSON)) _model = model.toJSON();
 	propsToRemove.forEach(function(prop){
 		delete _model[prop];
 	});
@@ -25,6 +39,17 @@ __sanitizeModels = function(models, propsToRemove) {
 	var _models = [];
 	models.forEach(function(model){
 		_models.push(__sanitizeModel(model, propsToRemove));
+	});
+	return _models;
+},
+
+__sanitizeRole = function(model) {
+	return __sanitizeModel(model, ['__v']);
+},
+__sanitizeRoles = function(models) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeRole(model));
 	});
 	return _models;
 },
@@ -100,8 +125,11 @@ module.exports = {
 
 			return JSON.stringify(response);
 		},
+		extractModel: __extractModel,
 		sanitizeModel: __sanitizeModel,
 		sanitizeModels: __sanitizeModels,
+		sanitizeRole: __sanitizeRole,
+		sanitizeRoles: __sanitizeRoles,
 		sanitizeUser: __sanitizeUser,
 		sanitizeUsers: __sanitizeUsers,
 		sanitizeUserRole: __sanitizeUserRole,
