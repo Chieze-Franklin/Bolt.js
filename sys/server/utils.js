@@ -43,6 +43,26 @@ __sanitizeModels = function(models, propsToRemove) {
 	return _models;
 },
 
+__sanitizeApp = function(model) {
+	return __sanitizeModel(model, ['__v']); //dont remove 'appHash' because POST: /api/apps/start needs it
+},
+__sanitizeApps = function(models) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeApp(model));
+	});
+	return _models;
+},
+__sanitizeAppRole = function(model) {
+	return __sanitizeModel(model, ['__v']);
+},
+__sanitizeAppRoles = function(models) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeAppRole(model));
+	});
+	return _models;
+},
 __sanitizeRole = function(model) {
 	return __sanitizeModel(model, ['__v']);
 },
@@ -126,6 +146,10 @@ module.exports = {
 			return JSON.stringify(response);
 		},
 		extractModel: __extractModel,
+		sanitizeApp: __sanitizeApp,
+		sanitizeApps: __sanitizeApps,
+		sanitizeAppRole: __sanitizeAppRole,
+		sanitizeAppRoles: __sanitizeAppRoles,
 		sanitizeModel: __sanitizeModel,
 		sanitizeModels: __sanitizeModels,
 		sanitizeRole: __sanitizeRole,

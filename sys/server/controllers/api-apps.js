@@ -27,7 +27,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if(!utils.Misc.isNullOrUndefined(apps)){
-				response.send(utils.Misc.createResponse(apps));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeApps(apps)));
 			}
 			else{
 				response.send(utils.Misc.createResponse([]));
@@ -47,7 +47,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 403));
 			}
 			else{
-				response.send(utils.Misc.createResponse(app));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(app)));
 			}
 		});
 	},
@@ -202,7 +202,7 @@ module.exports = {
 									}
 									else {
 										//TODO: POST necessary info to savedApp.install endpoint
-										response.send(utils.Misc.createResponse(savedApp));
+										response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
 									}
 								});
 							};

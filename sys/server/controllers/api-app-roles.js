@@ -22,7 +22,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						response.send(utils.Misc.createResponse(appRoles));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeAppRoles(appRoles)));
 					}
 				});
 			}
@@ -42,7 +42,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(appRoles)) {
-				response.send(utils.Misc.createResponse(appRoles));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeAppRoles(appRoles)));
 			}
 			else {
 				response.send(utils.Misc.createResponse([]));
@@ -89,7 +89,7 @@ module.exports = {
 											response.end(utils.Misc.createResponse(null, saveError, 322));
 										}
 										else {
-											response.send(utils.Misc.createResponse(savedAppRole));
+											response.send(utils.Misc.createResponse(utils.Misc.sanitizeAppRole(savedAppRole)));
 										}
 									});
 								}
