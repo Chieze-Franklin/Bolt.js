@@ -37,6 +37,16 @@ __sanitizeUsers = function(models) {
 		_models.push(__sanitizeUser(model));
 	});
 	return _models;
+},
+__sanitizeUserRole = function(model) {
+	return __sanitizeModel(model, ['__v']);
+},
+__sanitizeUserRoles = function(models) {
+	var _models = [];
+	models.forEach(function(model){
+		_models.push(__sanitizeUserRole(model));
+	});
+	return _models;
 };
 
 module.exports = {
@@ -94,6 +104,8 @@ module.exports = {
 		sanitizeModels: __sanitizeModels,
 		sanitizeUser: __sanitizeUser,
 		sanitizeUsers: __sanitizeUsers,
+		sanitizeUserRole: __sanitizeUserRole,
+		sanitizeUserRoles: __sanitizeUserRoles,
 		isNullOrUndefined: __isNullOrUndefined
 	},
 	Security: {

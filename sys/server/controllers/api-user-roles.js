@@ -22,7 +22,7 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						response.send(utils.Misc.createResponse(userRoles));
+						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUserRoles(userRoles)));
 					}
 				});
 			}
@@ -42,7 +42,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(userRoles)) {
-				response.send(utils.Misc.createResponse(userRoles));
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeUserRoles(userRoles)));
 			}
 			else {
 				response.send(utils.Misc.createResponse([]));
@@ -87,7 +87,7 @@ module.exports = {
 											response.end(utils.Misc.createResponse(null, saveError, 312));
 										}
 										else {
-											response.send(utils.Misc.createResponse(savedUserRole));
+											response.send(utils.Misc.createResponse(utils.Misc.sanitizeUserRole(savedUserRole)));
 										}
 									});
 								}
