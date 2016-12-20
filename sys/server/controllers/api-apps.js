@@ -129,27 +129,31 @@ module.exports = {
 							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.plugins)) {
-								var plugins = package.bolt.plugins;
-								for (var plugin in plugins){
-									var plug = "/" + utils.String.trimStart(utils.String.trim(plugin.toLowerCase()), "/");
-									if (plugins.hasOwnProperty(plugin)){
-										var newPlugin = new models.plugin({
-											path: plug,
+							if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
+								var extensions = package.bolt.extensions;
+								for (var extension in extensions){
+									var ext = "/" + utils.String.trimStart(utils.String.trim(extension.toLowerCase()), "/");
+									if (extensions.hasOwnProperty(extension)){
+										var newExtension = new models.extension({
+											path: ext,
 											app: appnm,
-											route: plugins[plugin]
+											route: extensions[extension]
 										});
 										//set type
-										if (utils.String.startsWith(plug, "/data/")) {
-											newPlugin.type = "data";
+										if (utils.String.startsWith(ext, "/acts/")) {
+											newExtension.type = "action";
 										}
-										else if (utils.String.startsWith(plug, "/acts/")) {
-											newPlugin.type = "action";
+										else if (utils.String.startsWith(ext, "/data/")) {
+											newExtension.type = "datum";
 										}
+										else if (utils.String.startsWith(ext, "/files/")) {
+											newExtension.type = "file";
+										}
+										//listeners|handlers
 										else {
-											newPlugin.type = "view";
+											newExtension.type = "view";
 										}
-										newPlugin.save(); //TODO: check that two plugins dont hv d same path and app
+										newExtension.save(); //TODO: check that two extensions dont hv d same path and app
 									}
 								}
 							}

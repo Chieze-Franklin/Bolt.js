@@ -50,7 +50,7 @@ module.exports = {
 		name: { type: String, required: true, lowercase: true },
 		value: { type: String, required: true }
 	},
-	plugin : {
+	extension : {
 		path: { type: String, required: true },
 		app: { type: String, required: true },
 		isDefault: { type: Boolean, default: false },

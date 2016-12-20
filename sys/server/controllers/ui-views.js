@@ -117,23 +117,23 @@ module.exports = {
 		//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
 
 		var app = null;
-		var plug = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
-		models.plugin.find({ path: plug }, function(errorPlugins, plugins){
-			if (!utils.Misc.isNullOrUndefined(errorPlugins)){
-				response.end(utils.Misc.createResponse(null, errorPlugins, 433));
+		var ext = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
+		models.extension.find({ path: ext }, function(errorExtensions, extensions){
+			if (!utils.Misc.isNullOrUndefined(errorExtensions)){
+				response.end(utils.Misc.createResponse(null, errorExtensions, 433));
 			}
 			//check for an app that can serve this view
-			else if(!utils.Misc.isNullOrUndefined(plugins) && plugins.length > 0) {
+			else if(!utils.Misc.isNullOrUndefined(extensions) && extensions.length > 0) {
 				var rawQuery = url.parse(request.url).query;
-				if (plugins.length == 1) {
-					app = plugins[0].app + '?route=' + encodeURIComponent(plugins[0].route) 
+				if (extensions.length == 1) {
+					app = extensions[0].app + '?route=' + encodeURIComponent(extensions[0].route) 
 						+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
 				}
 				else {
-					for (var index = 0; index < plugins.length; index++) {
-						var plugin = plugins[index];
-						if (plugin.isDefault) {
-							app = plugin.app + '?route=' + encodeURIComponent(plugin.route)
+					for (var index = 0; index < extensions.length; index++) {
+						var extension = extensions[index];
+						if (extension.isDefault) {
+							app = extension.app + '?route=' + encodeURIComponent(extension.route)
 								+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
 							break;
 						}

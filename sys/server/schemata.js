@@ -8,7 +8,7 @@ var appSchema = new Schema(defs.app);
 var appRoleAssocSchema = new Schema(defs.appRoleAssoc);
 var appUserAssocSchema = new Schema(defs.appUserAssoc);
 var boltSecretSchema = new Schema(defs.boltSecret);
-var pluginSchema = new Schema(defs.plugin);
+var extensionSchema = new Schema(defs.extension);
 var roleSchema = new Schema(defs.role);
 
 var userSchema = new Schema(defs.user);
@@ -29,7 +29,7 @@ module.exports = {
 	appRoleAssoc : appRoleAssocSchema,
 	appUserAssoc : appUserAssocSchema,
 	boltSecret : boltSecretSchema,
-	plugin : pluginSchema,
+	extension : extensionSchema,
 	role : roleSchema,
 	user : userSchema,
 	userRoleAssoc : userRoleAssocSchema
