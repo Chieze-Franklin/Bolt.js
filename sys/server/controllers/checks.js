@@ -92,14 +92,14 @@ module.exports = {
 	//checks to be sure the app making this request is a system app
 	forSystemApp: function(request, response, next){
 		var id;
-		if (!utils.Misc.isNullOrUndefined(request.reqid)) {
+		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
+			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
 			id = request.reqid;
 		}
-		else {
-			id = request.get(X_BOLT_REQ_ID);
-		}
 
-		var name = __getAppFromReqId(id, request);
+		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
 		var appnm = utils.String.trim(name.toLowerCase());
 
 		if (appnm == 'bolt') {
@@ -109,9 +109,9 @@ module.exports = {
 		else {
 			models.app.findOne({ 
 				name: appnm, system: true
-			}, function(error, app){
-				if (!utils.Misc.isNullOrUndefined(error)) {
-					response.end(utils.Misc.createResponse(null, error));
+			}, function(appError, app){
+				if (!utils.Misc.isNullOrUndefined(appError)) {
+					response.end(utils.Misc.createResponse(null, appError));
 				}
 				else if(utils.Misc.isNullOrUndefined(app)){
 					var error = new Error(errors['504']);
@@ -125,5 +125,108 @@ module.exports = {
 	},
 	forUserPermToInstall: function(request, response, next){
 		next(); //TODO: check if app has user's permission to install an app (remember system apps need no permission)
+	},
+
+	//checks if this app has the right to access a database (actually a collection in the database)
+	forDbAccess: function(request, response, next) {
+		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
+			var id;
+			if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
+				id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			}
+			else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
+				id = request.reqid;
+			}
+
+			var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+			var appnm = utils.String.trim(name.toLowerCase());
+			var dbOwner = request.body.db || request.body.app || appnm;
+
+			models.collection.findOne({ name: request.body.collection, app: dbOwner }, function(collError, collection){
+				if (!utils.Misc.isNullOrUndefined(collError)){
+					response.end(utils.Misc.createResponse(null, collError));
+				}
+				else if(utils.Misc.isNullOrUndefined(collection)){
+					var errUser = new Error(errors['703']);
+					response.end(utils.Misc.createResponse(null, errUser, 703));
+				}
+				else {
+					//allow the owner to pass
+					if (appnm.toLowerCase() == collection.app.toLowerCase()) next();
+
+					//check if this is a guest app
+					else if (utils.Misc.isNullOrUndefined(collection.guests)) { //no guest allowed
+						var error = new Error(errors['704']);
+						response.end(utils.Misc.createResponse(null, error, 704));
+					}
+					else if ("*" == collection.guests) next(); //every body is allowed
+					else { //there is a guest list; are u invited?
+						if (collection.guests.map(function(value){ return value.toLowerCase(); }).indexOf(appnm) > -1) next();
+						else {
+							var error = new Error(errors['704']);
+							response.end(utils.Misc.createResponse(null, error, 704));
+						}
+					}
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['700']);
+			response.end(utils.Misc.createResponse(null, error, 700));
+		}
+	},
+	//gets the DB name from the request, and creates the request.db field to hold the value
+	getDbName: function(request, response, next){
+		var id;
+		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
+			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
+			id = request.reqid;
+		}
+
+		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+		var appnm = utils.String.trim(name.toLowerCase());
+		request.db = request.body.db || request.body.app || appnm;
+
+		next();
+	},
+	//checks if this app owns the database (actually a collection in the database)
+	forDbOwner: function(request, response, next) {
+		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
+			var id;
+			if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
+				id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			}
+			else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
+				id = request.reqid;
+			}
+
+			var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+			var appnm = utils.String.trim(name.toLowerCase());
+			var dbOwner = request.body.db || request.body.app || appnm;
+
+			models.collection.findOne({ name: request.body.collection, app: dbOwner }, function(collError, collection){
+				if (!utils.Misc.isNullOrUndefined(collError)){
+					response.end(utils.Misc.createResponse(null, collError));
+				}
+				else if(utils.Misc.isNullOrUndefined(collection)){
+					var errUser = new Error(errors['703']);
+					response.end(utils.Misc.createResponse(null, errUser, 703));
+				}
+				else {
+					//allow the owner to pass
+					if (appnm.toLowerCase() == collection.app.toLowerCase()) next();
+					else { //no guest allowed
+						var error = new Error(errors['704']);
+						response.end(utils.Misc.createResponse(null, error, 704));
+					}
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['700']);
+			response.end(utils.Misc.createResponse(null, error, 700));
+		}
 	}
 };

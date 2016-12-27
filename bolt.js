@@ -15,6 +15,7 @@ var apiRouter = require('./sys/server/routers/api');
 var apiAppRolesRouter = require('./sys/server/routers/api-app-roles');
 var apiAppsRouter = require('./sys/server/routers/api-apps');
 var apiChecksRouter = require('./sys/server/routers/api-checks');
+var apiDbRouter = require('./sys/server/routers/api-db');
 var apiFilesRouter = require('./sys/server/routers/api-files');
 var apiRolesRouter = require('./sys/server/routers/api-roles');
 var apiTokensRouter = require('./sys/server/routers/api-tokens');
@@ -87,6 +88,8 @@ app.use('/api/app-roles', apiAppRolesRouter);
 app.use('/api/apps', apiAppsRouter);
 
 app.use('/api/checks', apiChecksRouter);
+
+app.use('/api/db', apiDbRouter);
 
 app.use('/api/files', apiFilesRouter);
 

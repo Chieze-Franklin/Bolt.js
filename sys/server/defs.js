@@ -2,12 +2,13 @@
 
 var mongoose = require('mongoose'),
 	Schema = mongoose.Schema,
+	Mixed = Schema.Types.Mixed,
 	ObjectId = Schema.ObjectId;
 
 module.exports = {
 	app : {
 		appHash: { type: String },
-		name: { type: String, required: true, lowercase: true },
+		name: { type: String, index: true, lowercase: true, required: true },
 		path: { type: String, required: true },
 		main: { type: String },
 		displayName: { type: String, required: true },
@@ -47,8 +48,14 @@ module.exports = {
 		lastStart: { type: Date, default: Date.now }
 	},
 	boltSecret : {
-		name: { type: String, required: true, lowercase: true },
+		name: { type: String, index: true, lowercase: true, required: true },
 		value: { type: String, required: true }
+	},
+	collection : {
+		name: { type: String, lowercase: true, required: true, trim: true },
+		app: { type: String, required: true },
+		database: { type: String, required: true },
+		guests: { type: Mixed }
 	},
 	extension : {
 		path: { type: String, required: true },
@@ -58,7 +65,7 @@ module.exports = {
 		route: { type: String, required: true }
 	},
 	role : {
-		name: { type: String, required: true, lowercase: true },
+		name: { type: String, index: true, lowercase: true, required: true },
 		isAdmin: { type: Boolean, default: false },
 		displayName: { type: String, required: true },
 
@@ -66,7 +73,7 @@ module.exports = {
 		dateCreated: { type: Date, default: Date.now }
 	},
 	user : {
-		name: { type: String, required: true, lowercase: true },
+		name: { type: String, index: true, lowercase: true, required: true },
 		displayName: { type: String, required: true },
 		passwordHash : { type: String, required: true },
 

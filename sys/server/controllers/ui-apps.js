@@ -12,7 +12,7 @@ module.exports = {
 		var appnm = utils.String.trim(request.params.name.toLowerCase());
 
 		var smthn = superagent.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start');
-		if(!utils.Misc.isNullOrUndefined(request.user.name)) smthn = smthn.set(X_BOLT_USER_NAME, request.user.name);
+		if(!utils.Misc.isNullOrUndefined(request.user)) smthn = smthn.set(X_BOLT_USER_NAME, request.user.name);
 		else if(!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_NAME))) smthn = smthn.set(X_BOLT_USER_NAME, request.get(X_BOLT_USER_NAME));
 		if(!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) smthn = smthn.set(X_BOLT_USER_TOKEN, request.get(X_BOLT_USER_TOKEN));
 		

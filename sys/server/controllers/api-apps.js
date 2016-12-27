@@ -129,6 +129,27 @@ module.exports = {
 							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
 
+							if (!utils.Misc.isNullOrUndefined(package.bolt.db)) {
+								var db = package.bolt.db;
+
+								for (var collection in db) {
+									if (db.hasOwnProperty(collection)) {
+										var newCollection = new models.collection({
+											name: collection,
+											app: appnm,
+											database: appnm
+										});
+
+										var collObj = db[collection];
+										if (collObj.constructor === Array || collObj.constructor === String) {
+											newCollection.guests = collObj;
+										}
+										else if (!utils.Misc.isNullOrUndefined(collObj.guests)) newCollection.guests = collObj.guests;
+										newCollection.save();
+									}
+								}
+							}
+
 							if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
 								var extensions = package.bolt.extensions;
 								for (var extension in extensions){
@@ -205,7 +226,14 @@ module.exports = {
 										response.end(utils.Misc.createResponse(null, saveError, 402));
 									}
 									else {
-										//TODO: POST necessary info to savedApp.install endpoint
+										/*//necessary info to savedApp.install endpoint
+										superagent
+											.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+											.send({ name: name, install: true })
+											.end(function(appstartError, appstartResponse){
+												//TODO: when is the right time to shut down the app
+												//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
+											});*/
 										response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
 									}
 								});
@@ -320,6 +348,7 @@ module.exports = {
 
 									//pass the OS host & port to the app
 									var initUrl = context.app.ini;
+									if (true === request.body.install) initUrl = context.app.install; //if this is called during installation
 									if (!utils.Misc.isNullOrUndefined(initUrl)) {
 										initUrl = "/" + utils.String.trimStart(initUrl, "/");
 										superagent
