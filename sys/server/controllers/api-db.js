@@ -71,16 +71,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "drop" }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "drop" }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	},
 	postFind: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -89,16 +83,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "find", object: request.body.object, map: request.body.map || {} }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "find", object: request.body.object, map: request.body.map || {} }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	},
 	postFindOne: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -107,16 +95,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "findone", object: request.body.object, map: request.body.map || {} }, 
-			function(err, doc){
-				response.send(utils.Misc.createResponse(doc, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "findone", object: request.body.object, map: request.body.map || {} }, 
+		function(err, doc){
+			response.send(utils.Misc.createResponse(doc, err));
+		});
 	},
 	postInsert: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -125,16 +107,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "insert", object: request.body.object }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "insert", object: request.body.object }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	},
 	postRemove: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -143,16 +119,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "remove", object: request.body.object }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "remove", object: request.body.object }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	},
 	postReplace: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -161,17 +131,11 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "update", object: request.body.object, 
-				values: request.body.values, options: { upsert: request.body.upsert || false, multi: request.body.multi || false } }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "update", object: request.body.object, 
+			values: request.body.values, options: { upsert: request.body.upsert || false, multi: request.body.multi || false } }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	},
 	postUpdate: function(request, response){
 		if(utils.Misc.isNullOrUndefined(request.body.object)) {
@@ -180,16 +144,10 @@ module.exports = {
 			return;
 		}
 
-		if(!utils.Misc.isNullOrUndefined(request.body.collection)) {
-			__dbOp({ db: request.db, collection: request.body.collection, operation: "update", object: request.body.object, 
-				values: { $set: request.body.values }, options: { upsert: request.body.upsert || false, multi: request.body.multi || false } }, 
-			function(err, docs){
-				response.send(utils.Misc.createResponse(docs, err));
-			});
-		}
-		else {
-			var error = new Error(errors['700']);
-			response.end(utils.Misc.createResponse(null, error, 700));
-		}
+		__dbOp({ db: request.db, collection: request.params.collection, operation: "update", object: request.body.object, 
+			values: { $set: request.body.values }, options: { upsert: request.body.upsert || false, multi: request.body.multi || false } }, 
+		function(err, docs){
+			response.send(utils.Misc.createResponse(docs, err));
+		});
 	}
 };
