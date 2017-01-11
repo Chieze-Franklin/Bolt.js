@@ -1,5 +1,6 @@
 var bodyParser = require('body-parser');
-var cons = require('consolidate');
+//var cons = require('consolidate');
+var exphbs = require('express3-handlebars');
 var express = require("express");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);
@@ -63,7 +64,14 @@ module.exports = function(app) {
 	app.use('/public', express.static(__publicdir));
 
 	app.set('views', __sysdir + '/views');
-	app.engine('html', cons.handlebars);
+	//app.engine('html', cons.handlebars);
+	app.engine('html', exphbs.create({
+		helpers: {
+			json: function(obj) {
+				return JSON.stringify(obj);
+			}
+		}
+	}).engine);
 	app.set('view engine', 'html');
 
 	return app;

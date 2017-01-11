@@ -23,8 +23,6 @@
     <link href="public/bolt/pages/assets/plugins/switchery/css/switchery.min.css" rel="stylesheet" type="text/css" media="screen" />
     <link href="public/bolt/pages/pages/css/pages-icons.css" rel="stylesheet" type="text/css">
     <link class="main-stylesheet" href="public/bolt/pages/pages/css/pages.css" rel="stylesheet" type="text/css" />
-    <!--BOLT-->
-    <script type="text/javascript" src="../client/bolt.config-0.1.0.js"></script>
     <!--[if lte IE 9]>
         <link href="public/bolt/pages/pages/css/ie9.css" rel="stylesheet" type="text/css" />
     <![endif]-->
@@ -57,45 +55,114 @@
       <!-- END Login Background Pic Wrapper-->
       <!-- START Login Right Container-->
       <div class="login-container bg-white">
-        <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
-          <img src="public/bolt/pages/assets/img/logo.png" alt="logo" data-src="public/bolt/pages/assets/img/logo.png" data-src-retina="public/bolt/pages/assets/img/logo_2x.png" width="78" height="22">
-          <p class="p-t-35">You are being registered as an admin</p>
-          <!-- START Login Form -->
-          <div>
-            <!-- START Form Control-->
-            <div class="form-group form-group-default">
-              <label>Name</label>
-              <div class="controls">
-                <input type="text" name="displayname" id="displayname" placeholder="Display Name" class="form-control" required>
-              </div>
-            </div>
-            <!-- END Form Control-->
-            <!-- START Form Control-->
-            <div class="form-group form-group-default">
-              <label>Login</label>
-              <div class="controls">
-                <input type="text" name="username" id="username" placeholder="User Name" class="form-control" required>
-              </div>
-            </div>
-            <!-- END Form Control-->
-            <!-- START Form Control-->
-            <div class="form-group form-group-default">
-              <label>Password</label>
-              <div class="controls">
-                <input type="password" class="form-control" name="password" id="password" placeholder="Credentials" required>
-              </div>
-            </div>
-            <!-- END Form Control-->
-            <!-- START Form Control-->
-            <div class="form-group form-group-default">
-              <label>Confirm Password</label>
-              <div class="controls">
-                <input type="password" class="form-control" name="password" id="confirm_password" placeholder="Credentials" required>
-              </div>
-            </div>
-            <button class="btn btn-primary btn-cons m-t-10" value="submit" id="submit">Sign in</button>
+        <div id="rootwizard" class="m-t-50">
+            <!-- Nav tabs
+          <ul class="nav nav-tabs nav-tabs-separator nav-stack-sm">
+            <li class="active">
+              <a data-toggle="tab" href="#tab1"></a>
+            </li>
+          </ul> -->
+          <!-- Tab panes -->
+          <div class="tab-content">
+              <div class="tab-pane active slide-left" id="begin">
+                  <div class="row row-same-height">
+                        <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
+                          <img src="public/bolt/pages/assets/img/logo.png" alt="logo" width="78" height="22">
+                          <p class="p-t-35">You are being registered as an admin</p>
+                          <!-- START Login Form -->
+                          <div>
+                            <!-- START Form Control-->
+                            <div class="form-group form-group-default">
+                              <label>Name</label>
+                              <div class="controls">
+                                <input type="text" name="displayname" id="displayname" placeholder="Display Name" class="form-control" required>
+                              </div>
+                            </div>
+                            <!-- END Form Control-->
+                            <!-- START Form Control-->
+                            <div class="form-group form-group-default">
+                              <label>Login</label>
+                              <div class="controls">
+                                <input type="text" name="username" id="username" placeholder="User Name" class="form-control" required>
+                              </div>
+                            </div>
+                            <!-- END Form Control-->
+                            <!-- START Form Control-->
+                            <div class="form-group form-group-default">
+                              <label>Password</label>
+                              <div class="controls">
+                                <input type="password" class="form-control" name="password" id="password" placeholder="Credentials" required>
+                              </div>
+                            </div>
+                            <!-- END Form Control-->
+                            <!-- START Form Control-->
+                            <div class="form-group form-group-default">
+                              <label>Confirm Password</label>
+                              <div class="controls">
+                                <input type="password" class="form-control" name="password" id="confirm_password" placeholder="Credentials" required>
+                              </div>
+                            </div>
+                            <button class="btn btn-primary btn-cons m-t-10" value="submit" id="submit">Sign in</button>
+                            <ul class="pager wizard">
+                                <li>
+                                {{#if steps}}
+                                  <a class="btn btn-default btn-cons pull-right hidden" id="setup" data-toggle="tab" href="#tab0">
+                                    <span>Setup <i class="fa fa-arrow-right"></i></span>
+                                  </a>
+                                  {{else}}
+                                  <a class="btn btn-default btn-cons pull-right hidden" id="setup" data-toggle="tab" href="#end">
+                                    <span>Setup <i class="fa fa-arrow-right"></i></span>
+                                  </a>
+                                {{/if}}
+                                </li>
+                              </ul>
+                          </div>
+                          <!--END Login Form-->
+                        </div>
+                  </div>
+                </div>
+                {{#each steps}}
+                <div class="tab-pane slide-left" id="tab{{@index}}">
+                    <div class="row row-same-height">
+                        <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
+                            <h3>{{title}}</h3>
+                            <p>{{message}}</p>
+                            <ul class="pager wizard">
+                                <li class="next">
+                                  <button class="btn btn-primary btn-cons pull-right" type="button" 
+                                  onclick="performRequests({{@index}});">
+                                    <span>OK</span>
+                                  </button>
+                                </li>
+                                <li class="previous">
+                                {{#if next}}
+                                  <a id="skip{{@index}}" class="btn btn-default btn-cons pull-right" data-toggle="tab" href="#tab{{next}}">
+                                    <span>Skip</span>
+                                  </a>
+                                  {{else}}
+                                  <a id="skip{{@index}}" class="btn btn-default btn-cons pull-right" data-toggle="tab" href="#end">
+                                    <span>Skip</span>
+                                  </a>
+                                {{/if}}
+                                </li>
+                              </ul>
+                        </div>
+                    </div>
+                </div>
+                {{/each}}
+                <div class="tab-pane slide-left" id="end">
+                    <div class="row row-same-height">
+                        <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
+                            <h1>Done</h1>
+                            <ul class="pager wizard">
+                                <li>
+                                  <button class="btn btn-primary btn-cons m-t-10" id="proceed">Proceed</button>
+                                </li>
+                              </ul>
+                        </div>
+                    </div>
+                </div>
           </div>
-          <!--END Login Form-->
         </div>
       </div>
       <!-- END Login Right Container-->
@@ -119,17 +186,58 @@
     <!-- END VENDOR JS -->
     <script src="public/bolt/pages/pages/js/pages.min.js"></script>
     <script>
+    var performRequests = function(index){ 
+        var steps = {{{json steps}}};
+        var step = steps[index];
+        var requestsSync = step.requestsSync;
+        if(requestsSync){
+          var runRequest = function(index){
+            if(index < requestsSync.length) {
+              var req = requestsSync[index];    
+              $.ajax({
+                url: "{{protocol}}://{{host}}:{{port}}/" + req.endpoint,
+                data: req.body,
+                type: req.method,
+                //processData: false,
+                beforeSend: function(xhr) {
+                  xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+                },
+                success: function(response, status, xhr){
+                  runRequest(++index);
+                },
+                error: function(xhr, status, err){
+                  runRequest(++index);
+                }
+              });
+            }
+          }
+          runRequest(0);
+        }
+        var requests = step.requests;
+        if(requests) {
+          requests.forEach(function(req){  
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{port}}/" + req.endpoint,
+              data: req.body,
+              type: req.method,
+              //processData: false,
+              beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+              },
+              success: function(response, status, xhr){},
+              error: function(xhr, status, err){}
+            });
+          });
+        }
+        $("#skip" + index)[0].click();
+    }
     $(function()
     {
         //$('#form-login').validate()
     })
     $(document).ready(function(){
-        Bolt.Config.setHost("{{host}}");
-        Bolt.Config.setPort("{{port}}");
-        Bolt.Config.setProtocol("{{protocol}}");
-
         var displayname, username, password, con_password;
-        $("#submit").click(function(){
+        $("#submit").click(function(){$("#setup")[0].click();return;
             displayname=$("#displayname").val();
             username=$("#username").val();
             password=$("#password").val();
@@ -172,7 +280,8 @@
             										headers: {'X-Bolt-Req-Id': '{{reqid}}'},
             										success: function(response4, status4, xhr4){
             											if(response4.code == 0){ 
-            												window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                                      //TODO: success dialog
+                                      $("#setup")[0].click();
             											}
             											else {
             												//TODO: error
@@ -206,6 +315,10 @@
             	error: function(xhr, status, err){}
             });
       	});
+
+        $("#proceed").click(function(){
+            window.location.href="{{protocol}}://{{host}}:{{port}}/{{redirect}}";
+        });
       });
     </script>
   </body>

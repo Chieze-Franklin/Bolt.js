@@ -2,7 +2,9 @@
 
 module.exports = {
 	'100': "Endpoint not specified",
-	'103': "Could not find endpoint",
+	'103': "Could not find specified endpoint",
+	'110': "'X-Bolt-Req-Id' header missing",
+	'113': "Could not retrieve the specified 'X-Bolt-Req-Id' value from the database",
 
 	'200': "Username and/or password missing",
 	'201': "A user with the same username already exists",

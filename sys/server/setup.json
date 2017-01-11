@@ -1,0 +1,40 @@
+{
+	"redirect": "/settings",
+	"steps": [
+		{
+			"title": "Step One",
+			"message": "This is step one",
+			"requestsSync": [
+				{
+					"method": "POST",
+					"endpoint": "/api/users",
+					"body": {
+						"name": "Abdul",
+						"password": "sss"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/users",
+					"body": {
+						"name": "Ahmed",
+						"password": "ppp"
+					}
+				}
+			]
+		},
+		{
+			"title": "Step Two",
+			"message": "Install default UI",
+			"requests": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-ui-pages"
+					}
+				}
+			]
+		}
+	]
+}

@@ -6,17 +6,50 @@ var url = require('url');
 var config = require("../config");
 var errors = require("../errors");
 var models = require("../models");
+var setup = require("../setup");
 var utils = require("../utils");
 
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __sysdir = path.join(__dirname + './../../../sys');
 
 var __loadSetupView = function(request, response){
+
+	var steps = setup.getSteps();
+	if(!utils.Misc.isNullOrUndefined(steps) && steps.length > 0) {
+		steps.forEach(function(step, index){
+			if(index < (steps.length - 1)) step.next = index + 1;
+
+			var requestsSync = step.requestsSync;
+			if (!utils.Misc.isNullOrUndefined(requestsSync)) {
+				requestsSync.forEach(function(rs){
+					rs.endpoint = utils.String.trimStart(rs.endpoint, "/");
+				});
+			}
+
+			var requests = step.requests;
+			if (!utils.Misc.isNullOrUndefined(requests)) {
+				requests.forEach(function(r){
+					r.endpoint = utils.String.trimStart(r.endpoint, "/");
+				});
+			}
+		});
+		response.locals.steps = steps;
+	}
+
+	var redirect = setup.getRedirect();
+	if(!utils.Misc.isNullOrUndefined(redirect)) {
+		redirect = utils.String.trimStart(redirect, "/");
+	}
+	else {
+		redirect = "home";
+	}
+
 	var scope = {
 		protocol: config.getProtocol(),
 		host: config.getHost(),
 		port: config.getPort(),
 
+		redirect: redirect,
 		reqid: request.reqid,
 		title: "Setup"
 	};

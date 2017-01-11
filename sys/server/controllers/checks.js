@@ -93,13 +93,20 @@ module.exports = {
 	forSystemApp: function(request, response, next){
 		var id;
 		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
-			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			id = request.get(X_BOLT_REQ_ID);
 		}
-		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
-			id = request.reqid;
+		else {
+			var error = new Error(errors['110']);
+			response.end(utils.Misc.createResponse(null, error, 110));
+			return;
 		}
 
-		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+		var name = __getAppFromReqId(id, request);
+		if (utils.Misc.isNullOrUndefined(name)) {
+			var error = new Error(errors['113']);
+			response.end(utils.Misc.createResponse(null, error, 113));
+			return;
+		}
 		var appnm = utils.String.trim(name.toLowerCase());
 
 		if (appnm == 'bolt') {
@@ -131,13 +138,20 @@ module.exports = {
 	forDbAccess: function(request, response, next) {
 		var id;
 		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
-			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			id = request.get(X_BOLT_REQ_ID);
 		}
-		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
-			id = request.reqid;
+		else {
+			var error = new Error(errors['110']);
+			response.end(utils.Misc.createResponse(null, error, 110));
+			return;
 		}
 
-		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+		var name = __getAppFromReqId(id, request);
+		if (utils.Misc.isNullOrUndefined(name)) {
+			var error = new Error(errors['113']);
+			response.end(utils.Misc.createResponse(null, error, 113));
+			return;
+		}
 		var appnm = utils.String.trim(name.toLowerCase());
 		var dbOwner = request.body.db || request.body.app || appnm;
 
@@ -173,13 +187,20 @@ module.exports = {
 	getDbName: function(request, response, next){
 		var id;
 		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
-			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			id = request.get(X_BOLT_REQ_ID);
 		}
-		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
-			id = request.reqid;
+		else {
+			var error = new Error(errors['110']);
+			response.end(utils.Misc.createResponse(null, error, 110));
+			return;
 		}
 
-		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+		var name = __getAppFromReqId(id, request);
+		if (utils.Misc.isNullOrUndefined(name)) {
+			var error = new Error(errors['113']);
+			response.end(utils.Misc.createResponse(null, error, 113));
+			return;
+		}
 		var appnm = utils.String.trim(name.toLowerCase());
 		request.db = request.body.db || request.body.app || appnm;
 
@@ -189,13 +210,20 @@ module.exports = {
 	forDbOwner: function(request, response, next) {
 		var id;
 		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
-			id = request.get(X_BOLT_REQ_ID); //TODO: what if there's no X_BOLT_REQ_ID
+			id = request.get(X_BOLT_REQ_ID);
 		}
-		else if (!utils.Misc.isNullOrUndefined(request.reqid)) {
-			id = request.reqid;
+		else {
+			var error = new Error(errors['110']);
+			response.end(utils.Misc.createResponse(null, error, 110));
+			return;
 		}
 
-		var name = __getAppFromReqId(id, request); //TODO: what if name is undefined
+		var name = __getAppFromReqId(id, request);
+		if (utils.Misc.isNullOrUndefined(name)) {
+			var error = new Error(errors['113']);
+			response.end(utils.Misc.createResponse(null, error, 113));
+			return;
+		}
 		var appnm = utils.String.trim(name.toLowerCase());
 		var dbOwner = request.body.db || request.body.app || appnm;
 

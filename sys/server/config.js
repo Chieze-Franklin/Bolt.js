@@ -7,7 +7,7 @@ var __config;
 var getConfig = function(){
 	if(__config) return __config;
 
-	//fs.readFile(__dirname + '/sys/' + 'config.json', 'utf8', function (err, data) {
+	//fs.readFile(__dirname + 'config.json', 'utf8', function (err, data) {
 	//	__config = JSON.parse(data);
 	//});
 
