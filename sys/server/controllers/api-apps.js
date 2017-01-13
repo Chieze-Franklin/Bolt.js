@@ -129,18 +129,21 @@ module.exports = {
 							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.db)) {
-								var db = package.bolt.db;
-
-								for (var collection in db) {
-									if (db.hasOwnProperty(collection)) {
+							//NOTE: transient apps can't register collections
+							//Although collections are independent of the apps that created them (u can access an app's collection without starting the app),
+							//the only way to delete the database holding those collections is to uninstall the app...
+							//the problem is, transient apps can't be uninstalled since they were never really installed
+							if (!utils.Misc.isNullOrUndefined(package.bolt.collections) && !package.bolt.transient) {
+								var collections = package.bolt.collections;
+								for (var collection in collections) {
+									if (collections.hasOwnProperty(collection)) {
 										var newCollection = new models.collection({
 											name: collection,
 											app: appnm,
 											database: appnm
 										});
 
-										var collObj = db[collection];
+										var collObj = collections[collection];
 										if (collObj.constructor === Array || collObj.constructor === String) {
 											newCollection.guests = collObj;
 										}
@@ -150,7 +153,8 @@ module.exports = {
 								}
 							}
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
+							//NOTE: transient apps can't register extensions
+							if (!utils.Misc.isNullOrUndefined(package.bolt.extensions) && !package.bolt.transient) {
 								var extensions = package.bolt.extensions;
 								for (var extension in extensions){
 									var ext = "/" + utils.String.trimStart(utils.String.trim(extension.toLowerCase()), "/");
@@ -175,6 +179,31 @@ module.exports = {
 											newExtension.type = "view";
 										}
 										newExtension.save(); //TODO: check that two extensions dont hv d same path and app
+									}
+								}
+							}
+
+							if (!utils.Misc.isNullOrUndefined(package.bolt.modules)) {
+								var _modules = package.bolt.modules;
+								for (var _module in _modules) {
+									if (_modules.hasOwnProperty(_module)) {
+										var newModule = new models.module({
+											name: _module,
+											app: appnm,
+											path: _path
+										});
+
+										var modObj = _modules[_module];
+										if (modObj.constructor === String) {
+											newModule.router = modObj;
+										}
+										else {
+											newModule.router = modObj.router;
+											if (!utils.Misc.isNullOrUndefined(modObj.root)) newModule.root = modObj.root;
+											if (!utils.Misc.isNullOrUndefined(modObj.order)) newModule.order = modObj.order;
+										}
+
+										newModule.save();
 									}
 								}
 							}
@@ -221,22 +250,27 @@ module.exports = {
 							newApp.package = package;
 
 							var saveNewApp = function(){
-								newApp.save(function(saveError, savedApp){
-									if (!utils.Misc.isNullOrUndefined(saveError)) {
-										response.end(utils.Misc.createResponse(null, saveError, 402));
-									}
-									else {
-										/*//necessary info to savedApp.install endpoint
-										superagent
-											.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-											.send({ name: name, install: true })
-											.end(function(appstartError, appstartResponse){
-												//TODO: when is the right time to shut down the app
-												//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
-											});*/
-										response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
-									}
-								});
+								if(package.bolt.transient) {
+									response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(newApp)));
+								}
+								else {
+									newApp.save(function(saveError, savedApp){
+										if (!utils.Misc.isNullOrUndefined(saveError)) {
+											response.end(utils.Misc.createResponse(null, saveError, 402));
+										}
+										else {
+											/*//necessary info to savedApp.install endpoint
+											superagent
+												.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+												.send({ name: name, install: true })
+												.end(function(appstartError, appstartResponse){
+													//TODO: when is the right time to shut down the app
+													//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
+												});*/
+											response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
+										}
+									});
+								}
 							};
 
 							if (!utils.Misc.isNullOrUndefined(package.bolt.checks)) {

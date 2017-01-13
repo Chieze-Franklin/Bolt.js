@@ -112,13 +112,30 @@ app.use('/files', uiFilesRouter);
 app.use(uiViewsRouter);
 //</UI-Endpoints>
 
+/* function for removing routes during runtime
+var routes = app._router.stack;
+routes.forEach(removeMiddleware);
+function removeMiddleware(route, index, routes){
+	switch (route.handle.name) {
+		case '$_': routes.splice(index, 1);
+	}
+	if (route.route) {
+		route.route.stack.forEach(removeMiddleware);
+	}
+}
+
+modules have: name, displayName, router(their own main), root[optional] (like '/api/fs'), order, target, dependencies
+//how do we know a the package,json is for a module or an app? //maybe include bolt.type='module'
+*/
+
 // catch 404 and forward to error handler
-app.use(function(request, response, next) {
+var $_ = function $_(request, response, next) {
   var error = new Error("The endpoint '" + request.path + "' could not be found!");
   response
   	.set('Content-Type', 'application/json')
   	.end(utils.Misc.createResponse(null, error, 103));
-});
+}
+//app.use($_);
 
 var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
@@ -155,6 +172,32 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 					
 					mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
 					mongoose.connection.on('open', function(){
+						//load modules
+						models.module.find({}, function(err, modules){
+							if(utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(modules)){
+								modules.sort(function(a, b){
+									var orderA = a.order || 0;
+						            var orderB = b.order || 0;
+						            return parseFloat(orderA) - parseFloat(orderB);
+								});
+								modules.forEach(function(mdl){
+									if(!utils.Misc.isNullOrUndefined(mdl.router)) {
+										var router = require(path.join(__dirname, 'node_modules', mdl.path, mdl.router));
+										if(utils.Misc.isNullOrUndefined(mdl.root)) {
+											app.use(router);
+										}
+										else {
+											app.use("/" + utils.String.trimStart(mdl.root, "/"), router);
+										}
+									}
+									console.log("Loaded module%s%s%s",
+										(!utils.Misc.isNullOrUndefined(mdl.name) ? " '" + mdl.name + "'" : ""), 
+										(!utils.Misc.isNullOrUndefined(mdl.app) ? " (" + mdl.app + ")" : ""),
+										(!utils.Misc.isNullOrUndefined(mdl.root) ? " on " + mdl.root : ""));
+								});
+								console.log('');
+							}
+						});
 						//start start-up services
 						models.app.find({ 
 							startup: true
@@ -186,7 +229,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 											if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
 												console.log("Started startup app%s%s at %s:%s",
-													(!utils.Misc.isNullOrUndefined(context.app.title) ? " '" + context.app.title + "'" : ""), 
+													(!utils.Misc.isNullOrUndefined(context.app.displayName) ? " '" + context.app.displayName + "'" : ""), 
 													(!utils.Misc.isNullOrUndefined(context.name) ? " (" + context.name + ")" : ""),
 													(!utils.Misc.isNullOrUndefined(context.host) ? context.host : ""), 
 													context.port);

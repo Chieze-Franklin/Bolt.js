@@ -185,24 +185,32 @@ module.exports = {
 	},
 	//gets the DB name from the request, and creates the request.db field to hold the value
 	getDbName: function(request, response, next){
-		var id;
-		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
-			id = request.get(X_BOLT_REQ_ID);
+		if (!utils.Misc.isNullOrUndefined(request.body.db)) {
+			request.db = request.body.db;
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.body.app)) {
+			request.db = request.body.app;
 		}
 		else {
-			var error = new Error(errors['110']);
-			response.end(utils.Misc.createResponse(null, error, 110));
-			return;
-		}
+			var id;
+			if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_REQ_ID))) {
+				id = request.get(X_BOLT_REQ_ID);
+			}
+			else {
+				var error = new Error(errors['110']);
+				response.end(utils.Misc.createResponse(null, error, 110));
+				return;
+			}
 
-		var name = __getAppFromReqId(id, request);
-		if (utils.Misc.isNullOrUndefined(name)) {
-			var error = new Error(errors['113']);
-			response.end(utils.Misc.createResponse(null, error, 113));
-			return;
+			var name = __getAppFromReqId(id, request);
+			if (utils.Misc.isNullOrUndefined(name)) {
+				var error = new Error(errors['113']);
+				response.end(utils.Misc.createResponse(null, error, 113));
+				return;
+			}
+			var appnm = utils.String.trim(name.toLowerCase());
+			request.db = appnm;
 		}
-		var appnm = utils.String.trim(name.toLowerCase());
-		request.db = request.body.db || request.body.app || appnm;
 
 		next();
 	},
