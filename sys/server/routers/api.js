@@ -16,4 +16,7 @@ router.get('/help', apiCtrlr.getHelp);
 //TODO: GET: /help/:endpoint //returns the description of an endpoint
 //TODO: GET: /help/:endpoint/:version //returns the description of a version of an endpoint
 
+router.post('/reset', checksCtrlr.forUserPermToReset, apiCtrlr.postReset);
+router.post('/reset/:collection', checksCtrlr.forUserPermToReset, apiCtrlr.postResetCollection);
+
 module.exports = router;

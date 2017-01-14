@@ -130,8 +130,12 @@ module.exports = {
 			});
 		}
 	},
+
 	forUserPermToInstall: function(request, response, next){
 		next(); //TODO: check if app has user's permission to install an app (remember system apps need no permission)
+	},
+	forUserPermToReset: function(request, response, next){
+		next(); //TODO: check if app has user's permission to reset the database or its collections (remember system apps need no permission)
 	},
 
 	//checks if this app has the right to access a database (actually a collection in the database)

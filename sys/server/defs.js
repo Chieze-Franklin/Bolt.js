@@ -64,14 +64,6 @@ module.exports = {
 		type: { type: String, required: true },
 		route: { type: String, required: true }
 	},
-	module : {
-		name: { type: String, lowercase: true, required: true, trim: true },
-		app: { type: String, required: true },
-		path: { type: String, required: true },
-		router: { type: String, required: true, trim: true },
-		root: { type: String, trim: true },
-		order: { type: Number, default: 0 }
-	},
 	role : {
 		name: { type: String, index: true, lowercase: true, required: true },
 		isAdmin: { type: Boolean, default: false },
@@ -79,6 +71,14 @@ module.exports = {
 
 		description: { type: String },
 		dateCreated: { type: Date, default: Date.now }
+	},
+	router : {
+		name: { type: String, lowercase: true, required: true, trim: true },
+		app: { type: String, required: true },
+		path: { type: String, required: true },
+		main: { type: String, required: true, trim: true },
+		root: { type: String, trim: true },
+		order: { type: Number, default: 0 }
 	},
 	user : {
 		name: { type: String, index: true, lowercase: true, required: true },

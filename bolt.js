@@ -172,28 +172,28 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 					
 					mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
 					mongoose.connection.on('open', function(){
-						//load modules
-						models.module.find({}, function(err, modules){
-							if(utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(modules)){
-								modules.sort(function(a, b){
+						//load routers
+						models.router.find({}, function(err, routers){
+							if(utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)){
+								routers.sort(function(a, b){
 									var orderA = a.order || 0;
 						            var orderB = b.order || 0;
 						            return parseFloat(orderA) - parseFloat(orderB);
 								});
-								modules.forEach(function(mdl){
-									if(!utils.Misc.isNullOrUndefined(mdl.router)) {
-										var router = require(path.join(__dirname, 'node_modules', mdl.path, mdl.router));
-										if(utils.Misc.isNullOrUndefined(mdl.root)) {
+								routers.forEach(function(rtr){
+									if(!utils.Misc.isNullOrUndefined(rtr.main)) {
+										var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
+										if(utils.Misc.isNullOrUndefined(rtr.root)) {
 											app.use(router);
 										}
 										else {
-											app.use("/" + utils.String.trimStart(mdl.root, "/"), router);
+											app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
 										}
+										console.log("Loaded router%s%s%s",
+											(!utils.Misc.isNullOrUndefined(rtr.name) ? " '" + rtr.name + "'" : ""), 
+											(!utils.Misc.isNullOrUndefined(rtr.app) ? " (" + rtr.app + ")" : ""),
+											(!utils.Misc.isNullOrUndefined(rtr.root) ? " on " + rtr.root : ""));
 									}
-									console.log("Loaded module%s%s%s",
-										(!utils.Misc.isNullOrUndefined(mdl.name) ? " '" + mdl.name + "'" : ""), 
-										(!utils.Misc.isNullOrUndefined(mdl.app) ? " (" + mdl.app + ")" : ""),
-										(!utils.Misc.isNullOrUndefined(mdl.root) ? " on " + mdl.root : ""));
 								});
 								console.log('');
 							}

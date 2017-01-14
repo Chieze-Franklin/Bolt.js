@@ -183,27 +183,27 @@ module.exports = {
 								}
 							}
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.modules)) {
-								var _modules = package.bolt.modules;
-								for (var _module in _modules) {
-									if (_modules.hasOwnProperty(_module)) {
-										var newModule = new models.module({
-											name: _module,
+							if (!utils.Misc.isNullOrUndefined(package.bolt.routers)) {
+								var routers = package.bolt.routers;
+								for (var router in routers) {
+									if (routers.hasOwnProperty(router)) {
+										var newRouter = new models.router({
+											name: router,
 											app: appnm,
 											path: _path
 										});
 
-										var modObj = _modules[_module];
-										if (modObj.constructor === String) {
-											newModule.router = modObj;
+										var rtrObj = routers[router];
+										if (rtrObj.constructor === String) {
+											newRouter.main = rtrObj;
 										}
 										else {
-											newModule.router = modObj.router;
-											if (!utils.Misc.isNullOrUndefined(modObj.root)) newModule.root = modObj.root;
-											if (!utils.Misc.isNullOrUndefined(modObj.order)) newModule.order = modObj.order;
+											newRouter.main = rtrObj.main;
+											if (!utils.Misc.isNullOrUndefined(rtrObj.root)) newRouter.root = rtrObj.root;
+											if (!utils.Misc.isNullOrUndefined(rtrObj.order)) newRouter.order = rtrObj.order;
 										}
 
-										newModule.save();
+										newRouter.save();
 									}
 								}
 							}
