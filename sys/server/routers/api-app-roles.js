@@ -1,6 +1,7 @@
+var checksCtrlr = require("bolt-internal-checks");
+
 var express = require('express');
 
-var checksCtrlr = require('../controllers/checks');
 var apiAppRolesCtrlr = require('../controllers/api-app-roles');
 
 var router = express.Router();

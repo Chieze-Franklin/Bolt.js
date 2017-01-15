@@ -1,8 +1,8 @@
-var superagent = require('superagent');
+var config = require("bolt-internal-config");
+var errors = require("bolt-internal-errors");
+var utils = require("bolt-internal-utils");
 
-var config = require("../config");
-var errors = require("../errors");
-var utils = require("../utils");
+var superagent = require('superagent');
 
 const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';

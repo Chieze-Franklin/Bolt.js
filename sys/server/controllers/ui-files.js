@@ -1,10 +1,10 @@
+var config = require("bolt-internal-config");
+var errors = require("bolt-internal-errors");
+var utils = require("bolt-internal-utils");
+
 //var fs = require("fs");
 var path = require("path");
 var superagent = require('superagent');
-
-var config = require("../config");
-var errors = require("../errors");
-var utils = require("../utils");
 
 module.exports = {
 	getAppFile: function(request, response){

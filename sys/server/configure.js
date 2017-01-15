@@ -1,13 +1,13 @@
+var config = require("bolt-internal-config");
+var models = require("bolt-internal-models");
+var utils = require("bolt-internal-utils");
+
 var bodyParser = require('body-parser');
 //var cons = require('consolidate');
 var exphbs = require('express3-handlebars');
 var express = require("express");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);
-
-var config = require("./config");
-var models = require("./models");
-var utils = require("./utils");
 
 var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');

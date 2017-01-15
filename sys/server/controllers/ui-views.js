@@ -1,13 +1,13 @@
+var config = require("bolt-internal-config");
+var errors = require("bolt-internal-errors");
+var models = require("bolt-internal-models");
+var setup = require("bolt-internal-setup");
+var utils = require("bolt-internal-utils");
+
 var fs = require("fs");
 var path = require("path");
 var superagent = require('superagent');
 var url = require('url');
-
-var config = require("../config");
-var errors = require("../errors");
-var models = require("../models");
-var setup = require("../setup");
-var utils = require("../utils");
 
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __sysdir = path.join(__dirname + './../../../sys');

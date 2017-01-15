@@ -1,3 +1,7 @@
+var config = require("bolt-internal-config");
+var models = require("bolt-internal-models");
+var utils = require("bolt-internal-utils");
+
 var exec = require('child_process').exec, child;
 var express = require("express");
 var http = require("http");
@@ -6,12 +10,8 @@ var mongoose = require('mongoose'), Schema = mongoose.Schema;
 var path = require("path");
 var superagent = require('superagent');
 
-var config = require("./sys/server/config");
 var configure = require("./sys/server/configure");
-var models = require("./sys/server/models");
-var utils = require("./sys/server/utils");
 
-var apiRouter = require('./sys/server/routers/api');
 var apiAppRolesRouter = require('./sys/server/routers/api-app-roles');
 var apiAppsRouter = require('./sys/server/routers/api-apps');
 var apiChecksRouter = require('./sys/server/routers/api-checks');
@@ -100,8 +100,6 @@ app.use('/api/tokens', apiTokensRouter);
 app.use('/api/user-roles', apiUserRolesRouter);
 
 app.use('/api/users', apiUsersRouter);
-
-app.use('/api', apiRouter);
 //</API-Endpoints>
 
 //<UI-Endpoints>
@@ -123,9 +121,6 @@ function removeMiddleware(route, index, routes){
 		route.route.stack.forEach(removeMiddleware);
 	}
 }
-
-modules have: name, displayName, router(their own main), root[optional] (like '/api/fs'), order, target, dependencies
-//how do we know a the package,json is for a module or an app? //maybe include bolt.type='module'
 */
 
 // catch 404 and forward to error handler
@@ -135,7 +130,6 @@ var $_ = function $_(request, response, next) {
   	.set('Content-Type', 'application/json')
   	.end(utils.Misc.createResponse(null, error, 103));
 }
-//app.use($_);
 
 var server = app.listen(config.getPort(), config.getHost(), function(){
 	var host = server.address().address;
@@ -146,6 +140,10 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	//listen for 'uncaughtException' so it doesnt crash our system
 	process.on('uncaughtException', function(error){
 		console.log(error);
+	});
+
+	process.on('exit', function(code){
+		console.log("Shutting down with code " + code);
 	});
 
 	//TODO: how do I check Bolt source hasnt been altered
@@ -195,6 +193,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 											(!utils.Misc.isNullOrUndefined(rtr.root) ? " on " + rtr.root : ""));
 									}
 								});
+								app.use($_); //error handler
 								console.log('');
 							}
 						});

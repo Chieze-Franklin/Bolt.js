@@ -1,3 +1,5 @@
+var checksCtrlr = require("bolt-internal-checks");
+
 var express = require('express');
 var multer = require('multer'), 
 	/*storage =   multer.diskStorage({
@@ -10,7 +12,6 @@ var multer = require('multer'),
 	}),
 	upload = multer({ storage : storage})*/upload = multer({ dest : 'public/bolt/users/'});
 
-var checksCtrlr = require('../controllers/checks');
 var apiUsersCtrlr = require('../controllers/api-users');
 
 var router = express.Router();

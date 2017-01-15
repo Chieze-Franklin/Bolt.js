@@ -1,11 +1,10 @@
 'use strict';
+var config = require("bolt-internal-config");
 
 var exec = require('child_process').exec, child;
 var http = require("http");
 var path = require("path");
 var superagent = require('superagent');
-
-var config = require("./config");
 
 var __nameToAppPidMap = new Map();
 var __nameToAppPortMap = new Map();

@@ -1,9 +1,9 @@
-var superagent = require('superagent');
+var config = require("bolt-internal-config");
+var errors = require("bolt-internal-errors");
+var models = require("bolt-internal-models");
+var utils = require("bolt-internal-utils");
 
-var config = require("../config");
-var errors = require("../errors");
-var models = require("../models");
-var utils = require("../utils");
+var superagent = require('superagent');
 
 var __updatableProps = ["description", "displayName", "isAdmin"];
 

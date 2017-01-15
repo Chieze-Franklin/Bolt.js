@@ -1,12 +1,12 @@
+var config = require("bolt-internal-config");
+var errors = require("bolt-internal-errors");
+var models = require("bolt-internal-models");
+var utils = require("bolt-internal-utils");
+
 var fs = require('fs');
 var path = require("path");
 var mongodb = require('mongodb');
 var superagent = require('superagent');
-
-var config = require("../config");
-var errors = require("../errors");
-var models = require("../models");
-var utils = require("../utils");
 
 var __publicDir = path.join(__dirname + './../../../public');
 
