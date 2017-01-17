@@ -64,8 +64,10 @@ module.exports = function(app) {
 	app.use('/public', express.static(__publicdir));
 
 	app.set('views', __sysdir + '/views');
-	//app.engine('html', cons.handlebars);
 	app.engine('html', exphbs.create({
+		defaultLayout: 'main.html',
+		layoutsDir: app.get('views') + '/layouts',
+		partialsDir: [app.get('views') + '/partials'],
 		helpers: {
 			json: function(obj) {
 				return JSON.stringify(obj);
