@@ -223,28 +223,35 @@ module.exports = {
 								}
 								else {
 									var destRoot = path.join(__publicDir, _path);
-									var overwrite = public.overwrite || true;
+									var overwrite = true;
+									if (!utils.Misc.isNullOrUndefined(public.overwrite)) overwrite = public.overwrite;
+
+									var transferFiles = function() {
+										public.paths.forEach(function(publicPath, index){
+											var source = path.join(__node_modulesDir, _path, publicPath);
+											var destination = path.join(__publicDir, _path, publicPath);
+											if (public.move) {
+												fse.move(source, destination, { clobber: overwrite }, function(moveError){
+													//TODO: what shud I do if there's an error?
+												});
+											}
+											else {
+												fse.copy(source, destination, { clobber: overwrite }, function(copyError){
+													//TODO: what shud I do if there's an error?
+												});
+											}
+										});
+									}
 
 									if (public.clean){
 										fse.emptyDir(destRoot, function(emptyError){
 											//TODO: what shud I do if there's an error?
+											transferFiles();
 										});
 									}
-
-									public.paths.forEach(function(publicPath, index){
-										var source = path.join(__node_modulesDir, _path, publicPath);
-										var destination = path.join(__publicDir, _path, publicPath);
-										if (public.move) {
-											fse.move(source, destination, { clobber: overwrite }, function(moveError){
-												//TODO: what shud I do if there's an error?
-											});
-										}
-										else {
-											fse.copy(source, destination, { clobber: overwrite }, function(copyError){
-												//TODO: what shud I do if there's an error?
-											});
-										}
-									});
+									else {
+										transferFiles();
+									}
 								}
 							}
 
