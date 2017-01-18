@@ -1,0 +1,76 @@
+{
+	"redirect": "/settings",
+	"steps": [
+		{
+			"title": "Download NPM Modules",
+			"message": "Install needed modules from npm. This step is very important and requires internet connection. Or you can just run 'npm install'",
+			"requests": []
+		},
+		{
+			"title": "Download Core Modules",
+			"message": "Install core modules from online repositories. This step requires internet connection.",
+			"requests": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps",
+					"body": {
+						"name": "bolt-system-module"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps",
+					"body": {
+						"path": "bolt-module-db"
+					}
+				}
+			]
+		},
+		{
+			"title": "Sideload Core Modules",
+			"message": "Install core modules from local repositories. This step requires that the modules are located in the 'node_modules' folder.",
+			"requestsSync": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-module-system"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-module-db"
+					}
+				}
+			]
+		},
+		{
+			"title": "UI Setup",
+			"message": "Download necessary UI frameworks and libraries. Skipping this step may affect how some views appear.",
+			"requests": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps",
+					"body": {
+						"path": "bolt-module-ui-pages"
+					}
+				}
+			]
+		},
+		{
+			"title": "UI Setup",
+			"message": "Sideload necessary UI frameworks and libraries. Skipping this step may affect how some views appear.",
+			"requests": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-module-ui-pages"
+					}
+				}
+			]
+		}
+	]
+}
