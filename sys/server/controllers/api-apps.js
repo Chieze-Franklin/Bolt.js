@@ -66,6 +66,7 @@ module.exports = {
 	},*/
 	post: function(request, response){
 		//TODO:
+		//support npm (default) and bower
 		//expects: { app (if app name (.body.name) missing, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
 		//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
 		//if (!utils.Misc.isNullOrUndefined(request.body.name))
@@ -119,22 +120,66 @@ module.exports = {
 							newApp.description = package.description || "";
 							newApp.version = package.version || "";
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
+							if (!utils.Misc.isNullOrUndefined(package.bolt.module)) newApp.module = package.bolt.module;
+
+							/*a module can't have/do the things in this block
+							* a module can't have 'main'
+							* a module can't have 'index', 'ini', 'install'
+							* a module can't have 'startup' or 'system' privileges
+							* a module can't register extensions
+							*/
+							if (!package.bolt.module) {
+								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
+
+								if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
+								if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
+								if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
+
+								newApp.startup = false;
+								if (!utils.Misc.isNullOrUndefined(request.body.startup)) newApp.startup = request.body.startup;
+								else if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) newApp.startup = package.bolt.startup;
+
+								newApp.system = false;
+								if (!utils.Misc.isNullOrUndefined(request.body.system)) newApp.system = request.body.system;
+								else if (!utils.Misc.isNullOrUndefined(package.bolt.system)) newApp.system = package.bolt.system;
+
+								if (!utils.Misc.isNullOrUndefined(package.bolt.extensions) && !package.bolt.transient) {
+									var extensions = package.bolt.extensions;
+									for (var extension in extensions){
+										var ext = "/" + utils.String.trimStart(utils.String.trim(extension.toLowerCase()), "/");
+										if (extensions.hasOwnProperty(extension)){
+											var newExtension = new models.extension({
+												path: ext,
+												app: appnm,
+												route: extensions[extension]
+											});
+											//set type
+											if (utils.String.startsWith(ext, "/acts/")) {
+												newExtension.type = "action";
+											}
+											else if (utils.String.startsWith(ext, "/data/")) {
+												newExtension.type = "datum";
+											}
+											else if (utils.String.startsWith(ext, "/files/")) {
+												newExtension.type = "file";
+											}
+											//listeners|handlers
+											else {
+												newExtension.type = "view";
+											}
+											newExtension.save(); //TODO: check that two extensions dont hv d same path and app
+										}
+									}
+								}
+							}
 
 							newApp.files = package.bolt.files || {};
-							if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
-							if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
-							if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 							if (!utils.Misc.isNullOrUndefined(package.bolt.order)) newApp.order = package.bolt.order;
-							newApp.startup = request.body.startup || (package.bolt.startup || false);
-							newApp.system = request.body.system || (package.bolt.system || false);
 							newApp.tags = package.bolt.tags || [];
 
-							//NOTE: transient apps can't register collections
-							//Although collections are independent of the apps that created them (u can access an app's collection without starting the app),
-							//the only way to delete the database holding those collections is to uninstall the app...
-							//the problem is, transient apps can't be uninstalled since they were never really installed
-							if (!utils.Misc.isNullOrUndefined(package.bolt.collections) && !package.bolt.transient) {
+							//even a module can register collections
+							//considering the fact that such collections will always be empty, I wonder why I'm allowing that
+							if (!utils.Misc.isNullOrUndefined(package.bolt.collections)) {
 								var collections = package.bolt.collections;
 								for (var collection in collections) {
 									if (collections.hasOwnProperty(collection)) {
@@ -150,36 +195,6 @@ module.exports = {
 										}
 										else if (!utils.Misc.isNullOrUndefined(collObj.guests)) newCollection.guests = collObj.guests;
 										newCollection.save();
-									}
-								}
-							}
-
-							//NOTE: transient apps can't register extensions
-							if (!utils.Misc.isNullOrUndefined(package.bolt.extensions) && !package.bolt.transient) {
-								var extensions = package.bolt.extensions;
-								for (var extension in extensions){
-									var ext = "/" + utils.String.trimStart(utils.String.trim(extension.toLowerCase()), "/");
-									if (extensions.hasOwnProperty(extension)){
-										var newExtension = new models.extension({
-											path: ext,
-											app: appnm,
-											route: extensions[extension]
-										});
-										//set type
-										if (utils.String.startsWith(ext, "/acts/")) {
-											newExtension.type = "action";
-										}
-										else if (utils.String.startsWith(ext, "/data/")) {
-											newExtension.type = "datum";
-										}
-										else if (utils.String.startsWith(ext, "/files/")) {
-											newExtension.type = "file";
-										}
-										//listeners|handlers
-										else {
-											newExtension.type = "view";
-										}
-										newExtension.save(); //TODO: check that two extensions dont hv d same path and app
 									}
 								}
 							}
@@ -263,7 +278,8 @@ module.exports = {
 								}
 								else {
 									newApp.save(function(saveError, savedApp){
-										if (!utils.Misc.isNullOrUndefined(saveError)) {
+										if (!utils.Misc.isNullOrUndefined(saveError)) {console.log(newApp);console.log(saveError);
+											//TODO: if an error occurs, undo everything this app did
 											response.end(utils.Misc.createResponse(null, saveError, 402));
 										}
 										else {
@@ -281,7 +297,8 @@ module.exports = {
 								}
 							};
 
-							if (!utils.Misc.isNullOrUndefined(package.bolt.checks)) {
+							// a module can't check files
+							if (!utils.Misc.isNullOrUndefined(package.bolt.checks) && !package.bolt.module) {
 								var totalHash = "";
 								var checksum = function(index){
 									if (index >= package.bolt.checks.length) {
@@ -362,9 +379,13 @@ module.exports = {
 						return;
 					}
 
-					var context = {}
 					var app = realResponse.body;
 
+					if (app.module) {
+						//TODO: throw error(u cant start a module)
+					}
+
+					var context = {}
 					context.name = app.name;
 					context.path = app.path;
 					context.app = app;

@@ -38,7 +38,7 @@ module.exports = {
 					}
 				}
 
-				if (!utils.Misc.isNullOrUndefined(fileInfo.path)) {
+				if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.path)) {
 					fileInfo.publicPath = config.getProtocol() + "://" + config.getHost() + ":" + config.getPort() 
 						+ "/public/" + app.name + "/" + fileInfo.path;
 					fileInfo.staticPath = path.join(__publicDir, app.path, fileInfo.path);

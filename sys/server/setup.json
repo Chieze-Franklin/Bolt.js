@@ -47,8 +47,8 @@
 			]
 		},
 		{
-			"title": "UI Setup",
-			"message": "Download necessary UI frameworks and libraries. Skipping this step may affect how some views appear.",
+			"title": "Download UI Framework",
+			"message": "Download necessary UI frameworks and libraries from online repositories. Skipping this step may affect how some views appear.",
 			"requests": [
 				{
 					"method": "POST",
@@ -60,14 +60,54 @@
 			]
 		},
 		{
-			"title": "UI Setup",
-			"message": "Sideload necessary UI frameworks and libraries. Skipping this step may affect how some views appear.",
+			"title": "Sideload UI Framework",
+			"message": "Sideload necessary UI frameworks and libraries from local (node_modules) repository. Skipping this step may affect how some views appear.",
 			"requests": [
 				{
 					"method": "POST",
 					"endpoint": "/api/apps/reg",
 					"body": {
-						"path": "bolt-module-ui-pages"
+						"path": "bolt-ui-pages"
+					}
+				}
+			]
+		},
+		{
+			"title": "Download Core Apps",
+			"message": "Install core apps from online repositories. This step requires internet connection.",
+			"requests": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps",
+					"body": {
+						"name": "bolt-settings"
+					}
+				}
+			]
+		},
+		{
+			"title": "Sideload Core Apps",
+			"message": "Install core apps from local repositories. This step requires that the apps are located in the 'node_modules' folder.",
+			"requestsSync": [
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-settings"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "ctl-sms-home"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "ctl-sms-students"
 					}
 				}
 			]

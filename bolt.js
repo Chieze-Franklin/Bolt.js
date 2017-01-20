@@ -137,6 +137,8 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	//listen for 'uncaughtException' so it doesnt crash our system
 	process.on('uncaughtException', function(error){
 		console.log(error);
+		console.log(error.stack);
+		console.trace();
 	});
 
 	process.on('exit', function(code){

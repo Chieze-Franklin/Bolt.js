@@ -37,7 +37,6 @@
     "bolt-internal-setup": "*",
     "bolt-internal-utils": "*",
     "client-sessions": "^0.7.0",
-    "consolidate": "^0.14.1",
     "cookie-parser": "^1.4.3",
     "express": "~4.14.0",
     "express3-handlebars": "^0.5.2",
@@ -54,9 +53,11 @@
     "superagent": "^2.3.0",
     "underscore": "^1.8.3"
   },
+  "optionalDependencies": {},
   "author": "Chieze Franklin",
   "bugs": {
     "url": "https://github.com/Chieze-Franklin/Bolt.js/issues"
   },
-  "homepage": "https://chieze-franklin.github.io/Bolt.js/"
+  "homepage": "https://chieze-franklin.github.io/Bolt.js/",
+  "license": "MIT"
 }
