@@ -69,6 +69,13 @@
 					"body": {
 						"path": "bolt-ui-pages"
 					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-ui-sweetalert"
+					}
 				}
 			]
 		},
@@ -108,6 +115,52 @@
 					"endpoint": "/api/apps/reg",
 					"body": {
 						"path": "ctl-sms-students"
+					}
+				}
+			]
+		},
+		{
+			"title": "Default Roles",
+			"message": "Create roles 'Student', 'Teacher', 'Principal', 'Parent'",
+			"requestsSync": [
+				{
+					"method": "POST",
+					"endpoint": "/api/roles",
+					"body": {
+						"name": "student",
+						"displayName": "Student",
+						"isAdmin": false,
+						"description": "A registered student"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/roles",
+					"body": {
+						"name": "teacher",
+						"displayName": "Teacher",
+						"isAdmin": false,
+						"description": "A registered teacher"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/roles",
+					"body": {
+						"name": "principal",
+						"displayName": "Principal",
+						"isAdmin": true,
+						"description": "Has access to every school resource and data"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/roles",
+					"body": {
+						"name": "parent",
+						"displayName": "Parent",
+						"isAdmin": false,
+						"description": "The parent/guardian of a registered student"
 					}
 				}
 			]
