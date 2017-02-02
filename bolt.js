@@ -32,8 +32,9 @@ var uiViewsRouter = require('./sys/server/routers/ui-views');
 var __contextToReqidMap = new Map();
 
 var __destroyAppReqId = function(app) {
-	if (__contextToReqidMap.has(app))
+	if (__contextToReqidMap.has(app)) {
 		__contextToReqidMap.delete(app);
+	}
 }
 
 var __genAppReqId = function(app) {
