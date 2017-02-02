@@ -1,4 +1,4 @@
-## Bolt.js
+## Bolt.js [![Build Status](https://travis-ci.org/Chieze-Franklin/Bolt.js.svg?branch=master)](https://travis-ci.org/Chieze-Franklin/Bolt.js)
 
 Bolt.js is a Node.js-based app runtime environment written in JavaScript.
 
