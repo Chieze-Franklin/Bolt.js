@@ -3,6 +3,7 @@ __dump/
 __raw/
 _github.io/_notes/
 node_modules/*
+node_modules-dev/*
 public/*
 sys/bins/mongodb/darwin/*
 sys/bins/mongodb/linux/*

@@ -19,7 +19,7 @@ module.exports = function(app) {
 	app.use(function (request, response, next) {
 	  response.header('Access-Control-Allow-Origin', '*');
 	  response.header('Access-Control-Allow-Headers', 
-	  	'Origin, X-Requested-With, Content-Type, Accept, X-Bolt-Req-Id, X-Bolt-Locale, X-Bolt-API-Ver, X-Bolt-Perm-Token, X-Bolt-User-Token');
+	  	'Origin, X-Requested-With, Content-Type, Accept, X-Bolt-App-Token, X-Bolt-Locale, X-Bolt-API-Ver, X-Bolt-Perm-Token, X-Bolt-User-Token');
 	  response.header('Access-Control-Allow-Methods', 'DELETE, GET, POST, PUT');
 
 	  next();

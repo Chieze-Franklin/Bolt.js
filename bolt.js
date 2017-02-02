@@ -11,6 +11,7 @@ var path = require("path");
 var superagent = require('superagent');
 
 var configure = require("./sys/server/configure");
+var socket = require("./sys/server/socket");
 
 var apiAppRolesRouter = require('./sys/server/routers/api-app-roles');
 var apiAppsRouter = require('./sys/server/routers/api-apps');
@@ -147,6 +148,9 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 
 	//TODO: how do I check Bolt source hasnt been altered
 
+	//socket.io
+	socket.initialize(server);
+
 	var hasStartedStartups = false;
 
 	//start mongodb 
@@ -175,7 +179,7 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 								routers.sort(function(a, b){
 									var orderA = a.order || 0;
 						            var orderB = b.order || 0;
-						            return parseFloat(orderA) - parseFloat(orderB);
+						            return parseInt(orderA, 10) - parseInt(orderB, 10);
 								});
 								routers.forEach(function(rtr){
 									if(!utils.Misc.isNullOrUndefined(rtr.main)) {
