@@ -8,7 +8,8 @@
     "url": "https://github.com/Chieze-Franklin/Bolt.js"
   },
   "scripts": {
-    "start": "node bolt"
+    "start": "node bolt",
+    "test": "gulp test"
   },
   "keywords": [
     "bolt",
@@ -52,6 +53,10 @@
     "socket.io": "^1.5.1",
     "superagent": "^2.3.0",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jslint": "^1.0.10"
   },
   "optionalDependencies": {},
   "author": "Chieze Franklin",
