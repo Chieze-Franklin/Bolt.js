@@ -421,7 +421,7 @@ module.exports = {
 												host: config.getHost(), 
 												port: config.getPort(), 
 												appPort: context.port,
-												reqid: request.genAppReqId(context.name)
+												appToken: request.genAppToken(context.name)
 											})
 											.end(function(initError, initResponse){});
 									}
@@ -487,8 +487,8 @@ module.exports = {
 					var context = __runningContexts[index];
 					__runningContexts.pop(context);
 
-					//remove all request IDs
-					request.destroyAppReqId(context.name); //TODO: test this
+					//remove app token
+					request.destroyAppToken(context.name); //TODO: test this
 
 					//kill process
 					processes.killProcess(context.name); //TODO: haven't tested this

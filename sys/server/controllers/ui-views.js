@@ -50,7 +50,7 @@ var __loadSetupView = function(request, response){
 		port: config.getPort(),
 
 		redirect: redirect,
-		reqid: request.reqid,
+		appToken: request.appToken,
 		title: "Setup"
 	};
 	//response.locals.title = "Setup";
@@ -85,12 +85,7 @@ module.exports = {
 					else if (!utils.Misc.isNullOrUndefined(users) && users.length > 0){ //if there are registered users,...
 						response.redirect('/login');
 					}
-					else { //if there are NO registered users, then show them the setup view
-						//response
-						//	.set(X_BOLT_REQ_ID, __genAppReqId('bolt'))
-						//	.redirect('/setup');
-						//my own security features won't let me just navigate to this endpoint, so I to load the view using response.render(...)
-
+					else {
 						__loadSetupView(request, response);
 					}
 				}
@@ -105,7 +100,7 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			reqid: request.reqid
+			appToken: request.appToken
 		};
 		response.locals.title = "Login";
 		response
@@ -118,7 +113,7 @@ module.exports = {
 			host: config.getHost(),
 			port: config.getPort(),
 
-			reqid: request.reqid,
+			appToken: request.appToken,
 		};
 		response.locals.title = "Log Out";
 		response
@@ -136,7 +131,7 @@ module.exports = {
 			failure: request.query.failure,
 			permissions: request.query.permissions,
 
-			reqid: request.reqid
+			appToken: request.appToken
 		};
 		response.locals.title = "Request";
 		response
@@ -196,7 +191,7 @@ module.exports = {
 							errorUserTitle: request.query.error_user_title,
 							errorUserMessage: request.query.error_user_message,
 
-							reqid: request.reqid
+							appToken: request.appToken
 						};
 						response
 							.set('Content-type', 'text/html')

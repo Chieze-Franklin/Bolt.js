@@ -21,20 +21,21 @@
     $(document).ready(function(){
         $("#download").click(function(){
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/apps/get",
+              url: "{{protocol}}://{{host}}:{{port}}/api/apps",
               data: { name: "bolt-settings" },
               type: "POST",
-              headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+              headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
                 }
                 else {
-                  //TODO: error
-                  console.log(response);
+                  sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
                 }
               },
-              error: function(xhr, status, err){}
+              error: function(xhr, status, err){
+                alert(xhr.responseText);
+              }
             });
         });
 
@@ -43,17 +44,18 @@
               url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
               data: { path: "bolt-settings" },
               type: "POST",
-              headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+              headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
                 }
                 else {
-                  //TODO: error
-                  console.log(response);
+                  sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
                 }
               },
-              error: function(xhr, status, err){}
+              error: function(xhr, status, err){
+                alert(xhr.responseText);
+              }
             });
         });
       });

@@ -52,7 +52,7 @@ function redirect(user){
       url: "{{protocol}}://{{host}}:{{port}}/api/tokens",
       data: { object: user._id },
       type: "POST",
-      headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+      headers: {'X-Bolt-App-Token': '{{appToken}}'},
       success: function(response, status, xhr){
         if(response.code == 0){
           var token = response.body;
@@ -60,7 +60,9 @@ function redirect(user){
         }
         //TODO: else
       },
-      error: function(xhr, status, err){}
+      error: function(xhr, status, err){
+        alert(xhr.responseText);
+      }
     });
   }
   else {
@@ -74,13 +76,15 @@ $(function()
     $.ajax({
       url: "{{protocol}}://{{host}}:{{port}}/api/users/@current",
       type: "GET",
-      headers: {'X-Bolt-Req-Id': '{{reqid}}'},
+      headers: {'X-Bolt-App-Token': '{{appToken}}'},
       success: function(response, status, xhr){
         if(response.code == 0){
           redirect(response.body);
         }
       },
-      error: function(xhr, status, err){}
+      error: function(xhr, status, err){
+        alert(xhr.responseText);
+      }
     });
 })
 
@@ -97,18 +101,19 @@ $(document).ready(function(){
           data: { name: username, password: password },
           type: "POST",
           beforeSend: function(xhr) {
-            xhr.setRequestHeader('X-Bolt-Req-Id', '{{reqid}}');
+            xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
           },
           success: function(response, status, xhr){
             if(response.code == 0){
               redirect(response.body);
             }
             else {
-              //TODO: error
-              console.log(response);
+              sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
             }
           },
-          error: function(xhr, status, err){}
+          error: function(xhr, status, err){
+            alert(xhr.responseText);
+          }
         });
     });
   });

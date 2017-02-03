@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node bolt",
-    "test": "gulp test"
+    "test": "mocha -R spec tests/spec_with_mocha_supertest.js && gulp test"
   },
   "keywords": [
     "bolt",
@@ -55,8 +55,15 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "del": "^2.2.2",
     "gulp": "^3.9.1",
-    "gulp-jslint": "^1.0.10"
+    "gulp-jslint": "^1.0.10",
+    "mocha": "^3.2.0",
+    "mock-req": "^0.2.0",
+    "mock-res": "^0.3.3",
+    "run-sequence": "^1.2.2",
+    "sinon": "^1.17.7",
+    "supertest": "^3.0.0"
   },
   "optionalDependencies": {},
   "author": "Chieze Franklin",

@@ -19,7 +19,7 @@
                           <div class="col-sm-12">
                             <div class="form-group form-group-default">
                               <label>User name</label>
-                              <input type="text" name="name" id="name" placeholder="must be unique in the system" class="form-control" required>
+                              <input type="text" name="name" id="name" placeholder="enter unique user name" class="form-control" required>
                             </div>
                           </div>
                         </div>
@@ -28,7 +28,7 @@
                           <div class="col-sm-12">
                             <div class="form-group form-group-default">
                               <label>Password</label>
-                              <input type="password" name="password" id="password" placeholder="user being added should type this themselves" class="form-control" required>
+                              <input type="password" name="password" id="password" placeholder="enter password" class="form-control" required>
                             </div>
                           </div>
                         </div>
@@ -200,10 +200,11 @@ $(document).ready(function(){
       var username = $("#name").val();
       var password = $("#password").val();
       var displayname = $("#dn").val();
+      var con_password=$("#confirm_password").val();
       var email = $("#email").val();
       var phone = $("#phone").val();
       /*
-      * Perform some validation here.
+      * TODO: ensure password and con_password are identical
       */
 
       formData.append('name', username);
@@ -212,6 +213,7 @@ $(document).ready(function(){
       formData.append('email', email);
       formData.append('phone', phone);
 
+      //first, add the user
       $.ajax({
         url: '{{protocol}}://{{host}}:{{port}}/api/users',
         type: 'POST',
@@ -219,12 +221,72 @@ $(document).ready(function(){
         processData: false,
         contentType: false, //'multipart/form-data',
         beforeSend: function(xhr) {
-          xhr.setRequestHeader('X-Bolt-Req-Id', '{{bolt.reqid}}');
+          xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
         },
         success: function(response){
           if(response.code == 0){
-            sweetAlert("User created!", response.body.displayName + " has been created!", "success");
-            window.location.href="{{protocol}}://{{host}}:{{app.port}}/users";
+            //second, create an admin role
+            $.ajax({
+              url: "{{protocol}}://{{host}}:{{port}}/api/roles",
+              data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Has complete access to every part of the system" },
+              type: "POST",
+              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              success: function(response2, status2, xhr2){
+                if(response2.code == 0){ 
+                  //third, associate user and role
+                  $.ajax({
+                    url: "{{protocol}}://{{host}}:{{port}}/api/user-roles",
+                    data: { user: response.body.name, role: response2.body.name },
+                    type: "POST",
+                    headers: {'X-Bolt-App-Token': '{{appToken}}'},
+                    success: function(response3, status3, xhr3){
+                      if(response3.code == 0){ 
+                        //fourth, log user in
+                        $.ajax({
+                          url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
+                          data: { name: username, password: password },
+                          type: "POST",
+                          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+                          success: function(response4, status4, xhr4){
+                            if(response4.code == 0){ 
+                                swal({
+                                  title: "Admin added!",
+                                  text: displayname + " has been added as a system administrator!",
+                                  type: "success",
+                                  showCancelButton: false,
+                                  closeOnConfirm: false
+                                }, function(isConfirm){
+                                  if (isConfirm) {
+                                    $("#setup")[0].click();
+                                  }
+                                });
+                            }
+                            else {
+                              sweetAlert(response4.errorUserTitle, response4.errorUserMessage, "error");
+                            }
+                          },
+                          error: function(xhr4, status4, err4){
+                            alert(xhr4.responseText);
+                          }
+                        });
+                      }
+                      else {
+                        sweetAlert(response3.errorUserTitle, response3.errorUserMessage, "error");
+                      }
+                    },
+                    error: function(xhr3, status3, err3){
+                      alert(xhr3.responseText);
+                    }
+                  });
+                }
+                else {
+                  sweetAlert(response2.errorUserTitle, response2.errorUserMessage, "error");
+                }
+              },
+              error: function(xhr2, status2, err2){
+                alert(xhr2.responseText);
+              }
+            });
           }
           else {
             sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
@@ -262,6 +324,10 @@ $(document).ready(function(){
         }
       });
   });
+
+    $("#proceed").click(function(){
+        window.location.href="{{protocol}}://{{host}}:{{port}}/{{redirect}}";
+    });
 });
 
 var performRequests = function(index){ 
@@ -309,93 +375,4 @@ var performRequests = function(index){
     }
     $("#skip" + index)[0].click();
 }
-$(function()
-{
-    //$('#form-login').validate()
-})
-$(document).ready(function(){
-    var displayname, username, password, con_password;
-    $("#submit").click(function(){
-        displayname=$("#displayname").val();
-        username=$("#username").val();
-        password=$("#password").val();
-        con_password=$("#confirm_password").val();
-        /*
-        * Perform some validation here.
-        */
-
-        //first, add the user
-        $.ajax({
-        	url: "{{protocol}}://{{host}}:{{port}}/api/users",
-        	data: { name: username, password: password, displayName: displayname },
-        	type: "POST",
-        	beforeSend: function(xhr) {
-        		xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
-        	},
-        	success: function(response, status, xhr){
-        		if(response.code == 0){ 
-        			//second, create an admin role
-        			$.ajax({
-        				url: "{{protocol}}://{{host}}:{{port}}/api/roles",
-        				data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Administrator" },
-        				type: "POST",
-        				headers: {'X-Bolt-App-Token': '{{appToken}}'},
-        				success: function(response2, status2, xhr2){
-        					if(response2.code == 0){ 
-        						//third, associate user and role
-        						$.ajax({
-        							url: "{{protocol}}://{{host}}:{{port}}/api/user-roles",
-        							data: { user: response.body.name, role: response2.body.name },
-        							type: "POST",
-        							headers: {'X-Bolt-App-Token': '{{appToken}}'},
-        							success: function(response3, status3, xhr3){
-        								if(response3.code == 0){ 
-        									//fourth, log user in
-        									$.ajax({
-        										url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
-        										data: { name: username, password: password },
-        										type: "POST",
-        										headers: {'X-Bolt-App-Token': '{{appToken}}'},
-        										success: function(response4, status4, xhr4){
-        											if(response4.code == 0){ 
-                                  //TODO: success dialog
-                                  $("#setup")[0].click();
-        											}
-        											else {
-        												//TODO: error
-        												console.log("/user/login");console.log(response4)
-        											}
-        										},
-        										error: function(xhr4, status4, err4){}
-        									});
-        								}
-        								else {
-        									//TODO: error
-        									console.log("/user-role");console.log(response3);
-        								}
-        							},
-        							error: function(xhr3, status3, err3){}
-        						});
-        					}
-        					else {
-        						//TODO: error
-        						console.log("/role");console.log(response2);
-        					}
-        				},
-        				error: function(xhr2, status2, err2){}
-        			});
-        		}
-        		else {
-        			//TODO: error
-        			console.log("/user");console.log(response);
-        		}
-        	},
-        	error: function(xhr, status, err){}
-        });
-  	});
-
-    $("#proceed").click(function(){
-        window.location.href="{{protocol}}://{{host}}:{{port}}/{{redirect}}";
-    });
-  });
 </script>

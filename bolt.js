@@ -28,21 +28,21 @@ var uiViewsRouter = require('./sys/server/routers/ui-views');
 
 //---------Helpers
 
-//holds all the apps' request IDs
-var __contextToReqidMap = new Map();
+//maps contexts to app tokens
+var __contextToAppTokenMap = new Map();
 
-var __destroyAppReqId = function(app) {
-	if (__contextToReqidMap.has(app)) {
-		__contextToReqidMap.delete(app);
+var __destroyAppToken = function(app) {
+	if (__contextToAppTokenMap.has(app)) {
+		__contextToAppTokenMap.delete(app);
 	}
 }
 
-var __genAppReqId = function(app) {
-	if (__contextToReqidMap.has(app))
-		return __contextToReqidMap.get(app);
+var __genAppToken = function(app) {
+	if (__contextToAppTokenMap.has(app))
+		return __contextToAppTokenMap.get(app);
 
 	var id = utils.String.getRandomString(24);
-	__contextToReqidMap.set(app, id);
+	__contextToAppTokenMap.set(app, id);
 
 	return id;
 }
@@ -75,10 +75,10 @@ var app = configure(express());
 
 //pass in info native views can use
 app.use(function(request, response, next) {
-	request.contextToReqidMap = __contextToReqidMap;
-	request.destroyAppReqId = __destroyAppReqId; //TODO: test this
-	request.genAppReqId = __genAppReqId; //TODO: test this
-	request.reqid = __genAppReqId('bolt');
+	request.contextToAppTokenMap = __contextToAppTokenMap;
+	request.destroyAppToken = __destroyAppToken; //TODO: test this
+	request.genAppToken = __genAppToken; //TODO: test this
+	request.appToken = __genAppToken('bolt');
 
   	next();
 });
@@ -259,3 +259,5 @@ var server = app.listen(config.getPort(), config.getHost(), function(){
 	//}
 	//else {}
 });
+
+module.exports = server;
