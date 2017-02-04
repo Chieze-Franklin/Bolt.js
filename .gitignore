@@ -1,8 +1,11 @@
 __docs/
 __dump/
 __raw/
-_github.io/_notes/
-node_modules/*
+data/
+dist/**/*
+!dist/
+fs/
+node_modules/
 node_modules-dev/*
 public/*
 sys/bins/mongodb/darwin/*

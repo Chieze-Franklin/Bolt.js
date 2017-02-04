@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node bolt",
-    "test": "mocha -R spec tests/spec_with_mocha_supertest.js && gulp test"
+    "test": "gulp test && mocha -R spec tests/spec_with_mocha_supertest.js"
   },
   "keywords": [
     "bolt",

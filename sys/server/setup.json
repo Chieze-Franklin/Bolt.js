@@ -43,6 +43,13 @@
 					"body": {
 						"path": "bolt-module-db"
 					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-module-events"
+					}
 				}
 			]
 		},

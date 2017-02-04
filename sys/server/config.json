@@ -4,7 +4,7 @@
 	"protocol": "http",
 
 	"dbHost": "localhost",
-	"dbPort": 401,
+	"dbPort": 402,
 
 	"appPortStart": 500,
 	"appPortEnd": 600,
