@@ -127,6 +127,7 @@ module.exports = {
 							* a module can't have 'index', 'ini', 'install'
 							* a module can't have 'startup' or 'system' privileges
 							* a module can't register extensions
+							* a module can't register hooks
 							*/
 							if (!package.bolt.module) {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
@@ -143,7 +144,7 @@ module.exports = {
 								if (!utils.Misc.isNullOrUndefined(request.body.system)) newApp.system = request.body.system;
 								else if (!utils.Misc.isNullOrUndefined(package.bolt.system)) newApp.system = package.bolt.system;
 
-								if (!utils.Misc.isNullOrUndefined(package.bolt.extensions) && !package.bolt.transient) {
+								if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
 									var extensions = package.bolt.extensions;
 									for (var extension in extensions){
 										var ext = "/" + utils.String.trimStart(utils.String.trim(extension.toLowerCase()), "/");
@@ -167,7 +168,38 @@ module.exports = {
 											else {
 												newExtension.type = "view";
 											}
-											newExtension.save(); //TODO: check that two extensions dont hv d same path and app
+											newExtension.save();
+										}
+									}
+								}
+
+								if (!utils.Misc.isNullOrUndefined(package.bolt.hooks)) {
+									var hooks = package.bolt.hooks;
+									for (var hook in hooks){
+										if (hooks.hasOwnProperty(hook)) {
+											hook = hook.replace("\\", "/");
+
+											var publisher, evnt;
+
+											if (hook.indexOf("/") == -1) {
+												publisher = "*";
+												evnt = hook;
+											}
+											else {
+												publisher = hook.substring(0, hook.indexOf("/"));
+												if (publisher == "") publisher = "*";
+
+												evnt = hook.substr(hook.indexOf("/") + 1);
+												if (evnt == "") evnt = "*";
+											}
+
+											var newHook = new models.hook({
+												event: evnt,
+												publisher: publisher,
+												route: hooks[hook],
+												subscriber: appnm
+											});
+											newHook.save();
 										}
 									}
 								}
@@ -273,28 +305,23 @@ module.exports = {
 							newApp.package = package;
 
 							var saveNewApp = function(){
-								if(package.bolt.transient) {
-									response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(newApp)));
-								}
-								else {
-									newApp.save(function(saveError, savedApp){
-										if (!utils.Misc.isNullOrUndefined(saveError)) {console.log(newApp);console.log(saveError);
-											//TODO: if an error occurs, undo everything this app did
-											response.end(utils.Misc.createResponse(null, saveError, 402));
-										}
-										else {
-											/*//necessary info to savedApp.install endpoint
-											superagent
-												.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-												.send({ name: name, install: true })
-												.end(function(appstartError, appstartResponse){
-													//TODO: when is the right time to shut down the app
-													//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
-												});*/
-											response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
-										}
-									});
-								}
+								newApp.save(function(saveError, savedApp){
+									if (!utils.Misc.isNullOrUndefined(saveError)) {console.log(newApp);console.log(saveError);
+										//TODO: if an error occurs, undo everything this app did
+										response.end(utils.Misc.createResponse(null, saveError, 402));
+									}
+									else {
+										/*//necessary info to savedApp.install endpoint
+										superagent
+											.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+											.send({ name: name, install: true })
+											.end(function(appstartError, appstartResponse){
+												//TODO: when is the right time to shut down the app
+												//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
+											});*/
+										response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
+									}
+								});
 							};
 
 							// a module can't check files

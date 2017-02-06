@@ -7,6 +7,8 @@ var fs = require('fs');
 var path = require('path');
 var superagent = require('superagent');
 
+const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
+
 var __updatableProps = ["displayName", "email", "isBlocked", "phone"];
 
 var __users = [];
@@ -307,6 +309,12 @@ module.exports = {
 						response.locals.user = request.user; //make available to UI template engines
 
 						__registerLogin(request.user);
+						//fire the 'user-logged-in' (change to user_logged_in?) event
+						superagent
+							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/events/user-logged-in')
+							.set(X_BOLT_APP_TOKEN, request.appToken)
+							.send({ body: request.user })
+							.end(function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(request.user));
 					}
 				}

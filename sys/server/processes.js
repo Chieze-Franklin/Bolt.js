@@ -56,10 +56,10 @@ module.exports = {
 		});
 	},
 	getAppPid : function(name){
-		__nameToAppPidMap.get(name);
+		return __nameToAppPidMap.get(name);
 	},
 	getAppPort : function(name){
-		__nameToAppPortMap.get(name);
+		return __nameToAppPortMap.get(name);
 	},
 	hasProcess : function(name){
 		return __nameToChildProcessMap.has(name);

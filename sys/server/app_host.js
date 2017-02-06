@@ -1,3 +1,5 @@
+var sockets = require("bolt-internal-sockets");
+
 var bodyParser = require('body-parser');
 var express = require("express");
 var path = require("path");
@@ -9,6 +11,7 @@ var post_appstart_app = function(request, response){
 
 	var app = require(path.join('../../node_modules', context.path, context.app.main));
 	var s = app.listen(0, function(){
+		sockets.createSocket(s);
 		var port = s.address().port;
 		context.pid = process.pid;
 		context.port = port;

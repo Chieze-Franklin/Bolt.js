@@ -1,3 +1,5 @@
+//the new package.json shud actually derive fro the existing one
+
 var gulp = require('gulp');
 
 var del = require('del');
@@ -5,15 +7,29 @@ var jslint = require('gulp-jslint');
 var runSequence = require('run-sequence');
 
 gulp.task('build', function(){
-	runSequence('del:build', 'build:public-bolt-native', 'build:public-bolt-users-user')
+	runSequence('del:build', 'copy:build');
 });
-gulp.task('build:public-bolt-native', function(){
+gulp.task('copy:build', function(){
 	gulp.src(['public/bolt/native/**/*'])
 		.pipe(gulp.dest('dist/public/bolt/native'))
-});
-gulp.task('build:public-bolt-users-user', function(){
 	gulp.src(['public/bolt/users/user.png'])
 		.pipe(gulp.dest('dist/public/bolt/users'))
+	gulp.src(['sys/bins/mongodb/darwin/**/*'])
+		.pipe(gulp.dest('dist/sys/bin/mongodb/darwin'))
+	gulp.src(['sys/bins/mongodb/linux/**/*'])
+		.pipe(gulp.dest('dist/sys/bin/mongodb/linux'))
+	gulp.src(['sys/bins/mongodb/win32/**/*'])
+		.pipe(gulp.dest('dist/sys/bin/mongodb/win32'))
+	gulp.src(['sys/data/mongodb/', '!sys/data/mongodb/**/*'])
+		.pipe(gulp.dest('dist/sys/data'))
+	gulp.src(['sys/server/**/*'])
+		.pipe(gulp.dest('dist/sys/server'))
+	gulp.src(['sys/views/**/*'])
+		.pipe(gulp.dest('dist/sys/views'))
+	gulp.src(['node_modules/bolt-*/**/*'])
+		.pipe(gulp.dest('dist/node_modules'))
+	gulp.src(['bolt.js', '_docs/LICENSE', '_docs/README.md', '_docs/package.json'])
+		.pipe(gulp.dest('dist'))
 });
 gulp.task('del:build', function(){
 	return del(['dist/**/*'])
@@ -27,7 +43,9 @@ gulp.task('jslint', function(){
 
 gulp.task('test', ['jslint'], function(){
 });
-gulp.task('test:jslint', ['jslint'], function(){
+gulp.task('test:behaviour', function(){
+});
+gulp.task('test:style', ['jslint'], function(){
 });
 
 /*
@@ -69,6 +87,10 @@ gulp.task('copy:bolt-internal-schemata', function(){
 gulp.task('copy:bolt-internal-setup', function(){
 	return gulp.src(['node_modules/bolt-internal-setup/**/*', '!node_modules/bolt-internal-setup/node_modules'])
 		.pipe(gulp.dest('node_modules-dev/bolt-internal-setup'))
+});
+gulp.task('copy:bolt-internal-sockets', function(){
+	return gulp.src(['node_modules/bolt-internal-sockets/**/*', '!node_modules/bolt-internal-sockets/node_modules'])
+		.pipe(gulp.dest('node_modules-dev/bolt-internal-sockets'))
 });
 gulp.task('copy:bolt-internal-utils', function(){
 	return gulp.src(['node_modules/bolt-internal-utils/**/*', '!node_modules/bolt-internal-utils/node_modules'])
@@ -131,6 +153,9 @@ gulp.task('del:bolt-internal-schemata', function(){
 gulp.task('del:bolt-internal-setup', function(){
 	return del(['node_modules-dev/bolt-internal-setup/**/*', '!node_modules-dev/bolt-internal-setup/.git'])
 });
+gulp.task('del:bolt-internal-sockets', function(){
+	return del(['node_modules-dev/bolt-internal-sockets/**/*', '!node_modules-dev/bolt-internal-sockets/.git'])
+});
 gulp.task('del:bolt-internal-utils', function(){
 	return del(['node_modules-dev/bolt-internal-utils/**/*', '!node_modules-dev/bolt-internal-utils/.git'])
 });
@@ -168,6 +193,7 @@ gulp.task('watch-dev', function(){
 	gulp.watch('node_modules/bolt-internal-models/**/*', function(){runSequence('del:bolt-internal-models', 'copy:bolt-internal-models')});
 	gulp.watch('node_modules/bolt-internal-schemata/**/*', function(){runSequence('del:bolt-internal-schemata', 'copy:bolt-internal-schemata')});
 	gulp.watch('node_modules/bolt-internal-setup/**/*', function(){runSequence('del:bolt-internal-setup', 'copy:bolt-internal-setup')});
+	gulp.watch('node_modules/bolt-internal-sockets/**/*', function(){runSequence('del:bolt-internal-sockets', 'copy:bolt-internal-sockets')});
 	gulp.watch('node_modules/bolt-internal-utils/**/*', function(){runSequence('del:bolt-internal-utils', 'copy:bolt-internal-utils')});
 	gulp.watch('node_modules/bolt-module-db/**/*', function(){runSequence('del:bolt-module-db', 'copy:bolt-module-db')});
 	gulp.watch('node_modules/bolt-module-events/**/*', function(){runSequence('del:bolt-module-events', 'copy:bolt-module-events')});
