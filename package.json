@@ -10,7 +10,7 @@
   "scripts": {
     "build": "gulp build",
     "start": "node bolt",
-    "test": "gulp test:behaviour && mocha -R spec tests/spec_with_mocha_supertest.js",
+    "test": "gulp test:behaviour && mocha -R spec test/spec_with_mocha_supertest.js",
     "test-style": "gulp test:style"
   },
   "keywords": [

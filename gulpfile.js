@@ -93,7 +93,7 @@ gulp.task('copy:bolt-internal-sockets', function(){
 		.pipe(gulp.dest('node_modules-dev/bolt-internal-sockets'))
 });
 gulp.task('copy:bolt-internal-utils', function(){
-	return gulp.src(['node_modules/bolt-internal-utils/**/*', '!node_modules/bolt-internal-utils/node_modules'])
+	return gulp.src(['node_modules/bolt-internal-utils/**/*', 'node_modules/bolt-internal-utils/.*', '!node_modules/bolt-internal-utils/node_modules'])
 		.pipe(gulp.dest('node_modules-dev/bolt-internal-utils'))
 });
 gulp.task('copy:bolt-module-db', function(){
@@ -194,7 +194,8 @@ gulp.task('watch-dev', function(){
 	gulp.watch('node_modules/bolt-internal-schemata/**/*', function(){runSequence('del:bolt-internal-schemata', 'copy:bolt-internal-schemata')});
 	gulp.watch('node_modules/bolt-internal-setup/**/*', function(){runSequence('del:bolt-internal-setup', 'copy:bolt-internal-setup')});
 	gulp.watch('node_modules/bolt-internal-sockets/**/*', function(){runSequence('del:bolt-internal-sockets', 'copy:bolt-internal-sockets')});
-	gulp.watch('node_modules/bolt-internal-utils/**/*', function(){runSequence('del:bolt-internal-utils', 'copy:bolt-internal-utils')});
+	gulp.watch(['node_modules/bolt-internal-utils/**/*', 'node_modules/bolt-internal-utils/.*'], 
+		function(){runSequence('del:bolt-internal-utils', 'copy:bolt-internal-utils')});
 	gulp.watch('node_modules/bolt-module-db/**/*', function(){runSequence('del:bolt-module-db', 'copy:bolt-module-db')});
 	gulp.watch('node_modules/bolt-module-events/**/*', function(){runSequence('del:bolt-module-events', 'copy:bolt-module-events')});
 	gulp.watch('node_modules/bolt-module-system/**/*', function(){runSequence('del:bolt-module-system', 'copy:bolt-module-system')});

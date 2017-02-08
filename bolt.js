@@ -154,7 +154,7 @@ var server = app.listen(config.getPort(), config.getHost(), function () {
     //TODO: how do I check Bolt source hasnt been altered
 
     //socket.io
-    sockets.createSocket(server);
+    sockets.createSocket("bolt", server);
 
     var hasStartedStartups = false;
 

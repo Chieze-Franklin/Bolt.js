@@ -11,7 +11,7 @@ var post_appstart_app = function(request, response){
 
 	var app = require(path.join('../../node_modules', context.path, context.app.main));
 	var s = app.listen(0, function(){
-		sockets.createSocket(s);
+		sockets.createSocket(context.name, s);
 		var port = s.address().port;
 		context.pid = process.pid;
 		context.port = port;

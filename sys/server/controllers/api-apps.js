@@ -446,7 +446,8 @@ module.exports = {
 											.send({ 
 												protocol: config.getProtocol(), 
 												host: config.getHost(), 
-												port: config.getPort(), 
+												port: config.getPort(),
+												appName: context.name,
 												appPort: context.port,
 												appToken: request.genAppToken(context.name)
 											})
