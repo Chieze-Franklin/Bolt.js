@@ -10,8 +10,12 @@
   "scripts": {
     "build": "gulp build",
     "start": "node bolt",
-    "test": "gulp test:behaviour && mocha -R spec test/spec_with_mocha_supertest.js",
-    "test-style": "gulp test:style"
+    "test": "npm run test-unit && npm run test-acceptance",
+    "test-acceptance": "npm run test-acceptance-tobi && npm run test-acceptance-soda",
+    "test-acceptance-soda": "node test/acceptance_test_with_soda.js",
+    "test-acceptance-tobi": "node test/acceptance_test_with_tobi.js",
+    "test-style": "gulp test:style",
+    "test-unit": "mocha -R spec test/spec_with_mocha_supertest.js"
   },
   "keywords": [
     "bolt",
@@ -66,7 +70,9 @@
     "mock-res": "^0.3.3",
     "run-sequence": "^1.2.2",
     "sinon": "^1.17.7",
-    "supertest": "^3.0.0"
+    "soda": "^0.2.5",
+    "supertest": "^3.0.0",
+    "tobi": "^0.3.2"
   },
   "optionalDependencies": {},
   "author": "Chieze Franklin",

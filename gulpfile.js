@@ -43,9 +43,11 @@ gulp.task('jslint', function(){
 
 gulp.task('test', ['jslint'], function(){
 });
-gulp.task('test:behaviour', function(){
+gulp.task('test:acceptance', function(){
 });
 gulp.task('test:style', ['jslint'], function(){
+});
+gulp.task('test:unit', function(){
 });
 
 /*

@@ -1,5 +1,7 @@
 var request = require('supertest');
 describe('Loading Bolt...', function () {
+  this.timeout(8000);
+
   var server;
   beforeEach(function () {
     server = require('../bolt');
