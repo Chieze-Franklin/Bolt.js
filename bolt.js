@@ -134,9 +134,10 @@ var $_ = function (request, response) {
         .end(utils.Misc.createResponse(null, error, 103));
 };
 
-var server = app.listen(config.getPort(), config.getHost(), function () {
+var server = app.listen(process.env.PORT || config.getPort(), config.getHost(), function () {
     var host = server.address().address;
     var port = server.address().port;
+    //config.setPort(port);////////////////////////////////////////////////////////////////
     console.log("Bolt Server listening at http://%s:%s", host, port);
     console.log('');
 
@@ -156,124 +157,90 @@ var server = app.listen(config.getPort(), config.getHost(), function () {
     //socket.io
     sockets.createSocket("bolt", server);
 
-    var hasStartedStartups = false;
-
-    //start mongodb
-    if (process.platform === 'win32') {
-        var mongodbPath = path.join(__dirname, 'sys/bins/mongodb/win32/mongod.exe');
-        var mongodbDataPath = path.join(__dirname, 'sys/data/mongodb');
-        child = exec(mongodbPath + ' --dbpath ' + mongodbDataPath + ' --port ' + config.getDbPort());
-
-        child.stdout.on('data', function (data) {
-            console.log(data);
-
-            //ok so I'm going to do something probably bad here
-            //I want to start the mongodb client and startup apps only after am sure the mongod.exe is ready
-            //I don't know of a way to know that yet so I'm going to do a lil dirty work here...
-            //By studying the output of mongod.exe on the command line I noticed when ready it emits a line containing
-            //        "[initandlisten] waiting for connections on port "
-            if (!hasStartedStartups) {
-                if (data.indexOf("[initandlisten] waiting for connections on port ") > -1) {
-                    hasStartedStartups = true;
-
-                    mongoose.connect('mongodb://localhost:' + config.getDbPort() + '/bolt');
-                    mongoose.connection.on('open', function () {
-                        //load routers
-                        models.router.find({}, function (err, routers) {
-                            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)) {
-                                routers.sort(function (a, b) {
-                                    var orderA = a.order || 0;
-                                    var orderB = b.order || 0;
-                                    return parseInt(orderA, 10) - parseInt(orderB, 10);
-                                });
-                                routers.forEach(function (rtr) {
-                                    if (!utils.Misc.isNullOrUndefined(rtr.main)) {
-                                        var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
-                                        if (utils.Misc.isNullOrUndefined(rtr.root)) {
-                                            app.use(router);
-                                        } else {
-                                            app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
-                                        }
-                                        console.log("Loaded router%s%s%s",
-                                                (!utils.Misc.isNullOrUndefined(rtr.name)
-                                            ? " '" + rtr.name + "'"
-                                            : ""),
-                                                (!utils.Misc.isNullOrUndefined(rtr.app)
-                                            ? " (" + rtr.app + ")"
-                                            : ""),
-                                                (!utils.Misc.isNullOrUndefined(rtr.root)
-                                            ? " on " + rtr.root
-                                            : ""));
-                                    }
-                                });
-                                app.use($_); //error handler
-                                console.log('');
-                            }
-                        });
-                        //start start-up services
-                        models.app.find({
-                            startup: true
-                        }, function (err, apps) {
-                            var startups = [];
-                            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(apps)) {
-                                apps.forEach(function (app) {
-                                    startups.push(app.name);
-                                });
-                            }
-
-                            var runStartups = function (index) {
-                                if (index >= startups.length) {
-                                    console.log('============================================');
-                                    console.log('');
-                                } else {
-                                    var name = startups[index];
-                                    superagent
-                                        .post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-                                        .send({name: name})
-                                        .end(function (appstartError, appstartResponse) {
-                                            if (!utils.Misc.isNullOrUndefined(appstartError)) {
-                                                runStartups(++index);
-                                                return;
-                                            }
-
-                                            var context = appstartResponse.body.body;
-
-                                            if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
-                                                console.log("Started startup app%s%s at %s:%s",
-                                                        (!utils.Misc.isNullOrUndefined(context.app.displayName)
-                                                    ? " '" + context.app.displayName + "'"
-                                                    : ""),
-                                                        (!utils.Misc.isNullOrUndefined(context.name)
-                                                    ? " (" + context.name + ")"
-                                                    : ""),
-                                                        (!utils.Misc.isNullOrUndefined(context.host)
-                                                    ? context.host
-                                                    : ""),
-                                                    context.port);
-                                            }
-                                            runStartups(++index);
-                                        });
-                                }
-                            };
-
-                            runStartups(0);
-                        });
-                    });
-                }
+    //mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
+    mongoose.connect('mongodb://sam:sam@ds056979.mlab.com:56979/bolt-test')
+    mongoose.connection.on('open', function () {
+        //load routers
+        models.router.find({}, function (err, routers) {
+            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)) {
+                routers.sort(function (a, b) {
+                    var orderA = a.order || 0;
+                    var orderB = b.order || 0;
+                    return parseInt(orderA, 10) - parseInt(orderB, 10);
+                });
+                routers.forEach(function (rtr) {
+                    if (!utils.Misc.isNullOrUndefined(rtr.main)) {
+                        var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
+                        if (utils.Misc.isNullOrUndefined(rtr.root)) {
+                            app.use(router);
+                        } else {
+                            app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
+                        }
+                        console.log("Loaded router%s%s%s",
+                                (!utils.Misc.isNullOrUndefined(rtr.name)
+                            ? " '" + rtr.name + "'"
+                            : ""),
+                                (!utils.Misc.isNullOrUndefined(rtr.app)
+                            ? " (" + rtr.app + ")"
+                            : ""),
+                                (!utils.Misc.isNullOrUndefined(rtr.root)
+                            ? " on " + rtr.root
+                            : ""));
+                    }
+                });
+                app.use($_); //error handler
+                console.log('');
             }
         });
-        child.stderr.on('data', function (data) {
-            console.log(data);
-        });
+        //start start-up services
+        models.app.find({
+            startup: true
+        }, function (err, apps) {
+            var startups = [];
+            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(apps)) {
+                apps.forEach(function (app) {
+                    startups.push(app.name);
+                });
+            }
 
-        child.on('close', function (code, signal) {
-            //console.log("mongod.exe process ", child.pid, " closing with code ", code);
+            var runStartups = function (index) {
+                if (index >= startups.length) {
+                    console.log('============================================');
+                    console.log('');
+                } else {
+                    var name = startups[index];
+                    superagent
+                        .post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+                        .send({name: name})
+                        .end(function (appstartError, appstartResponse) {
+                            if (!utils.Misc.isNullOrUndefined(appstartError)) {
+                                runStartups(++index);
+                                return;
+                            }
+
+                            var context = appstartResponse.body.body;
+
+                            if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
+                                console.log("Started startup app%s%s at %s:%s",
+                                        (!utils.Misc.isNullOrUndefined(context.app.displayName)
+                                    ? " '" + context.app.displayName + "'"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(context.name)
+                                    ? " (" + context.name + ")"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(context.host)
+                                    ? context.host
+                                    : ""),
+                                    context.port);
+                            }
+                            runStartups(++index);
+                        });
+                }
+            };
+
+            runStartups(0);
         });
-    }
-    //else if (process.platform === 'linux') {
-    //    //ubuntu: sudo service mongodb start
-    //}
-    //else {}
+    });
 });
 
 module.exports = server;

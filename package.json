@@ -1,6 +1,6 @@
 {
   "name": "Bolt.js",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "description": "A Node.js-base runtime environment written in JavaScript",
   "main": "bolt.js",
   "repository": {
@@ -16,6 +16,10 @@
     "test-acceptance-tobi": "nodeunit test/acceptance_test_with_tobi.js",
     "test-style": "gulp test:style",
     "test-unit": "mocha -R spec test/spec_with_mocha_supertest.js"
+  },
+  "engines": {
+    "node": "6.9.4",
+    "npm": "4.1.1"
   },
   "keywords": [
     "bolt",
