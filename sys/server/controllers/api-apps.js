@@ -125,7 +125,7 @@ module.exports = {
 							/*a module can't have/do the things in this block
 							* a module can't have 'main'
 							* a module can't have 'index', 'ini', 'install'
-							* a module can't have 'startup' or 'system' privileges
+							* a module can't have 'startup' privileges
 							* a module can't register extensions
 							* a module can't register hooks
 							*/
@@ -139,10 +139,6 @@ module.exports = {
 								newApp.startup = false;
 								if (!utils.Misc.isNullOrUndefined(request.body.startup)) newApp.startup = request.body.startup;
 								else if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) newApp.startup = package.bolt.startup;
-
-								newApp.system = false;
-								if (!utils.Misc.isNullOrUndefined(request.body.system)) newApp.system = request.body.system;
-								else if (!utils.Misc.isNullOrUndefined(package.bolt.system)) newApp.system = package.bolt.system;
 
 								if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
 									var extensions = package.bolt.extensions;
@@ -205,6 +201,11 @@ module.exports = {
 								}
 							}
 
+							//for now we allow modules to be 'system' apps bcuz u need 'system' privilege to install routers
+							newApp.system = false;
+							if (!utils.Misc.isNullOrUndefined(request.body.system)) newApp.system = request.body.system;
+							else if (!utils.Misc.isNullOrUndefined(package.bolt.system)) newApp.system = package.bolt.system;
+
 							newApp.files = package.bolt.files || {};
 							if (!utils.Misc.isNullOrUndefined(package.bolt.order)) newApp.order = package.bolt.order;
 							newApp.tags = package.bolt.tags || [];
@@ -251,7 +252,35 @@ module.exports = {
 											if (!utils.Misc.isNullOrUndefined(rtrObj.order)) newRouter.order = rtrObj.order;
 										}
 
-										newRouter.save();
+										newRouter.save(function(saveRtrError, savedRouter){
+											if (utils.Misc.isNullOrUndefined(saveRtrError) && !utils.Misc.isNullOrUndefined(savedRouter)) {
+												if (newApp.system) {
+													//remove '$_'
+													request.removeErrorHandlerMiddleware(request.app);
+
+													//load router
+													var routerObject = require(path.join(__node_modulesDir, savedRouter.path, savedRouter.main));
+													if (utils.Misc.isNullOrUndefined(savedRouter.root)) {
+							                            request.app.use(routerObject);
+							                        } else {
+							                            request.app.use("/" + utils.String.trimStart(savedRouter.root, "/"), routerObject);
+							                        }
+							                        console.log("Loaded router%s%s%s",
+							                                (!utils.Misc.isNullOrUndefined(savedRouter.name)
+							                            ? " '" + savedRouter.name + "'"
+							                            : ""),
+							                                (!utils.Misc.isNullOrUndefined(savedRouter.app)
+							                            ? " (" + savedRouter.app + ")"
+							                            : ""),
+							                                (!utils.Misc.isNullOrUndefined(savedRouter.root)
+							                            ? " on " + savedRouter.root
+							                            : ""));
+
+													//add '$_'
+													request.addErrorHandlerMiddleware(request.app);
+												}
+											}
+										});
 									}
 								}
 							}
@@ -306,7 +335,7 @@ module.exports = {
 
 							var saveNewApp = function(){
 								newApp.save(function(saveError, savedApp){
-									if (!utils.Misc.isNullOrUndefined(saveError)) {console.log(newApp);console.log(saveError);
+									if (!utils.Misc.isNullOrUndefined(saveError)) {
 										//TODO: if an error occurs, undo everything this app did
 										response.end(utils.Misc.createResponse(null, saveError, 402));
 									}

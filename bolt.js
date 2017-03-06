@@ -51,6 +51,78 @@ var __genAppToken = function (app) {
     return id;
 };
 
+var __addErrorHandlerMiddleware = function(app) {
+	app.use($_); //error handler
+}
+var __removeErrorHandlerMiddleware = function(app) {
+	function removeMiddleware(route, index, routes) {
+	    switch (route.handle.name) {
+	        case '$_': routes.splice(index, 1);
+	    }
+	    if (route.route) {
+	        route.route.stack.forEach(removeMiddleware);
+	    }
+	}
+	var routes = app._router.stack;
+	routes.forEach(removeMiddleware);
+}
+
+var __loadRouters = function(app) {
+	//remove '$_'
+	__removeErrorHandlerMiddleware(app);
+
+	//load routers
+	models.router.find({}, function (err, routers) {
+        if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)) {
+        	routers.sort(function (a, b) {
+                var orderA = a.order || 0;
+                var orderB = b.order || 0;
+                return parseInt(orderA, 10) - parseInt(orderB, 10);
+            });
+            var loadRouter = function (idx) {
+                if (idx >= routers.length) {
+                    __addErrorHandlerMiddleware(app);
+            		console.log('');
+                } else {
+                	var rtr = routers[idx];
+                    if (!utils.Misc.isNullOrUndefined(rtr.main)) {
+	                    var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
+	                    //load the router only if its app is a system app
+	                    models.app.findOne({name: rtr.app, system: true}, function(systemAppError, systemApp){
+	                    	if (utils.Misc.isNullOrUndefined(systemAppError) && !utils.Misc.isNullOrUndefined(systemApp)) {
+	                    		if (utils.Misc.isNullOrUndefined(rtr.root)) {
+		                            app.use(router);
+		                        } else {
+		                            app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
+		                        }
+		                        console.log("Loaded router%s%s%s",
+		                                (!utils.Misc.isNullOrUndefined(rtr.name)
+		                            ? " '" + rtr.name + "'"
+		                            : ""),
+		                                (!utils.Misc.isNullOrUndefined(rtr.app)
+		                            ? " (" + rtr.app + ")"
+		                            : ""),
+		                                (!utils.Misc.isNullOrUndefined(rtr.root)
+		                            ? " on " + rtr.root
+		                            : ""));
+		                        loadRouter(++idx);
+	                    	}
+	                    	else {
+	                    		loadRouter(++idx);
+	                    	}
+	                    });
+	                }
+	                else {
+	                	loadRouter(++idx);
+	                }
+                }
+            };
+
+            loadRouter(0);
+        }
+    });
+};
+
 //---------Endpoints
 //TODO: discuss the versioning scheme below with others
 /*
@@ -79,9 +151,13 @@ var app = configure(express());
 
 //pass in info native views can use
 app.use(function (request, response, next) {
+	request.addErrorHandlerMiddleware = __addErrorHandlerMiddleware;
     request.contextToAppTokenMap = __contextToAppTokenMap;
     request.destroyAppToken = __destroyAppToken; //TODO: test this
     request.genAppToken = __genAppToken; //TODO: test this
+    request.loadRouters = __loadRouters;
+    request.removeErrorHandlerMiddleware = __removeErrorHandlerMiddleware;
+
     request.appToken = __genAppToken('bolt');
 
     next();
@@ -113,19 +189,6 @@ app.use('/files', uiFilesRouter);
 app.use(uiViewsRouter);
 //</UI-Endpoints>
 
-/* function for removing routes during runtime
-var routes = app._router.stack;
-routes.forEach(removeMiddleware);
-function removeMiddleware(route, index, routes) {
-    switch (route.handle.name) {
-        case '$_': routes.splice(index, 1);
-    }
-    if (route.route) {
-        route.route.stack.forEach(removeMiddleware);
-    }
-}
-*/
-
 // catch 404 and forward to error handler
 var $_ = function (request, response) {
     var error = new Error("The endpoint '" + request.path + "' could not be found!");
@@ -134,10 +197,11 @@ var $_ = function (request, response) {
         .end(utils.Misc.createResponse(null, error, 103));
 };
 
-var server = app.listen(process.env.PORT || config.getPort(), config.getHost(), function () {
+var server = app.listen(/*0*/process.env.PORT || config.getPort(), process.env.ADDRESS || config.getHost(), function () {
     var host = server.address().address;
     var port = server.address().port;
-    //config.setPort(port);////////////////////////////////////////////////////////////////
+    config.setHost(host);
+    config.setPort(port);
     console.log("Bolt Server listening at http://%s:%s", host, port);
     console.log('');
 
@@ -157,42 +221,13 @@ var server = app.listen(process.env.PORT || config.getPort(), config.getHost(), 
     //socket.io
     sockets.createSocket("bolt", server);
 
-    //mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
-    mongoose.connect('mongodb://sam:sam@ds056979.mlab.com:56979/bolt-test')
+    mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
+    //mongoose.connect('mongodb://localhost:27017/bolt');
+    //mongoose.connect('mongodb://sam:sam@ds056979.mlab.com:56979/bolt-test')
     mongoose.connection.on('open', function () {
         //load routers
-        models.router.find({}, function (err, routers) {
-            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)) {
-                routers.sort(function (a, b) {
-                    var orderA = a.order || 0;
-                    var orderB = b.order || 0;
-                    return parseInt(orderA, 10) - parseInt(orderB, 10);
-                });
-                routers.forEach(function (rtr) {
-                    if (!utils.Misc.isNullOrUndefined(rtr.main)) {
-                        var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
-                        if (utils.Misc.isNullOrUndefined(rtr.root)) {
-                            app.use(router);
-                        } else {
-                            app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
-                        }
-                        console.log("Loaded router%s%s%s",
-                                (!utils.Misc.isNullOrUndefined(rtr.name)
-                            ? " '" + rtr.name + "'"
-                            : ""),
-                                (!utils.Misc.isNullOrUndefined(rtr.app)
-                            ? " (" + rtr.app + ")"
-                            : ""),
-                                (!utils.Misc.isNullOrUndefined(rtr.root)
-                            ? " on " + rtr.root
-                            : ""));
-                    }
-                });
-                app.use($_); //error handler
-                console.log('');
-            }
-        });
-        //start start-up services
+        __loadRouters(app);
+        //start start-up apps
         models.app.find({
             startup: true
         }, function (err, apps) {

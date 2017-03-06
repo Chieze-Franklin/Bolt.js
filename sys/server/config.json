@@ -1,9 +1,9 @@
 {
-	"host": "localhost",
+	"host": "127.0.0.1",
 	"port": 400,
 	"protocol": "http",
 
-	"dbHost": "localhost",
+	"dbHost": "127.0.0.1",
 	"dbPort": 27017,
 
 	"appPortStart": 500,

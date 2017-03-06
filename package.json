@@ -10,12 +10,12 @@
   "scripts": {
     "build": "gulp build",
     "start": "node bolt",
-    "test": "npm run test-unit && npm run test-acceptance",
+    "test": "npm run test-integration && npm run test-acceptance",
     "test-acceptance": "npm run test-acceptance-tobi && npm run test-acceptance-soda",
     "test-acceptance-soda": "nodeunit test/acceptance_test_with_soda.js",
     "test-acceptance-tobi": "nodeunit test/acceptance_test_with_tobi.js",
-    "test-style": "gulp test:style",
-    "test-unit": "mocha -R spec test/spec_with_mocha_supertest.js"
+    "test-integration": "mocha -R spec test/spec_with_mocha_supertest.js",
+    "test-style": "gulp test:style"
   },
   "engines": {
     "node": "6.9.4",
