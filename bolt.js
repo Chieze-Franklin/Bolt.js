@@ -197,7 +197,7 @@ var $_ = function (request, response) {
         .end(utils.Misc.createResponse(null, error, 103));
 };
 
-var server = app.listen(/*0*/process.env.PORT || config.getPort(), process.env.ADDRESS || config.getHost(), function () {
+var server = app.listen(/*0*/process.env.PORT || config.getPort(), function () {
     var host = server.address().address;
     var port = server.address().port;
     config.setHost(host);
