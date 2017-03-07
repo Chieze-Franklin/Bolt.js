@@ -221,7 +221,7 @@ var server = app.listen(/*0*/process.env.PORT || config.getPort(), function () {
     //socket.io
     sockets.createSocket("bolt", server);
 
-    //mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
+    ////mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
     //mongoose.connect('mongodb://localhost:27017/bolt');
     mongoose.connect('mongodb://sam:sam@ds056979.mlab.com:56979/bolt-test')
     mongoose.connection.on('open', function () {
