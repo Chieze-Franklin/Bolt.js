@@ -8,6 +8,7 @@ var exphbs = require('express3-handlebars');
 var express = require("express");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);
+var Showdown = require("showdown");
 
 var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');
@@ -69,6 +70,19 @@ module.exports = function(app) {
 		layoutsDir: app.get('views') + '/layouts',
 		partialsDir: [app.get('views') + '/partials'],
 		helpers: {
+			markdownToHtml: function(obj) {
+				var converter = new Showdown.converter();
+				var content = converter.makeHtml(obj);
+				return content;
+			},
+			markdownToHtmlString: function(obj) {
+				var converter = new Showdown.converter();
+				var content = converter.makeHtml(obj);
+				content = content;
+				content = content.split("\n");
+				content = content.join();
+				return content;
+			},
 			json: function(obj) {
 				return JSON.stringify(obj);
 			}

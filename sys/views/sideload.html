@@ -1,0 +1,102 @@
+<div class="register-container full-height sm-p-t-30">
+  <div class="container-sm-height full-height">
+    <div class="row row-sm-height">
+      <div class="col-sm-12 col-sm-height col-middle">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              <h1>{{displayName}}</h1>
+              <h4>{{description}}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div id="readmediv"></div>
+        {{#if readme}}<button class="btn btn-primary btn-cons m-t-10" name="readme" id="readme">Show 'Read Me'</button>{{/if}}
+        <hr>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              {{#if startup}}
+              <input name="startup" id="startup" type="checkbox" checked>
+              {{else}}
+              <input name="startup" id="startup" type="checkbox">
+              {{/if}}
+              <label for="startup">Start this app as soon as Bolt starts (even before a user is logged in)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              {{#if system}}
+              <input name="system" id="system" type="checkbox" checked>
+              {{else}}
+              <input name="system" id="system" type="checkbox">
+              {{/if}}
+              <label for="system">Grant this app root privilege (do this for only apps you trust)</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-cons m-t-10" name="submit" id="submit">Install</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function redirect(){
+  var success_redirect = "{{success}}";
+
+  if (success_redirect) {
+    window.location.href = success_redirect;
+  }
+  else {
+    window.location.href = "{{protocol}}://{{host}}:{{port}}/home";
+  }
+}
+
+$(document).ready(function(){
+    var startup, system;
+
+    var readmeVisible = false;
+    $("#readme").click(function(){
+      if (!readmeVisible) {
+        $("#readmediv").html('{{{markdownToHtmlString readme}}}');
+        $("#readme").text("Hide 'Read Me'");
+      }
+      else {
+        $("#readmediv").html('');
+        $("#readme").text("Show 'Read Me'");
+      }
+
+      readmeVisible = !readmeVisible;
+    });
+
+    $("#submit").click(function(){
+        startup = $("#startup").is(":checked");
+        system = $("#system").is(":checked");
+
+        $.ajax({
+          url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
+          data: { path: "{{path}}", startup: startup, system: system },
+          type: "POST",
+          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              sweetAlert("App installed!", response.body.displayName + " has been installed!", "success");
+              redirect();
+            }
+            else {
+              swal(response.errorUserTitle, response.errorUserMessage, "error");
+            }
+          },
+          error: function(xhr, status, err){
+            alert(xhr.responseText);
+          }
+        });
+    });
+  });
+</script>

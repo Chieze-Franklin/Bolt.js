@@ -1,0 +1,51 @@
+<div class="register-container full-height sm-p-t-30">
+  <div class="container-sm-height full-height">
+    <div class="row row-sm-height">
+      <div class="col-sm-12 col-sm-height col-middle">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group form-group-default">
+              <label>App</label>
+              <input type="text" name="app" id="app" placeholder="app name (download) or path (sideload)" class="form-control" required>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-cons m-t-10" name="download" id="download">Download</button>
+        <button class="btn btn-primary btn-cons m-t-10" name="sideload" id="sideload">Sideload</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+    $("#app").val("{{app}}")
+    var success_redirect = "{{success}}";
+
+    var appname, apppath;
+    $("#download").click(function(){ //TODO: implement download to look like sideload below
+        appname=$("#app").val();
+        $.ajax({
+          url: "{{protocol}}://{{host}}:{{port}}/api/apps/get",
+          data: { name: appname },
+          type: "POST",
+          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              //
+            }
+            else {
+              //TODO: error
+              console.log(response);
+            }
+          },
+          error: function(xhr, status, err){}
+        });
+    });
+
+    $("#sideload").click(function(){
+        apppath = $("#app").val();
+        window.location.href = "/sideload?app=" + apppath + (success_redirect ? "&success=" + success_redirect : "");
+    });
+  });
+</script>

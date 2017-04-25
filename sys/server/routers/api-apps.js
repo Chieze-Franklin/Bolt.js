@@ -16,19 +16,24 @@ router.get('/@live', apiAppsCtrlr.getLive);
 router.get('/:name', apiAppsCtrlr.getApp);
 
 //installs an app from an online repository (current only npm is supported)
-router.post('/', checksCtrlr.forUserPermToInstall, checksCtrlr.forAdminRight, apiAppsCtrlr.post);
+router.post('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.post);
 //TODO: PUT: /:app //updates an app from an online repository
 //TODO: DEL: /:app //uninstalls an app (remember to delete app-user, app-role, plugins, routers, collections, hooks...)
 
 //TODO: POST /package //call this before POST: / to get the package.json of the app so important info can be shown to the user before installation
 
+//TODO: POST /readme //call this before POST: / to get the readme.md of the app so important info can be shown to the user before installation
+
 //installs (registers) an app from a local repository (current only the node_modules folder is supported)
-router.post('/reg', checksCtrlr.forUserPermToInstall, checksCtrlr.forAdminRight, apiAppsCtrlr.postReg);
+router.post('/reg', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.postReg);
 //TODO: PUT: /reg/:app //updates an app from a local repository
 //TODO: DEL: /reg/:app //unregisters an app (remember to delete app-user, app-role, plugins, routers, collections, hooks...)
 
 //returns the relevant package.json of an app from a local repository (current only the node_modules folder is supported)
 router.post('/reg-package', checksCtrlr.forAdminRight, apiAppsCtrlr.postRegPackage);
+
+//returns the relevant readme.md of an app from a local repository (current only the node_modules folder is supported)
+router.post('/reg-readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postRegReadme);
 
 //starts the server of the app with the specified name
 router.post('/start', /*checksCtrlr.forAppRight,*/ apiAppsCtrlr.postStart);

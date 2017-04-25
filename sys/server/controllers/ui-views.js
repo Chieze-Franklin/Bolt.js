@@ -6,6 +6,7 @@ var utils = require("bolt-internal-utils");
 
 var fs = require("fs");
 var path = require("path");
+var Showdown = require("showdown");
 var superagent = require('superagent');
 var url = require('url');
 
@@ -91,6 +92,40 @@ module.exports = {
 				}
 			});	
 	},
+	getDownload: function(request, response){
+		var scope = {
+			protocol: config.getProtocol(),
+			host: config.getHost(),
+			port: config.getPort(),
+
+			app: request.query.app,
+			success: request.query.success,
+			failure: request.query.failure,
+
+			appToken: request.appToken
+		};
+		response.locals.title = "Install";
+		response
+			.set('Content-type', 'text/html')
+			.render('download.html', scope);
+	},
+	getInstall: function(request, response){
+		var scope = {
+			protocol: config.getProtocol(),
+			host: config.getHost(),
+			port: config.getPort(),
+
+			app: request.query.app,
+			success: request.query.success,
+			failure: request.query.failure,
+
+			appToken: request.appToken
+		};
+		response.locals.title = "Install";
+		response
+			.set('Content-type', 'text/html')
+			.render('install.html', scope);
+	},
 	getLogin: function(request, response){
 		var scope = {
 			protocol: config.getProtocol(),
@@ -120,26 +155,73 @@ module.exports = {
 			.set('Content-type', 'text/html')
 			.render('logout.html', scope);
 	},
-	getRequest: function(request, response){
-		var scope = {
-			protocol: config.getProtocol(),
-			host: config.getHost(),
-			port: config.getPort(),
-
-			app: request.query.app,
-			success: request.query.success,
-			failure: request.query.failure,
-			permissions: request.query.permissions,
-
-			appToken: request.appToken
-		};
-		response.locals.title = "Request";
-		response
-			.set('Content-type', 'text/html')
-			.render('request.html', scope);
-	},
 	getSetup: function(request, response){
 		__loadSetupView(request, response);
+	},
+	getSideload: function(request, response){
+		superagent
+			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg-package')
+			.send({ path: request.query.app })
+			.end(function(err, res){
+				if (!utils.Misc.isNullOrUndefined(err)) {
+					response.redirect('/error');
+				}
+				else {
+					var responseError = res.body.error;
+					var package = res.body.body;
+					//TODO: show package.bolt.dependencies
+
+					if (!utils.Misc.isNullOrUndefined(responseError)) {
+						var encodedCode = encodeURIComponent(res.body.code);
+						if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
+							var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
+							var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
+							response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
+						}
+						else {
+							response.redirect('/error?code=' + encodedCode);
+						}
+					}
+					else {
+						superagent
+							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg-readme')
+							.send({ path: request.query.app })
+							.end(function(errReadme, resReadme){
+								var readme = resReadme.body.body;
+
+								var scope = {
+									protocol: config.getProtocol(),
+									host: config.getHost(),
+									port: config.getPort(),
+
+									path: request.query.app,
+
+									success: request.query.success,
+
+									appToken: request.appToken
+								};
+
+								if (!utils.Misc.isNullOrUndefined(package)) {
+									var startup = false;
+									if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) startup = package.bolt.startup;
+									var system = false;
+									if (!utils.Misc.isNullOrUndefined(package.bolt.system)) system = package.bolt.system;
+
+									scope.displayName = package.bolt.displayName || package.name;
+									scope.description = package.description;
+									scope.readme = readme;
+									scope.startup = startup;
+									scope.system = system;
+								}
+									
+								response.locals.title = "Sideload";
+								response
+									.set('Content-type', 'text/html')
+									.render('sideload.html', scope);
+							});
+					}
+				}
+			});
 	},
 	getView: function(request, response){
 		//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html

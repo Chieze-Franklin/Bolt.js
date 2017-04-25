@@ -410,6 +410,24 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 410));
 		}
 	},
+
+	postRegReadme: function(request, response){
+		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
+			var _path = utils.String.trim(request.body.path);
+			fs.readFile(path.join(__node_modulesDir, _path, 'readme.md'), function (error, data) {
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else {
+					response.send(utils.Misc.createResponse(data.toString('utf8')));
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['410']);
+			response.end(utils.Misc.createResponse(null, error, 410));
+		}
+	},
 	postStart: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
 			var appnm = utils.String.trim(request.body.name.toLowerCase());
@@ -484,6 +502,7 @@ module.exports = {
 									}
 
 									__runningContexts.push(context);
+									utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 									response.send(utils.Misc.createResponse(context));
 								});
 							}

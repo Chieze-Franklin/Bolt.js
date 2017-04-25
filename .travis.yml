@@ -3,6 +3,9 @@ node_js:
   - "6.9.4"
 #services:
 #  - mongodb
+
+notifications:
+  email: false
   
 before_script:
   - npm install -g bower

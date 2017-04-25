@@ -62,13 +62,20 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
+						users = utils.Misc.sanitizeUsers(users);
 						users.forEach(function(user){
 							//delete user-roles
 							models.userRoleAssoc.remove({ user: user.name }, function(userRoleRemoveError){});
 							//delete app-users
 							models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
+							//delete dp
+							if(!utils.Misc.isNullOrUndefined(user.displayPic)) {
+								fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
+							}
+
+							utils.Events.fire('user-deleted', { body: user }, request.appToken, function(eventError, eventResponse){});
 						});
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUsers(users)));
+						response.send(utils.Misc.createResponse(users));
 					}
 				});
 			}
@@ -103,7 +110,9 @@ module.exports = {
 							fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
 						}
 
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
+						user = utils.Misc.sanitizeUser(user);
+						utils.Events.fire('user-deleted', { body: user }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(user));
 					}
 				});
 			}
@@ -232,7 +241,9 @@ module.exports = {
 								response.end(utils.Misc.createResponse(null, saveError, 202));
 							}
 							else {
-								response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(savedUser)));
+								savedUser = utils.Misc.sanitizeUser(savedUser);
+								utils.Events.fire('user-created', { body: savedUser }, request.appToken, function(eventError, eventResponse){});
+								response.send(utils.Misc.createResponse(savedUser));
 							}
 						});
 					}
@@ -310,11 +321,12 @@ module.exports = {
 
 						__registerLogin(request.user);
 						//fire the 'user-logged-in' (change to user_logged_in?) event
-						superagent
+						utils.Events.fire('user-logged-in', { body: request.user }, request.appToken, function(eventError, eventResponse){});
+						/*superagent
 							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/events/user-logged-in')
 							.set(X_BOLT_APP_TOKEN, request.appToken)
 							.send({ body: request.user })
-							.end(function(eventError, eventResponse){});
+							.end(function(eventError, eventResponse){});*/
 						response.send(utils.Misc.createResponse(request.user));
 					}
 				}
@@ -328,11 +340,12 @@ module.exports = {
 	postLogout: function(request, response){
 		if(!utils.Misc.isNullOrUndefined(request.session.user)) {
 			__registerLogout(request.session.user);
+			utils.Events.fire('user-logged-out', { body: request.session.user }, request.appToken, function(eventError, eventResponse){});
 		}
 		request.session.reset();
 	  	response.end(utils.Misc.createResponse(request.session.user, null, 0));
 	},
-	put: function(request, response){
+	put: function(request, response){ //TODO: there has to be a way to update 'displayPic'
 		var searchCriteria = {};
 		if (!utils.Misc.isNullOrUndefined(request.query)) {
 			searchCriteria = request.query;
@@ -353,7 +366,11 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, error));
 					}
 					else if (!utils.Misc.isNullOrUndefined(users)) {
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUsers(users)));
+						users = utils.Misc.sanitizeUsers(users);
+						users.forEach(function(user){
+							utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(users));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -418,7 +435,9 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, err, 203));
 					}
 					else{
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
+						user = utils.Misc.sanitizeUser(user);
+						utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(user));
 					}
 				});
 			}
