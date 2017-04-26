@@ -93,7 +93,9 @@ module.exports = {
 											response.end(utils.Misc.createResponse(null, saveError, 322));
 										}
 										else {
-											response.send(utils.Misc.createResponse(utils.Misc.sanitizeAppRole(savedAppRole)));
+											savedAppRole = utils.Misc.sanitizeAppRole(savedAppRole);
+											utils.Events.fire('app-role-created', { body: savedAppRole }, request.appToken, function(eventError, eventResponse){});
+											response.send(utils.Misc.createResponse(savedAppRole));
 										}
 									});
 								}
