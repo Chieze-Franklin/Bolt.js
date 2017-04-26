@@ -105,6 +105,7 @@ var __loadRouters = function(app) {
 		                                (!utils.Misc.isNullOrUndefined(rtr.root)
 		                            ? " on " + rtr.root
 		                            : ""));
+                                utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(rtr) }, __genAppToken('bolt'), function(eventError, eventResponse){});
 		                        loadRouter(++idx);
 	                    	}
 	                    	else {

@@ -93,21 +93,74 @@ module.exports = {
 			});	
 	},
 	getDownload: function(request, response){
-		var scope = {
-			protocol: config.getProtocol(),
-			host: config.getHost(),
-			port: config.getPort(),
+		superagent
+			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/package')
+			.send({ name: request.query.app, version: request.query.version })
+			.end(function(err, res){
+				if (!utils.Misc.isNullOrUndefined(err)) {
+					response.redirect('/error');
+				}
+				else {
+					var responseError = res.body.error;
+					var package = res.body.body;
+					//TODO: show package.bolt.dependencies
 
-			app: request.query.app,
-			success: request.query.success,
-			failure: request.query.failure,
+					if (!utils.Misc.isNullOrUndefined(responseError)) {
+						var encodedCode = encodeURIComponent(res.body.code);
+						if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
+							var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
+							var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
+							response.redirect('/error?code=' + encodedCode + '&error_user_title=' + encodedTitle + '&error_user_message=' + encodedMessage);
+						}
+						else {
+							response.redirect('/error?code=' + encodedCode);
+						}
+					}
+					else {
+						superagent
+							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/readme')
+							.send({ name: request.query.app, version: request.query.version })
+							.end(function(errReadme, resReadme){
+								var readme = resReadme.body.body;
 
-			appToken: request.appToken
-		};
-		response.locals.title = "Install";
-		response
-			.set('Content-type', 'text/html')
-			.render('download.html', scope);
+								var scope = {
+									protocol: config.getProtocol(),
+									host: config.getHost(),
+									port: config.getPort(),
+
+									name: request.query.app,
+
+									success: request.query.success,
+
+									appToken: request.appToken
+								};
+
+								if (!utils.Misc.isNullOrUndefined(package)) {
+									var startup = false;
+									var system = false;
+									scope.displayName = package.name;
+									
+									if (!utils.Misc.isNullOrUndefined(package.bolt)) {
+										if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) startup = package.bolt.startup;
+										if (!utils.Misc.isNullOrUndefined(package.bolt.system)) system = package.bolt.system;
+
+										if (!utils.Misc.isNullOrUndefined(package.bolt.displayName)) scope.displayName = package.bolt.displayName;
+									}
+
+									scope.description = package.description;
+									scope.readme = readme;
+									scope.startup = startup;
+									scope.system = system;
+								}
+									
+								response.locals.title = "Download";
+								response
+									.set('Content-type', 'text/html')
+									.render('download.html', scope);
+							});
+					}
+				}
+			});
 	},
 	getInstall: function(request, response){
 		var scope = {

@@ -22,7 +22,11 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeAppRoles(appRoles)));
+						appRoles = utils.Misc.sanitizeAppRoles(appRoles);
+						appRoles.forEach(function(appRole){
+							utils.Events.fire('app-role-deleted', { body: appRole }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(appRoles));
 					}
 				});
 			}

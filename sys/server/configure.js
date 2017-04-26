@@ -81,6 +81,8 @@ module.exports = function(app) {
 				content = content;
 				content = content.split("\n");
 				content = content.join();
+				content = content.split("'");
+				content = content.join("\"");
 				return content;
 			},
 			json: function(obj) {

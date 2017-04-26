@@ -3,13 +3,17 @@ var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
 
+var getPackageReadme = require('get-package-readme')
 var fs = require('fs');
 var fse = require('fs-extra');
+var npm = require('npm-programmatic');
+var packageJson = require("pkg.json");
 var path = require("path");
 var superagent = require('superagent');
 
 var processes = require("../processes");
 
+var __boltDir = path.join(__dirname + './../../../');
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __publicDir = path.join(__dirname + './../../../public');
 
@@ -65,12 +69,120 @@ module.exports = {
 		response.redirect('/api/apps?tags=' + tag);
 	},*/
 	post: function(request, response){
-		//TODO:
-		//support npm (default) and bower
-		//expects: { app (if app name (.body.name) missing, error code=400; if app name='bolt', error=401), version (optional) } => npm install {app}@{version}
-		//calls /api/app/reg after downloading app (if not possible then after package.json and all the files to hash in package.json are downloaded)
-		//if (!utils.Misc.isNullOrUndefined(request.body.name))
-		response.send();
+		//TODO: support bower
+
+		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
+			var appnm = utils.String.trim(request.body.name.toLowerCase());
+			if (appnm === "bolt") { //'bolt' is a special app that is "already installed"
+				var errr = new Error(errors['401']);
+				response.end(utils.Misc.createResponse(null, errr, 401));
+				return;
+			}
+
+			var version = "";
+			if (!utils.Misc.isNullOrUndefined(request.body.version)) {
+				version = "@" + request.body.version;
+			}
+
+			//using child_process
+			/*var exec = require('child_process').exec, child;
+			 child = exec('npm install ' + appnm + version,
+			 function (error, stdout, stderr) {
+			     console.log('stdout: ' + stdout);
+			     console.log('stderr: ' + stderr);
+			     if (error !== null) {
+			          console.log('exec error: ' + error);
+			     }
+			 });*/
+
+			//using require('npm')
+			/*npm.load({}, function (loadError) {
+				if (!utils.Misc.isNullOrUndefined(loadError)) {
+					response.end(utils.Misc.createResponse(null, loadError));
+				}
+				else {
+					npm.commands.install([appnm + version], function (installError, installData) {
+						//check for error, do stuff
+					});
+				}
+
+				npm.on('log', function(message) {
+				    //log installation progress
+				    console.log(message);
+				});
+			});*/
+
+			//using require('enpeem')
+			//see: https://www.npmjs.com/package/enpeem
+
+			//using require('npm-programmatic')
+			npm.install([appnm + version], {
+		        cwd: __boltDir
+		    })
+		    .then(function(){
+		    	console.log("success!!!");
+		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
+		        //call /api/apps/reg
+		        superagent
+					.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg')
+					.send({ path: appnm, startup: request.body.startup || false, system: request.body.system || false })
+					.end(function(appregError, appregResponse){
+						if (!utils.Misc.isNullOrUndefined(appregError)) {
+							response.end(utils.Misc.createResponse(null, appregError));
+						}
+						else {console.log(appregResponse.body);
+							response.send(utils.Misc.createResponse(appregResponse.body));
+						}
+					});
+		    })
+		    .catch(function(){
+		        var error = new Error(errors['415']);
+				response.end(utils.Misc.createResponse(null, error, 415));
+		    });
+		}
+		else {
+			var error = new Error(errors['400']);
+			response.end(utils.Misc.createResponse(null, error, 400));
+		}
+	},
+	postPackage: function(request, response){
+		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
+			var appnm = utils.String.trim(request.body.name);
+			var version = "latest";
+			if (!utils.Misc.isNullOrUndefined(request.body.version)) {
+				version = utils.String.trim(request.body.version);
+			}
+			packageJson(appnm, version, function (error, data) {
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else {
+					response.send(utils.Misc.createResponse(data));
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['400']);
+			response.end(utils.Misc.createResponse(null, error, 400));
+		}
+	},
+	postReadme: function(request, response){
+		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
+			var appnm = utils.String.trim(request.body.name);
+			//another option: https://www.npmjs.com/package/readme-getter
+			getPackageReadme(appnm, function (error, data) {
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else {
+					response.send(utils.Misc.createResponse(data));
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['400']);
+			response.end(utils.Misc.createResponse(null, error, 400));
+		}
 	},
 	postReg: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
@@ -275,6 +387,8 @@ module.exports = {
 							                                (!utils.Misc.isNullOrUndefined(savedRouter.root)
 							                            ? " on " + savedRouter.root
 							                            : ""));
+							                        utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(savedRouter) }, request.appToken, 
+							                        	function(eventError, eventResponse){});
 
 													//add '$_'
 													request.addErrorHandlerMiddleware(request.app);
@@ -340,6 +454,7 @@ module.exports = {
 										response.end(utils.Misc.createResponse(null, saveError, 402));
 									}
 									else {
+										savedApp = utils.Misc.sanitizeApp(savedApp);
 										/*//necessary info to savedApp.install endpoint
 										superagent
 											.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
@@ -348,7 +463,8 @@ module.exports = {
 												//TODO: when is the right time to shut down the app
 												//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
 											});*/
-										response.send(utils.Misc.createResponse(utils.Misc.sanitizeApp(savedApp)));
+										utils.Events.fire('app-installed', { body: savedApp }, request.appToken, function(eventError, eventResponse){});
+										response.send(utils.Misc.createResponse(savedApp));
 									}
 								});
 							};
@@ -410,7 +526,6 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 410));
 		}
 	},
-
 	postRegReadme: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 			var _path = utils.String.trim(request.body.path);
@@ -559,6 +674,8 @@ module.exports = {
 			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){
 				if (__runningContexts[index].name === appnm){
+					//TODO: inform the app you are about to stop it (using a lifecycle-stopping event), if u get an OK from the app go ahead and stop it
+
 					//remove context
 					var context = __runningContexts[index];
 					__runningContexts.pop(context);
@@ -569,6 +686,7 @@ module.exports = {
 					//kill process
 					processes.killProcess(context.name); //TODO: haven't tested this
 
+					utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
 					response.send(utils.Misc.createResponse(context));
 					return;
 				}
