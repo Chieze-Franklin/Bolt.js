@@ -24,13 +24,16 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
+						roles = utils.Misc.sanitizeRoles(roles);
 						roles.forEach(function(role){
 							//delete user-roles
 							models.userRoleAssoc.remove({ role: role.name }, function(userRoleRemoveError){});
 							//delete app-roles
 							models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
+
+							utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
 						});
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRoles(roles)));
+						response.send(utils.Misc.createResponse(roles));
 					}
 				});
 			}
@@ -61,7 +64,9 @@ module.exports = {
 						//delete app-roles
 						models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
 
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(role)));
+						role = utils.Misc.sanitizeRole(role);
+						utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(role));
 					}
 				});
 			}
@@ -123,7 +128,9 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, saveError, 302));
 						}
 						else {
-							response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(savedRole)));
+							savedRole = utils.Misc.sanitizeRole(savedRole);
+							utils.Events.fire('role-created', { body: savedRole }, request.appToken, function(eventError, eventResponse){});
+							response.send(utils.Misc.createResponse(savedRole));
 						}
 					});
 				}
@@ -159,7 +166,11 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, error));
 					}
 					else if (!utils.Misc.isNullOrUndefined(roles)) {
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRoles(roles)));
+						roles = utils.Misc.sanitizeRoles(roles);
+						roles.forEach(function(role){
+							utils.Events.fire('role-updated', { body: role }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(roles));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -191,7 +202,9 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, err, 303));
 					}
 					else{
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeRole(role)));
+						role = utils.Misc.sanitizeRole(role);
+						utils.Events.fire('role-updated', { body: role }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(role));
 					}
 				});
 			}

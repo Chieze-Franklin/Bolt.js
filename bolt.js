@@ -198,12 +198,9 @@ var $_ = function (request, response) {
         .end(utils.Misc.createResponse(null, error, 103));
 };
 
-var server = app.listen(/*0*/process.env.PORT || config.getPort(), process.env.ADDRESS || config.getHost(), function () {
-    var host = server.address().address;
+var server = app.listen(process.env.PORT, function () {
     var port = server.address().port;
-    config.setHost(host);
-    config.setPort(port);
-    console.log("Bolt Server running on http://%s:%s", host, port);
+    console.log("Bolt Server running on port %s", port);
     console.log('');
 
     //listen for 'uncaughtException' so it doesnt crash our system
@@ -222,9 +219,7 @@ var server = app.listen(/*0*/process.env.PORT || config.getPort(), process.env.A
     //socket.io
     sockets.createSocket("bolt", server);
 
-    mongoose.connect('mongodb://' + config.getDbHost()+ ':' + config.getDbPort() + '/bolt');
-    //mongoose.connect('mongodb://localhost:27017/bolt');
-    //mongoose.connect('mongodb://sam:sam@ds056979.mlab.com:56979/bolt-test')
+    mongoose.connect(process.env.MONGODB_URL);
     mongoose.connection.on('open', function () {
         //load routers
         __loadRouters(app);
