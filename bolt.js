@@ -219,7 +219,7 @@ var server = app.listen(process.env.PORT, function () {
     //socket.io
     sockets.createSocket("bolt", server);
 
-    mongoose.connect(process.env.MONGODB_URL);
+    mongoose.connect(process.env.BOLT_DB_CONN_STR);
     mongoose.connection.on('open', function () {
         //load routers
         __loadRouters(app);
