@@ -12,6 +12,7 @@ var exec = require('child_process').exec, child;
 var express = require("express");
 var mongoose = require('mongoose');
 var path = require("path");
+var request = require("request");
 var superagent = require('superagent');
 
 var configure = require("./sys/server/configure");
@@ -198,7 +199,7 @@ var $_ = function (request, response) {
         .end(utils.Misc.createResponse(null, error, 103));
 };
 
-var server = app.listen(process.env.PORT, function () {
+var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
     var port = server.address().port;
     console.log("Bolt Server running on port %s", port);
     console.log('');
@@ -219,7 +220,7 @@ var server = app.listen(process.env.PORT, function () {
     //socket.io
     sockets.createSocket("bolt", server);
 
-    mongoose.connect(process.env.BOLT_DB_CONN_STR);
+    mongoose.connect(process.env.BOLT_DB_CONN_STR || process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.DATABASE_URL);
     mongoose.connection.on('open', function () {
         //load routers
         __loadRouters(app);
@@ -240,7 +241,33 @@ var server = app.listen(process.env.PORT, function () {
                     console.log('');
                 } else {
                     var name = startups[index];
-                    superagent
+                    request
+                        //.post({url: 'http://127.0.0.1:400/api/apps/start', json: {name: name}}, 
+                        .post({url: 'https://guarded-journey-25495.herokuapp.com/api/apps/start', json: {name: name}}, 
+                        function(appstartError, appstartResponse, appstartBody) {
+                            if (!utils.Misc.isNullOrUndefined(appstartError)) {
+                                runStartups(++index);
+                                return;
+                            }
+
+                            var context = appstartBody.body;
+
+                            if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
+                                console.log("Started startup app%s%s at %s:%s",
+                                        (!utils.Misc.isNullOrUndefined(context.app.displayName)
+                                    ? " '" + context.app.displayName + "'"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(context.name)
+                                    ? " (" + context.name + ")"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(context.host)
+                                    ? context.host
+                                    : ""),
+                                    context.port);
+                            }
+                            runStartups(++index);
+                        });
+                    /*superagent
                         .post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
                         .send({name: name})
                         .end(function (appstartError, appstartResponse) {
@@ -265,7 +292,7 @@ var server = app.listen(process.env.PORT, function () {
                                     context.port);
                             }
                             runStartups(++index);
-                        });
+                        });*/
                 }
             };
 
