@@ -170,6 +170,7 @@ module.exports = {
 		var scope = {
 			success: request.query.success,
 			failure: request.query.failure,
+			noQuery: request.query.no_query || false,
 
 			appToken: request.appToken
 		};

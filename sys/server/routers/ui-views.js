@@ -7,13 +7,13 @@ var uiViewsCtrlr = require('../controllers/ui-views');
 var router = express.Router();
 
 //this endpoint displays the appropriate view per time
-router.get('/', uiViewsCtrlr.get);
+router.get('/', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.get);
 
 //this endpoint displays the download view
-router.get('/download', uiViewsCtrlr.getDownload);
+router.get('/download', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getDownload);
 
 //this endpoint displays the install view
-router.get('/install', uiViewsCtrlr.getInstall);
+router.get('/install', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getInstall);
 
 //this endpoint displays the login view
 router.get('/login', uiViewsCtrlr.getLogin);
@@ -25,9 +25,9 @@ router.get('/logout', uiViewsCtrlr.getLogout);
 router.get('/setup', checksCtrlr.forSystemApp, uiViewsCtrlr.getSetup);
 
 //this endpoint displays the sideload view
-router.get('/sideload', uiViewsCtrlr.getSideload);
+router.get('/sideload', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getSideload);
 
 //this endpoint displays the specified view
-router.get('/:view', uiViewsCtrlr.getView);
+router.get('/:view', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getView);
 
 module.exports = router;

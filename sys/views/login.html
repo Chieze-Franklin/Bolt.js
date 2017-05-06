@@ -47,6 +47,7 @@
 <script>
 function redirect(user){
   var success_redirect = "{{success}}";
+  var noQuery = "{{noQuery}}".toLowerCase() == "true";
   if(success_redirect) {
     $.ajax({
       url: "/api/tokens",
@@ -56,7 +57,15 @@ function redirect(user){
       success: function(response, status, xhr){
         if(response.code == 0){
           var token = response.body;
-          window.location.href = success_redirect + "?user=" + token;
+          if (!noQuery) {
+            if (success_redirect.indexOf('?') > -1) { //the URL already has a query section
+              success_redirect += "&user=" + token;
+            }
+            else {
+              success_redirect += "?user=" + token;
+            }
+          }
+          window.location.href = success_redirect;
         }
         //TODO: else
       },
