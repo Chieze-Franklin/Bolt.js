@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
@@ -162,7 +161,7 @@ module.exports = {
 			var token = request.get(X_BOLT_USER_TOKEN);
 			
 			superagent
-				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/tokens/' + encodeURIComponent(token))
+				.get(process.env.BOLT_ADDRESS + '/api/tokens/' + encodeURIComponent(token))
 				.end(function(tokenError, tokenResponse){
 					if (!utils.Misc.isNullOrUndefined(tokenError)) {
 						response.end(utils.Misc.createResponse(null, tokenError));
@@ -323,7 +322,7 @@ module.exports = {
 						//fire the 'user-logged-in' (change to user_logged_in?) event
 						utils.Events.fire('user-logged-in', { body: request.user }, request.appToken, function(eventError, eventResponse){});
 						/*superagent
-							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/events/user-logged-in')
+							.post(process.env.BOLT_ADDRESS + '/api/events/user-logged-in')
 							.set(X_BOLT_APP_TOKEN, request.appToken)
 							.send({ body: request.user })
 							.end(function(eventError, eventResponse){});*/

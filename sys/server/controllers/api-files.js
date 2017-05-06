@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
@@ -39,8 +38,7 @@ module.exports = {
 				}
 
 				if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.path)) {
-					fileInfo.publicPath = config.getProtocol() + "://" + config.getHost() + ":" + config.getPort() 
-						+ "/public/" + app.name + "/" + fileInfo.path;
+					fileInfo.publicPath = process.env.BOLT_ADDRESS + "/public/" + app.name + "/" + fileInfo.path;
 					fileInfo.staticPath = path.join(__publicDir, app.path, fileInfo.path);
 					fs.stat(fileInfo.staticPath, function(fsError, stats) {
 						if (!utils.Misc.isNullOrUndefined(fsError)) {

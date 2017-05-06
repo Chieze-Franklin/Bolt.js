@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var utils = require("bolt-internal-utils");
 
@@ -9,7 +8,7 @@ var superagent = require('superagent');
 module.exports = {
 	getAppFile: function(request, response){
 		superagent
-			.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/files/' + request.params.app + '/' + request.params.file)
+			.get(process.env.BOLT_ADDRESS + '/api/files/' + request.params.app + '/' + request.params.file)
 			.end(function(error, fileinfoResponse){
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.redirect('/error');

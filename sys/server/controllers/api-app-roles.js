@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");

@@ -597,6 +597,7 @@ module.exports = {
 								response.send(utils.Misc.createResponse(context));
 							}
 							else { //if app is NOT a system app, start it on a child process
+								context.protocol = process.env.BOLT_PROTOCOL;
 								context.host = process.env.BOLT_IP;
 
 								if(!processes.hasProcess(context.name)){
