@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
 
@@ -14,8 +13,8 @@ var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');
 
 module.exports = function(app) {
-	app.use(bodyParser.json());
-	app.use(bodyParser.urlencoded({ extended: false }));
+	app.use(bodyParser.json({limit: '100mb'}));
+	app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
 
 	app.use(function (request, response, next) {
 	  response.header('Access-Control-Allow-Origin', '*');
@@ -28,7 +27,7 @@ module.exports = function(app) {
 
 	app.use(session({
 		cookieName: 'session',
-		secret: config.getSessionSecret(),
+		secret: process.env.BOLT_SESSION_SECRET,
 		duration: 24 * 60 * 60 * 1000,
 		activeDuration: 24 * 60 * 60 * 1000,
 		//httpOnly: false

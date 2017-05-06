@@ -124,7 +124,7 @@ module.exports = {
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
 		        //call /api/apps/reg
 		        superagent
-					.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg')
+					.post(process.env.BOLT_ADDRESS + '/api/apps/reg')
 					.send({ path: appnm, startup: request.body.startup || false, system: request.body.system || false })
 					.end(function(appregError, appregResponse){
 						if (!utils.Misc.isNullOrUndefined(appregError)) {
@@ -457,7 +457,7 @@ module.exports = {
 										savedApp = utils.Misc.sanitizeApp(savedApp);
 										/*//necessary info to savedApp.install endpoint
 										superagent
-											.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
+											.post(process.env.BOLT_ADDRESS + '/api/apps/start')
 											.send({ name: name, install: true })
 											.end(function(appstartError, appstartResponse){
 												//TODO: when is the right time to shut down the app
@@ -554,7 +554,7 @@ module.exports = {
 			}
 			
 			superagent
-				.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/' + request.body.name) 
+				.get(process.env.BOLT_ADDRESS + '/api/apps/' + request.body.name) 
 				.end(function(appinfoError, appinfoResponse){
 					if (!utils.Misc.isNullOrUndefined(appinfoError)) {
 						response.end(utils.Misc.createResponse(null, appinfoError));
@@ -580,51 +580,67 @@ module.exports = {
 					context.app = app;
 
 					var startApp = function() {
-						//start a child process for the app
-						if(!utils.Misc.isNullOrUndefined(context.app.main)){
-							context.host = config.getHost();
+						if(!utils.Misc.isNullOrUndefined(app.main)){
+							if (app.system) { //if app is system app, mount it as a sub-app
+								var subApp = require(path.join(__node_modulesDir, app.path, app.main));
+								
+								//remove '$_'
+								request.removeErrorHandlerMiddleware(request.app);
 
-							if(!processes.hasProcess(context.name)){
-								//pass the context (and a callback) to processes.createProcess()
-								//processes.createProcess() will start a new instance of app_process as a child process
-								//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
-								//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
-								//{host}:{child-port}/start-app will start app almost as was done before (see __raw/bolt2.js), on a random port
-								//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
-								processes.createProcess(context, function(error, _context){
-									if (!utils.Misc.isNullOrUndefined(error)) {
-										response.end(utils.Misc.createResponse(null, error));
-									}
+								request.app.use("/x/" + app.name, subApp);
 
-									context = _context;
+								//add '$_'
+								request.addErrorHandlerMiddleware(request.app);
 
-									//pass the OS host & port to the app
-									var initUrl = context.app.ini;
-									if (true === request.body.install) initUrl = context.app.install; //if this is called during installation
-									if (!utils.Misc.isNullOrUndefined(initUrl)) {
-										initUrl = "/" + utils.String.trimStart(initUrl, "/");
-										superagent
-											.post(config.getProtocol() + '://' + config.getHost() + ':' + context.port + initUrl)
-											.send({ 
-												protocol: config.getProtocol(), 
-												host: config.getHost(), 
-												port: config.getPort(),
-												appName: context.name,
-												appPort: context.port,
-												appToken: request.genAppToken(context.name)
-											})
-											.end(function(initError, initResponse){});
-									}
-
-									__runningContexts.push(context);
-									utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
-									response.send(utils.Misc.createResponse(context));
-								});
-							}
-							else{
-								context.pid = processes.getAppPid(context.name);
-								context.port = processes.getAppPort(context.name);
+								__runningContexts.push(context);
+								utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 								response.send(utils.Misc.createResponse(context));
+							}
+							else { //if app is NOT a system app, start it on a child process
+								context.host = process.env.BOLT_IP;
+
+								if(!processes.hasProcess(context.name)){
+									//pass the context (and a callback) to processes.createProcess()
+									//processes.createProcess() will start a new instance of app_process as a child process
+									//app_process will send the port it's running on ({child-port}) back to processes.createProcess()
+									//processes.createProcess() will send a post request to {host}:{child-port}/start-app, with context as the body
+									//{host}:{child-port}/start-app will start app almost as was done before (see __dumps/bolt2.js), on a random port
+									//processes will receive the new context (containing port and pid) as the reponse, and send it back in the callback
+									processes.createProcess(context, function(error, _context){
+										if (!utils.Misc.isNullOrUndefined(error)) {
+											response.end(utils.Misc.createResponse(null, error));
+										}
+
+										context = _context;
+
+										//pass the OS host & port to the app
+										var initUrl = context.app.ini;
+										if (true === request.body.install) initUrl = context.app.install; //if this is called during installation
+										if (!utils.Misc.isNullOrUndefined(initUrl)) {
+											initUrl = "/" + utils.String.trimStart(initUrl, "/");
+											superagent
+												.post(process.env.BOLT_PROTOCOL + '://' + process.env.BOLT_IP + ':' + context.port + initUrl)
+												.send({ 
+													protocol: process.env.BOLT_PROTOCOL, 
+													host: process.env.BOLT_IP, 
+													port: process.env.PORT || process.env.BOLT_PORT,
+													appName: context.name,
+													appPort: context.port,
+													appToken: request.genAppToken(context.name)
+												})
+												.end(function(initError, initResponse){});
+										}
+
+										__runningContexts.push(context);
+										utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
+										response.send(utils.Misc.createResponse(context));
+									});
+								}
+								else{
+									context.pid = processes.getAppPid(context.name);
+									context.port = processes.getAppPort(context.name);
+									response.send(utils.Misc.createResponse(context));
+								}
 							}
 						}
 						else
@@ -669,7 +685,7 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 400));
 		}
 	},
-	postStop: function(request, response){
+	postStop: function(request, response){ //TODO: how to stop system apps
 		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
 			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){

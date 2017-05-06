@@ -1,4 +1,3 @@
-var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var setup = require("bolt-internal-setup");
@@ -46,10 +45,6 @@ var __loadSetupView = function(request, response){
 	}
 
 	var scope = {
-		protocol: config.getProtocol(),
-		host: config.getHost(),
-		port: config.getPort(),
-
 		redirect: redirect,
 		appToken: request.appToken,
 		title: "Setup"
@@ -63,7 +58,7 @@ var __loadSetupView = function(request, response){
 module.exports = {
 	get: function(request, response){
 		superagent
-			.get(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/users') //get all registered users
+			.get(process.env.BOLT_ADDRESS + '/api/users') //get all registered users
 			.end(function(error, usersResponse){
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.redirect('/error');
@@ -94,7 +89,7 @@ module.exports = {
 	},
 	getDownload: function(request, response){
 		superagent
-			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/package')
+			.post(process.env.BOLT_ADDRESS + '/api/apps/package')
 			.send({ name: request.query.app, version: request.query.version })
 			.end(function(err, res){
 				if (!utils.Misc.isNullOrUndefined(err)) {
@@ -118,16 +113,12 @@ module.exports = {
 					}
 					else {
 						superagent
-							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/readme')
+							.post(process.env.BOLT_ADDRESS + '/api/apps/readme')
 							.send({ name: request.query.app, version: request.query.version })
 							.end(function(errReadme, resReadme){
 								var readme = resReadme.body.body;
 
 								var scope = {
-									protocol: config.getProtocol(),
-									host: config.getHost(),
-									port: config.getPort(),
-
 									name: request.query.app,
 
 									success: request.query.success,
@@ -164,10 +155,6 @@ module.exports = {
 	},
 	getInstall: function(request, response){
 		var scope = {
-			protocol: config.getProtocol(),
-			host: config.getHost(),
-			port: config.getPort(),
-
 			app: request.query.app,
 			success: request.query.success,
 			failure: request.query.failure,
@@ -181,10 +168,6 @@ module.exports = {
 	},
 	getLogin: function(request, response){
 		var scope = {
-			protocol: config.getProtocol(),
-			host: config.getHost(),
-			port: config.getPort(),
-
 			success: request.query.success,
 			failure: request.query.failure,
 
@@ -197,10 +180,6 @@ module.exports = {
 	},
 	getLogout: function(request, response){
 		var scope = {
-			protocol: config.getProtocol(),
-			host: config.getHost(),
-			port: config.getPort(),
-
 			appToken: request.appToken,
 		};
 		response.locals.title = "Log Out";
@@ -213,7 +192,7 @@ module.exports = {
 	},
 	getSideload: function(request, response){
 		superagent
-			.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg-package')
+			.post(process.env.BOLT_ADDRESS + '/api/apps/reg-package')
 			.send({ path: request.query.app })
 			.end(function(err, res){
 				if (!utils.Misc.isNullOrUndefined(err)) {
@@ -237,16 +216,12 @@ module.exports = {
 					}
 					else {
 						superagent
-							.post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/reg-readme')
+							.post(process.env.BOLT_ADDRESS + '/api/apps/reg-readme')
 							.send({ path: request.query.app })
 							.end(function(errReadme, resReadme){
 								var readme = resReadme.body.body;
 
 								var scope = {
-									protocol: config.getProtocol(),
-									host: config.getHost(),
-									port: config.getPort(),
-
 									path: request.query.app,
 
 									success: request.query.success,
@@ -314,10 +289,6 @@ module.exports = {
 				fs.stat(native, function(error, stats) {
 					if (utils.Misc.isNullOrUndefined(error) && stats.isFile()){
 						var scope = {
-							protocol: config.getProtocol(),
-							host: config.getHost(),
-							port: config.getPort(),
-
 							title: request.params.view,
 
 							item: request.query.item,

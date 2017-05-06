@@ -3,7 +3,6 @@
 
 'use strict';
 
-var config = require("bolt-internal-config");
 var models = require("bolt-internal-models");
 var sockets = require("bolt-internal-sockets");
 var utils = require("bolt-internal-utils");
@@ -13,7 +12,6 @@ var express = require("express");
 var mongoose = require('mongoose');
 var path = require("path");
 var request = require("request");
-var superagent = require('superagent');
 
 var configure = require("./sys/server/configure");
 
@@ -220,7 +218,7 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
     //socket.io
     sockets.createSocket("bolt", server);
 
-    mongoose.connect(process.env.BOLT_DB_CONN_STR || process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.DATABASE_URL);
+    mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
     mongoose.connection.on('open', function () {
         //load routers
         __loadRouters(app);
@@ -242,8 +240,7 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
                 } else {
                     var name = startups[index];
                     request
-                        //.post({url: 'http://127.0.0.1:400/api/apps/start', json: {name: name}}, 
-                        .post({url: 'https://guarded-journey-25495.herokuapp.com/api/apps/start', json: {name: name}}, 
+                        .post({url: process.env.BOLT_ADDRESS + '/api/apps/start', json: {name: name}}, 
                         function(appstartError, appstartResponse, appstartBody) {
                             if (!utils.Misc.isNullOrUndefined(appstartError)) {
                                 runStartups(++index);
@@ -252,47 +249,29 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
 
                             var context = appstartBody.body;
 
-                            if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
-                                console.log("Started startup app%s%s at %s:%s",
-                                        (!utils.Misc.isNullOrUndefined(context.app.displayName)
-                                    ? " '" + context.app.displayName + "'"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(context.name)
-                                    ? " (" + context.name + ")"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(context.host)
-                                    ? context.host
-                                    : ""),
-                                    context.port);
+                            if (!utils.Misc.isNullOrUndefined(context)) {
+                                if (!utils.Misc.isNullOrUndefined(context.port)) {
+                                    console.log("Started startup app%s%s at %s:%s",
+                                            (!utils.Misc.isNullOrUndefined(context.app.displayName)
+                                        ? " '" + context.app.displayName + "'"
+                                        : ""),
+                                            (!utils.Misc.isNullOrUndefined(context.name)
+                                        ? " (" + context.name + ")"
+                                        : ""),
+                                            (!utils.Misc.isNullOrUndefined(context.host)
+                                        ? context.host
+                                        : ""),
+                                        context.port);
+                                }
+                                else {
+                                    console.log("Started startup app%s",
+                                            (!utils.Misc.isNullOrUndefined(context.app.displayName)
+                                        ? " '" + context.app.displayName + "'"
+                                        : ""));
+                                }
                             }
                             runStartups(++index);
                         });
-                    /*superagent
-                        .post(config.getProtocol() + '://' + config.getHost() + ':' + config.getPort() + '/api/apps/start')
-                        .send({name: name})
-                        .end(function (appstartError, appstartResponse) {
-                            if (!utils.Misc.isNullOrUndefined(appstartError)) {
-                                runStartups(++index);
-                                return;
-                            }
-
-                            var context = appstartResponse.body.body;
-
-                            if (!utils.Misc.isNullOrUndefined(context) && !utils.Misc.isNullOrUndefined(context.port)) {
-                                console.log("Started startup app%s%s at %s:%s",
-                                        (!utils.Misc.isNullOrUndefined(context.app.displayName)
-                                    ? " '" + context.app.displayName + "'"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(context.name)
-                                    ? " (" + context.name + ")"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(context.host)
-                                    ? context.host
-                                    : ""),
-                                    context.port);
-                            }
-                            runStartups(++index);
-                        });*/
                 }
             };
 

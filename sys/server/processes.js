@@ -1,5 +1,5 @@
 'use strict';
-var config = require("bolt-internal-config");
+var utils = require("bolt-internal-utils");
 
 var exec = require('child_process').exec, child;
 var http = require("http");
@@ -16,7 +16,8 @@ module.exports = {
 		this.killProcess(context.name); //kill existing process first
 
 		var childPath = path.join(__dirname, 'app_host.js');
-		child = exec('node ' + childPath);
+		var env = utils.Misc.sanitizeModel(process.env, ["MONGODB_URI", "MONGOLAB_URI", "BOLT_DB_URI", "BOLT_SESSION_SECRET"]);
+		child = exec('node ' + childPath, {env: env}); //filter out sensitive environment variables from the view of child process
 
 		child.stdout.on('data', function(data) { 
 			if(data.indexOf("app_host.port=") == 0){ //if(data.startsWith("app_host.port="))
@@ -24,7 +25,7 @@ module.exports = {
 				var port = data.substr(index + 1);
 
 				superagent
-					.post(config.getProtocol() + '://' + config.getHost() + ':' + port + '/app-start')
+					.post(process.env.BOLT_PROTOCOL + '://' + process.env.BOLT_IP + ':' + port + '/app-start')
 					.send(context)
 					.end(function(appstartError, appstartResponse){
 						if (appstartError) {
