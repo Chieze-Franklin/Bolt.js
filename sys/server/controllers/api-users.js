@@ -138,7 +138,7 @@ module.exports = {
 	},
 	getCurrent: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.user)) {
-			response.send(utils.Misc.createResponse(request.session.user));
+			response.send(utils.Misc.createResponse(request.user));
 		}
 		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_NAME))) {
 			var username = request.get(X_BOLT_USER_NAME);

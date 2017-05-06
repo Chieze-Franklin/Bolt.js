@@ -22,7 +22,7 @@
     $(document).ready(function(){
         //get current user
         $.ajax({
-          url: "{{protocol}}://{{host}}:{{port}}/api/users/@current",
+          url: "/api/users/@current",
           type: "GET",
           headers: {'X-Bolt-App-Token': '{{appToken}}'},
           success: function(response, status, xhr){
@@ -41,13 +41,13 @@
 
         $("#download").click(function(){
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/apps",
+              url: "/api/apps",
               data: { name: "bolt-home" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
-                  window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
+                  window.location.href="/Home";
                 }
                 else {
                   sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
@@ -61,13 +61,13 @@
 
         $("#sideload").click(function(){
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
+              url: "/api/apps/reg",
               data: { path: "bolt-home" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
-                  window.location.href="{{protocol}}://{{host}}:{{port}}/Home";
+                  window.location.href="/Home";
                 }
                 else {
                   sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");

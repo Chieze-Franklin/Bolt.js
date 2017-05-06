@@ -219,7 +219,7 @@ module.exports = {
 							.post(process.env.BOLT_ADDRESS + '/api/apps/reg-readme')
 							.send({ path: request.query.app })
 							.end(function(errReadme, resReadme){
-								var readme = resReadme.body.body;
+								var readme = resReadme.body.body || "";
 
 								var scope = {
 									path: request.query.app,

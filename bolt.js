@@ -267,6 +267,9 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
                                     console.log("Started startup app%s",
                                             (!utils.Misc.isNullOrUndefined(context.app.displayName)
                                         ? " '" + context.app.displayName + "'"
+                                        : ""),
+                                            (!utils.Misc.isNullOrUndefined(context.name)
+                                        ? " (" + context.name + ")"
                                         : ""));
                                 }
                             }

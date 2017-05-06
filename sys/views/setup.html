@@ -14,7 +14,7 @@
                       <img src="public/bolt/native/img/logo.png" alt="logo" width="78" height="22">
                       <p class="p-t-35">You are being registered as an admin</p>
                       <!-- START Login Form -->
-                      <form id="form-register" enctype="multipart/form-data" method="post" action="{{protocol}}://{{host}}:{{port}}/api/users">
+                      <form id="form-register" enctype="multipart/form-data" method="post" action="/api/users">
                         <div class="row">
                           <div class="col-sm-12">
                             <div class="form-group form-group-default">
@@ -215,7 +215,7 @@ $(document).ready(function(){
 
       //first, add the user
       $.ajax({
-        url: '{{protocol}}://{{host}}:{{port}}/api/users',
+        url: '/api/users',
         type: 'POST',
         data: formData,
         processData: false,
@@ -227,7 +227,7 @@ $(document).ready(function(){
           if(response.code == 0){
             //second, create an admin role
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/roles",
+              url: "/api/roles",
               data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Has complete access to every part of the system" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},
@@ -235,7 +235,7 @@ $(document).ready(function(){
                 if(response2.code == 0){ 
                   //third, associate user and role
                   $.ajax({
-                    url: "{{protocol}}://{{host}}:{{port}}/api/user-roles",
+                    url: "/api/user-roles",
                     data: { user: response.body.name, role: response2.body.name },
                     type: "POST",
                     headers: {'X-Bolt-App-Token': '{{appToken}}'},
@@ -243,7 +243,7 @@ $(document).ready(function(){
                       if(response3.code == 0){ 
                         //fourth, log user in
                         $.ajax({
-                          url: "{{protocol}}://{{host}}:{{port}}/api/users/login",
+                          url: "/api/users/login",
                           data: { name: username, password: password },
                           type: "POST",
                           headers: {'X-Bolt-App-Token': '{{appToken}}'},
@@ -326,7 +326,7 @@ $(document).ready(function(){
   });
 
     $("#proceed").click(function(){
-        window.location.href="{{protocol}}://{{host}}:{{port}}/{{redirect}}";
+        window.location.href="/{{redirect}}";
     });
 });
 
@@ -339,7 +339,7 @@ var performRequests = function(index){
         if(index < requestsSync.length) {
           var req = requestsSync[index];    
           $.ajax({
-            url: "{{protocol}}://{{host}}:{{port}}/" + req.endpoint,
+            url: "/" + req.endpoint,
             data: req.body,
             type: req.method,
             //processData: false,
@@ -361,7 +361,7 @@ var performRequests = function(index){
     if(requests) {
       requests.forEach(function(req){  
         $.ajax({
-          url: "{{protocol}}://{{host}}:{{port}}/" + req.endpoint,
+          url: "/" + req.endpoint,
           data: req.body,
           type: req.method,
           //processData: false,

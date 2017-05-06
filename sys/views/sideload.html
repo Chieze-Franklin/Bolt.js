@@ -54,7 +54,7 @@ function redirect(){
     window.location.href = success_redirect;
   }
   else {
-    window.location.href = "{{protocol}}://{{host}}:{{port}}/home";
+    window.location.href = "/home";
   }
 }
 
@@ -81,7 +81,7 @@ $(document).ready(function(){
         system = $("#system").is(":checked");
 
         $.ajax({
-          url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
+          url: "/api/apps/reg",
           data: { path: "{{path}}", startup: startup, system: system },
           type: "POST",
           headers: {'X-Bolt-App-Token': '{{appToken}}'},

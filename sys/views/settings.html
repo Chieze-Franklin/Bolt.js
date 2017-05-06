@@ -21,13 +21,13 @@
     $(document).ready(function(){
         $("#download").click(function(){
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/apps",
+              url: "/api/apps",
               data: { name: "bolt-settings" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
-                  window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                  window.location.href="/Settings";
                 }
                 else {
                   sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
@@ -41,13 +41,13 @@
 
         $("#sideload").click(function(){
             $.ajax({
-              url: "{{protocol}}://{{host}}:{{port}}/api/apps/reg",
+              url: "/api/apps/reg",
               data: { path: "bolt-settings" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
-                  window.location.href="{{protocol}}://{{host}}:{{port}}/Settings";
+                  window.location.href="/Settings";
                 }
                 else {
                   sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
