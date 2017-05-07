@@ -6,6 +6,7 @@ var utils = require("bolt-internal-utils");
 var getPackageReadme = require('get-package-readme')
 var fs = require('fs');
 var fse = require('fs-extra');
+var mongodb = require('mongodb');
 var npm = require('npm-programmatic');
 var packageJson = require("pkg.json");
 var path = require("path");
@@ -339,6 +340,20 @@ module.exports = {
 											newCollection.guests = collObj;
 										}
 										else if (!utils.Misc.isNullOrUndefined(collObj.guests)) newCollection.guests = collObj.guests;
+										
+										/*
+										//create an actual capped collection named: appnm + '-' + newCollection.name
+										var MongoClient = mongodb.MongoClient;
+										MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
+											if (!utils.Misc.isNullOrUndefined(db)) 
+												db.createCollection(appnm + '-' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000});//TODO: config.getMax()...
+										});
+
+										//I once encountered some little issues working with capped collections on mlab.com, so I'm skeptical of allowing it here.
+										//Also, even if we do allow capped collections, after a system reset (or if the app that owns the collection drops it) 
+										//the next time the app writes to its collection, an uncapped version is created automatically
+										*/
+
 										newCollection.save();
 									}
 								}
@@ -592,6 +607,20 @@ module.exports = {
 								//add '$_'
 								request.addErrorHandlerMiddleware(request.app);
 
+								//pass info to the app
+								var initUrl = app.ini;
+								if (true === request.body.install) initUrl = app.install; //if this is called during installation
+								if (!utils.Misc.isNullOrUndefined(initUrl)) {
+									initUrl = "/" + utils.String.trimStart(initUrl, "/");
+									superagent
+										.post(process.env.BOLT_ADDRESS + "/x/" + app.name + initUrl)
+										.send({ 
+											appName: app.name,
+											appToken: request.genAppToken(app.name)
+										})
+										.end(function(initError, initResponse){});
+								}
+
 								__runningContexts.push(context);
 								utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 								response.send(utils.Misc.createResponse(context));
@@ -614,7 +643,7 @@ module.exports = {
 
 										context = _context;
 
-										//pass the OS host & port to the app
+										//pass info to the app
 										var initUrl = context.app.ini;
 										if (true === request.body.install) initUrl = context.app.install; //if this is called during installation
 										if (!utils.Misc.isNullOrUndefined(initUrl)) {

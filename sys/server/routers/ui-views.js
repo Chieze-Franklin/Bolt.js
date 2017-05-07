@@ -7,7 +7,7 @@ var uiViewsCtrlr = require('../controllers/ui-views');
 var router = express.Router();
 
 //this endpoint displays the appropriate view per time
-router.get('/', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.get);
+router.get('/', uiViewsCtrlr.get);
 
 //this endpoint displays the download view
 router.get('/download', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getDownload);
