@@ -191,7 +191,7 @@ app.use(uiViewsRouter);
 
 // catch 404 and forward to error handler
 var $_ = function (request, response) {
-    var error = new Error("The endpoint '" + request.path + "' could not be found!");
+    var error = new Error("The endpoint '" + request.path + "' could noot be found!");
     response
         .set('Content-Type', 'application/json')
         .end(utils.Misc.createResponse(null, error, 103));
