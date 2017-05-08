@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "gulp build",
-    "start": "npm install && node bolt",
+    "start": "npm install",
     "test": "npm run test-integration && npm run test-acceptance",
     "test-acceptance": "npm run test-acceptance-tobi && npm run test-acceptance-soda",
     "test-acceptance-soda": "nodeunit test/acceptance_test_with_soda.js",
