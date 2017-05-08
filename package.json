@@ -1,6 +1,6 @@
 {
   "name": "Bolt.js",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A Node.js-base runtime environment written in JavaScript",
   "main": "bolt.js",
   "repository": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "gulp build",
-    "start": "node bolt",
+    "start": "npm install && node bolt",
     "test": "npm run test-integration && npm run test-acceptance",
     "test-acceptance": "npm run test-acceptance-tobi && npm run test-acceptance-soda",
     "test-acceptance-soda": "nodeunit test/acceptance_test_with_soda.js",
