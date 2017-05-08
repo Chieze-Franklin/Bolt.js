@@ -198,7 +198,7 @@ var $_ = function (request, response) {
 };
 
 var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
-    var port = server.address().port;console.log(">>>>>>>>>>>>>>>>>>>>", port)
+    var port = server.address().port;
     console.log("Bolt Server running on port %s", port);
     console.log('');
 
