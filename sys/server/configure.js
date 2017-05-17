@@ -2,8 +2,7 @@ var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
 
 var bodyParser = require('body-parser');
-//var cons = require('consolidate');
-var exphbs = require('express3-handlebars');
+var exphbs = require('express-handlebars');
 var express = require("express");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);

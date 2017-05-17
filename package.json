@@ -51,7 +51,7 @@
     "client-sessions": "^0.7.0",
     "cookie-parser": "^1.4.3",
     "express": "~4.14.0",
-    "express3-handlebars": "^0.5.2",
+    "express-handlebars": "^3.0.0",
     "fs-extra": "^1.0.0",
     "get-package-readme": "^1.2.0",
     "handlebars": "^4.0.5",
