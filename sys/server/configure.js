@@ -70,12 +70,24 @@ module.exports = function(app) {
 		partialsDir: [app.get('views') + '/partials'],
 		helpers: {
 			markdownToHtml: function(obj) {
-				var converter = new Showdown.converter();
+				var converter;
+				try{
+					converter = new Showdown.converter(); //lowercase 'C'
+				}
+				catch (e) {
+					converter = new Showdown.Converter(); //uppercase 'C'
+				}
 				var content = converter.makeHtml(obj);
 				return content;
 			},
 			markdownToHtmlString: function(obj) {
-				var converter = new Showdown.converter();
+				var converter;
+				try{
+					converter = new Showdown.converter(); //lowercase 'C'
+				}
+				catch (e) {
+					converter = new Showdown.Converter(); //uppercase 'C'
+				}
 				var content = converter.makeHtml(obj);
 				content = content;
 				content = content.split("\n");
