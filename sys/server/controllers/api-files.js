@@ -39,8 +39,8 @@ module.exports = {
 
 				if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.path)) {
 					fileInfo.publicPath = process.env.BOLT_ADDRESS + "/public/" + app.name + "/" + fileInfo.path;
-					fileInfo.staticPath = path.join(__publicDir, app.path, fileInfo.path);
-					fs.stat(fileInfo.staticPath, function(fsError, stats) {
+					var staticPath = path.join(__publicDir, app.name, fileInfo.path);
+					fs.stat(staticPath, function(fsError, stats) {
 						if (!utils.Misc.isNullOrUndefined(fsError)) {
 							fileInfo.error = fsError;
 						}

@@ -420,21 +420,21 @@ module.exports = {
 								if (public.constructor === Array) { //if (public instanceof Array) //if (Array.isArray(public))
 									public.forEach(function(publicPath, index){
 										var source = path.join(__node_modulesDir, _path, publicPath);
-										var destination = path.join(__publicDir, _path, publicPath);
+										var destination = path.join(__publicDir, appnm, publicPath);
 										fse.copy(source, destination, { clobber: true }, function(copyError){
 											//TODO: what shud I do if there's an error?
 										});
 									});
 								}
 								else {
-									var destRoot = path.join(__publicDir, _path);
+									var destRoot = path.join(__publicDir, appnm);
 									var overwrite = true;
 									if (!utils.Misc.isNullOrUndefined(public.overwrite)) overwrite = public.overwrite;
 
 									var transferFiles = function() {
 										public.paths.forEach(function(publicPath, index){
 											var source = path.join(__node_modulesDir, _path, publicPath);
-											var destination = path.join(__publicDir, _path, publicPath);
+											var destination = path.join(__publicDir, appnm, publicPath);
 											if (public.move) {
 												fse.move(source, destination, { clobber: overwrite }, function(moveError){
 													//TODO: what shud I do if there's an error?
