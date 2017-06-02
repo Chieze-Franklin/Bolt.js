@@ -8,7 +8,7 @@ var superagent = require('superagent');
 
 const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
 
-var __updatableProps = ["displayName", "email", "isBlocked", "phone"];
+var __updatableProps = ["displayName", "dn", "displayPic", "dp", "email", "isBlocked", "phone"];
 
 var __users = [];
 //considering users can log in and out on different devices and browsers, this maps a user to the number of current log-ins
@@ -56,7 +56,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if (!utils.Misc.isNullOrUndefined(users)) {
-				models.user.remove(searchCriteria, function (removeError) {
+				models.user.remove(searchCriteria, function (removeError, removeResult) {
 					if (!utils.Misc.isNullOrUndefined(removeError)) {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
@@ -95,7 +95,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 203));
 			}
 			else{
-				models.user.remove(searchCriteria, function (removeError) {
+				models.user.remove(searchCriteria, function (removeError, removeResult) {
 					if (!utils.Misc.isNullOrUndefined(removeError)) {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
@@ -358,7 +358,7 @@ module.exports = {
 		models.user.update(searchCriteria,
 			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
 			{ upsert: false }, 
-			function (updateError) {
+			function (updateError, updateDoc) {
 			if (!utils.Misc.isNullOrUndefined(updateError)) {
 				response.end(utils.Misc.createResponse(null, updateError));
 			}
@@ -385,10 +385,38 @@ module.exports = {
 		var usrnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: usrnm };
 
-		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
+		var updateObject = request.body;
+		updateObject = utils.Misc.extractModel(updateObject, __updatableProps);
 
 		if (utils.Misc.isNullOrUndefined(updateObject.displayName))
 			updateObject.displayName = updateObject.dn;
+
+		function updateUser() {
+			models.user.update(searchCriteria,
+				{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+				{ upsert: false }, 
+				function (updateError, updateDoc) {
+				if (!utils.Misc.isNullOrUndefined(updateError)) {
+					response.end(utils.Misc.createResponse(null, updateError));
+				}
+				else {
+					models.user.findOne(searchCriteria, function(error, user){
+						if (!utils.Misc.isNullOrUndefined(error)) {
+							response.end(utils.Misc.createResponse(null, error));
+						}
+						else if(utils.Misc.isNullOrUndefined(user)){
+							var err = new Error(errors['203']);
+							response.end(utils.Misc.createResponse(null, err, 203));
+						}
+						else{
+							user = utils.Misc.sanitizeUser(user);
+							utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
+							response.send(utils.Misc.createResponse(user));
+						}
+					});
+				}
+			});
+		}
 
 		var file;
 		if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;
@@ -401,51 +429,38 @@ module.exports = {
 			}
 		}
 		if (!utils.Misc.isNullOrUndefined(file)) {
+			function setNewPic() {
+				//since multer seems not to add extensions, I'm doing it manually here
+				var tempPath = path.resolve(file.path),
+					targetPath = path.resolve(file.path + path.extname(file.originalname));
+				fs.rename(tempPath, targetPath, function(renameError){	
+					//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
+					//with which Mozilla doesn't work well sometimes
+					if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
+						updateObject.displayPic = file.destination + file.filename;
+					}
+					else {
+						updateObject.displayPic = file.destination + file.filename + path.extname(file.originalname);
+					}
+
+					updateUser();
+				});
+			}
+
 			//first delete the former dp
 			models.user.findOne(searchCriteria, function(error, user){
 				if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)){
-					fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
-				}
-			});
+					fs.unlink(path.resolve(user.displayPic), function(unlinkError){});
 
-			//since multer seems not to add extensions, I'm doing it manually here
-			var tempPath = path.resolve(file.path),
-				targetPath = path.resolve(file.path + path.extname(file.originalname));
-			fs.rename(tempPath, targetPath, function(renameError){	
-				//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
-				//with which Mozilla doesn't work well sometimes
-				if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
-					updateObject.displayPic = file.destination + file.filename;
+					setNewPic();
 				}
 				else {
-					updateObject.displayPic = file.destination + file.filename + path.extname(file.originalname);
+					setNewPic();
 				}
 			});
 		}
-
-		models.user.update(searchCriteria,
-			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
-			{ upsert: false }, 
-			function (updateError) {
-			if (!utils.Misc.isNullOrUndefined(updateError)) {
-				response.end(utils.Misc.createResponse(null, updateError));
-			}
-			else {
-				models.user.findOne(searchCriteria, function(error, user){
-					if (!utils.Misc.isNullOrUndefined(error)) {
-						response.end(utils.Misc.createResponse(null, error));
-					}
-					else if(utils.Misc.isNullOrUndefined(user)){
-						var err = new Error(errors['203']);
-						response.end(utils.Misc.createResponse(null, err, 203));
-					}
-					else{
-						user = utils.Misc.sanitizeUser(user);
-						utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
-						response.send(utils.Misc.createResponse(user));
-					}
-				});
-			}
-		});
+		else {
+			updateUser();
+		}
 	}
 };

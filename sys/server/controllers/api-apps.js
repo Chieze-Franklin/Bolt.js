@@ -340,6 +340,8 @@ module.exports = {
 											newCollection.guests = collObj;
 										}
 										else if (!utils.Misc.isNullOrUndefined(collObj.guests)) newCollection.guests = collObj.guests;
+
+										if (!utils.Misc.isNullOrUndefined(collObj.tenants)) newCollection.tenants = collObj.tenants;
 										
 										/*
 										//create an actual capped collection named: appnm + '-' + newCollection.name
