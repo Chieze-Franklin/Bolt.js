@@ -352,6 +352,9 @@ module.exports = {
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
+		if (utils.Misc.isNullOrUndefined(updateObject.displayName))
+			updateObject.displayName = updateObject.dn;
+
 		models.user.update(searchCriteria,
 			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
 			{ upsert: false }, 
@@ -383,6 +386,9 @@ module.exports = {
 		var searchCriteria = { name: usrnm };
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
+
+		if (utils.Misc.isNullOrUndefined(updateObject.displayName))
+			updateObject.displayName = updateObject.dn;
 
 		var file;
 		if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;
