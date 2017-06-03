@@ -102,9 +102,12 @@ $(document).ready(function(){
     $("#submit").click(function(){
         username=$("#username").val();
         password=$("#password").val();
-        /*
-        * Perform some validation here.
-        */
+        
+        if (!username || !password) {
+          sweetAlert("Error", "Username or password not supplied!", "error");
+          return;
+        }
+
         $.ajax({
           url: "/api/users/login",
           data: { name: username, password: password },

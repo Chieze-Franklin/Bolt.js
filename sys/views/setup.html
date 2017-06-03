@@ -203,9 +203,16 @@ $(document).ready(function(){
       var con_password=$("#confirm_password").val();
       var email = $("#email").val();
       var phone = $("#phone").val();
-      /*
-      * TODO: ensure password and con_password are identical
-      */
+
+      if (!username || !password || !displayname) {
+        sweetAlert("Error", "Username or password or display name not supplied!", "error");
+        return;
+      }
+      
+      if (password !== con_password) {
+        sweetAlert("Error", "Password and confirmation password do not match!", "error");
+        return;
+      }
 
       formData.append('name', username);
       formData.append('password', password);

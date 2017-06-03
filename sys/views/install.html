@@ -31,11 +31,23 @@ $(document).ready(function(){
     $("#download").click(function(){
         var appname = $("#app").val();
         var version = $("#version").val();
+
+        if (!appname) {
+          sweetAlert("Error", "App name not specified!", "error");
+          return;
+        }
+
         window.location.href = "/download?app=" + appname + (success_redirect ? "&success=" + success_redirect : "") + (version ? "&version=" + version : "");
     });
 
     $("#sideload").click(function(){
         var apppath = $("#app").val();
+
+        if (!apppath) {
+          sweetAlert("Error", "App path not specified!", "error");
+          return;
+        }
+
         window.location.href = "/sideload?app=" + apppath + (success_redirect ? "&success=" + success_redirect : "");
     });
   });
