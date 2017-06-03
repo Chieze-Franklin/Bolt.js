@@ -341,8 +341,9 @@ module.exports = {
 			__registerLogout(request.session.user);
 			utils.Events.fire('user-logged-out', { body: request.session.user }, request.appToken, function(eventError, eventResponse){});
 		}
+		var user = request.session.user;
 		request.session.reset();
-	  	response.end(utils.Misc.createResponse(request.session.user, null, 0));
+	  	response.end(utils.Misc.createResponse(user, null, 0));
 	},
 	put: function(request, response){ //TODO: there has to be a way to update 'displayPic'
 		var searchCriteria = {};
