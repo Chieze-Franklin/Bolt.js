@@ -237,10 +237,9 @@ module.exports = {
 
 							/*a module can't have/do the things in this block
 							* a module can't have 'main'
-							* a module can't have 'index', 'ini', 'install'
+							* a module can't have 'index'
 							* a module can't have 'startup' privileges
 							* a module can't register extensions
-							* a module can't register hooks
 							*/
 							if (!package.bolt.module) {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
@@ -281,37 +280,6 @@ module.exports = {
 										}
 									}
 								}
-
-								if (!utils.Misc.isNullOrUndefined(package.bolt.hooks)) {
-									var hooks = package.bolt.hooks;
-									for (var hook in hooks){
-										if (hooks.hasOwnProperty(hook)) {
-											hook = hook.replace("\\", "/");
-
-											var publisher, evnt;
-
-											if (hook.indexOf("/") == -1) {
-												publisher = "*";
-												evnt = hook;
-											}
-											else {
-												publisher = hook.substring(0, hook.indexOf("/"));
-												if (publisher == "") publisher = "*";
-
-												evnt = hook.substr(hook.indexOf("/") + 1);
-												if (evnt == "") evnt = "*";
-											}
-
-											var newHook = new models.hook({
-												event: evnt,
-												publisher: publisher,
-												route: hooks[hook],
-												subscriber: appnm
-											});
-											newHook.save();
-										}
-									}
-								}
 							}
 
 							//for now we allow modules to be 'system' apps bcuz u need 'system' privilege to install routers
@@ -323,8 +291,48 @@ module.exports = {
 							if (!utils.Misc.isNullOrUndefined(package.bolt.order)) newApp.order = package.bolt.order;
 							newApp.tags = package.bolt.tags || [];
 
-							//even a module can register collections
-							//considering the fact that such collections will always be empty, I wonder why I'm allowing that
+							//even a module can register hooks, but only web and function (and router, when we implement it) hooks
+							if (!utils.Misc.isNullOrUndefined(package.bolt.hooks)) {
+								var hooks = package.bolt.hooks;
+								for (var hook in hooks){
+									if (hooks.hasOwnProperty(hook)) {
+										hook = hook.replace("\\", "/");
+
+										var publisher, evnt;
+
+										if (hook.indexOf("/") == -1) {
+											publisher = "*";
+											evnt = hook;
+										}
+										else {
+											publisher = hook.substring(0, hook.indexOf("/"));
+											if (publisher == "") publisher = "*";
+
+											evnt = hook.substr(hook.indexOf("/") + 1);
+											if (evnt == "") evnt = "*";
+										}
+
+										var newHook = new models.hook({
+											event: evnt,
+											publisher: publisher,
+											subscriber: appnm
+										});
+
+										var hookObj = hooks[hook];
+										if (hookObj.constructor === String) {
+											newHook.route = hookObj;
+										}
+										else {
+											if (!utils.Misc.isNullOrUndefined(hookObj.route)) newHook.route = hookObj.route;
+											if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type;
+										}
+
+										newHook.save();
+									}
+								}
+							}
+
+							//even a module can register collections, especially now that we have "tenants"
 							if (!utils.Misc.isNullOrUndefined(package.bolt.collections)) {
 								var collections = package.bolt.collections;
 								for (var collection in collections) {
