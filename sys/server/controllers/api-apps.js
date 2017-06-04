@@ -245,8 +245,6 @@ module.exports = {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
 
 								if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
-								if (!utils.Misc.isNullOrUndefined(package.bolt.ini)) newApp.ini = "/" + utils.String.trimStart(package.bolt.ini, "/");
-								if (!utils.Misc.isNullOrUndefined(package.bolt.install)) newApp.install = "/" + utils.String.trimStart(package.bolt.install, "/");
 
 								newApp.startup = false;
 								if (!utils.Misc.isNullOrUndefined(request.body.startup)) newApp.startup = request.body.startup;
@@ -324,10 +322,18 @@ module.exports = {
 										}
 										else {
 											if (!utils.Misc.isNullOrUndefined(hookObj.route)) newHook.route = hookObj.route;
-											if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type;
+											if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type.toString().toLowerCase();
 										}
 
-										newHook.save();
+										if (package.bolt.module) {
+											//modules can only save type=="web" and type=="function"
+											if (newHook.type == "web" || newHook.type == "function") {
+												newHook.save();
+											}
+										}
+										else {
+											newHook.save();
+										}
 									}
 								}
 							}
@@ -480,14 +486,6 @@ module.exports = {
 									}
 									else {
 										savedApp = utils.Misc.sanitizeApp(savedApp);
-										/*//necessary info to savedApp.install endpoint
-										superagent
-											.post(process.env.BOLT_ADDRESS + '/api/apps/start')
-											.send({ name: name, install: true })
-											.end(function(appstartError, appstartResponse){
-												//TODO: when is the right time to shut down the app
-												//TODO: I'm thinking we shud encourage them to do it from their 'install' endpoint
-											});*/
 										utils.Events.fire('app-installed', { body: savedApp }, request.appToken, function(eventError, eventResponse){});
 										response.send(utils.Misc.createResponse(savedApp));
 									}
@@ -617,21 +615,15 @@ module.exports = {
 								//add '$_'
 								request.addErrorHandlerMiddleware(request.app);
 
-								//pass info to the app
-								var initUrl = app.ini;
-								if (true === request.body.install) initUrl = app.install; //if this is called during installation
-								if (!utils.Misc.isNullOrUndefined(initUrl)) {
-									initUrl = "/" + utils.String.trimStart(initUrl, "/");
-									superagent
-										.post(process.env.BOLT_ADDRESS + "/x/" + app.name + initUrl)
-										.send({ 
-											appName: app.name,
-											appToken: request.genAppToken(app.name)
-										})
-										.end(function(initError, initResponse){});
-								}
-
 								__runningContexts.push(context);
+
+								//pass info to the app
+								var appstartingData = { appName: app.name, appToken: request.genAppToken(app.name) };
+								utils.Events.fire('app-starting', { body: appstartingData, subscribers: [app.name] }, request.appToken, 
+									function(eventError, eventResponse){
+										//TODO: technically u r supposed to receive a response here to know if the app actually started
+										//after which we add the context to running contexts and fire 'app-started'
+									});
 								utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 								response.send(utils.Misc.createResponse(context));
 							}
@@ -653,25 +645,22 @@ module.exports = {
 
 										context = _context;
 
-										//pass info to the app
-										var initUrl = context.app.ini;
-										if (true === request.body.install) initUrl = context.app.install; //if this is called during installation
-										if (!utils.Misc.isNullOrUndefined(initUrl)) {
-											initUrl = "/" + utils.String.trimStart(initUrl, "/");
-											superagent
-												.post(process.env.BOLT_PROTOCOL + '://' + process.env.BOLT_IP + ':' + context.port + initUrl)
-												.send({ 
-													protocol: process.env.BOLT_PROTOCOL, 
-													host: process.env.BOLT_IP, 
-													port: process.env.PORT || process.env.BOLT_PORT,
-													appName: context.name,
-													appPort: context.port,
-													appToken: request.genAppToken(context.name)
-												})
-												.end(function(initError, initResponse){});
-										}
-
 										__runningContexts.push(context);
+
+										//pass info to the app
+										var appstartingData = { 
+											protocol: process.env.BOLT_PROTOCOL, 
+											host: process.env.BOLT_IP, 
+											port: process.env.PORT || process.env.BOLT_PORT, 
+											appName: context.name, 
+											appPort: context.port,
+											appToken: request.genAppToken(context.name) 
+										};
+										utils.Events.fire('app-starting', { body: appstartingData, subscribers: [context.name] }, request.appToken, 
+											function(eventError, eventResponse){
+												//TODO: technically u r supposed to receive a response here to know if the app actually started
+												//after which we add the context to running contexts and fire 'app-started'
+											});
 										utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 										response.send(utils.Misc.createResponse(context));
 									});
@@ -742,6 +731,12 @@ module.exports = {
 					//kill process
 					processes.killProcess(context.name); //TODO: haven't tested this
 
+					//TODO: the 'body' of the event should hold the reason why the app is stopping
+					utils.Events.fire('app-stopping', { body: context, subscribers: [context.name] }, request.appToken, 
+						function(eventError, eventResponse){
+							//TODO: technically u r supposed to receive a response here to know if the app actually stopped
+							//after which we do all the killing and destroying, and fire 'app-stopped'
+						});
 					utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
 					response.send(utils.Misc.createResponse(context));
 					return;
