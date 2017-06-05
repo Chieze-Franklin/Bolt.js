@@ -85,53 +85,21 @@ module.exports = {
 				version = "@" + request.body.version;
 			}
 
-			//using child_process
-			/*var exec = require('child_process').exec, child;
-			 child = exec('npm install ' + appnm + version,
-			 function (error, stdout, stderr) {
-			     console.log('stdout: ' + stdout);
-			     console.log('stderr: ' + stderr);
-			     if (error !== null) {
-			          console.log('exec error: ' + error);
-			     }
-			 });*/
-
-			//using require('npm')
-			/*npm.load({}, function (loadError) {
-				if (!utils.Misc.isNullOrUndefined(loadError)) {
-					response.end(utils.Misc.createResponse(null, loadError));
-				}
-				else {
-					npm.commands.install([appnm + version], function (installError, installData) {
-						//check for error, do stuff
-					});
-				}
-
-				npm.on('log', function(message) {
-				    //log installation progress
-				    console.log(message);
-				});
-			});*/
-
-			//using require('enpeem')
-			//see: https://www.npmjs.com/package/enpeem
-
-			//using require('npm-programmatic')
 			npm.install([appnm + version], {
 		        cwd: __boltDir
 		    })
 		    .then(function(){
-		    	console.log("success!!!");
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
 		        //call /api/apps/reg
 		        superagent
 					.post(process.env.BOLT_ADDRESS + '/api/apps/reg')
+					.set({'X-Bolt-App-Token': request.appToken})
 					.send({ path: appnm, startup: request.body.startup || false, system: request.body.system || false })
 					.end(function(appregError, appregResponse){
 						if (!utils.Misc.isNullOrUndefined(appregError)) {
 							response.end(utils.Misc.createResponse(null, appregError));
 						}
-						else {console.log(appregResponse.body);
+						else {
 							response.send(utils.Misc.createResponse(appregResponse.body));
 						}
 					});
