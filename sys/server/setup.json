@@ -2,11 +2,6 @@
 	"redirect": "/settings",
 	"steps": [
 		{
-			"title": "Download NPM Modules",
-			"message": "Install needed modules from npm. This step is very important and requires internet connection. Or you can just run 'npm install'",
-			"requests": []
-		},
-		{
 			"title": "Download Core Modules",
 			"message": "Install core modules from online repositories. This step requires internet connection.",
 			"requests": [
@@ -43,13 +38,6 @@
 					"body": {
 						"path": "bolt-module-db"
 					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/apps/reg",
-					"body": {
-						"path": "bolt-module-events"
-					}
 				}
 			]
 		},
@@ -62,6 +50,13 @@
 					"endpoint": "/api/apps",
 					"body": {
 						"path": "bolt-module-ui-pages"
+					}
+				},
+				{
+					"method": "POST",
+					"endpoint": "/api/apps/reg",
+					"body": {
+						"path": "bolt-ui-sweetalert"
 					}
 				}
 			]
@@ -109,65 +104,21 @@
 					"body": {
 						"path": "bolt-settings"
 					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/apps/reg",
-					"body": {
-						"path": "ctl-sms-home"
-					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/apps/reg",
-					"body": {
-						"path": "ctl-sms-students"
-					}
 				}
 			]
 		},
 		{
 			"title": "Default Roles",
-			"message": "Create roles 'Student', 'Teacher', 'Principal', 'Parent'",
+			"message": "Create 'Guest' role",
 			"requestsSync": [
 				{
 					"method": "POST",
 					"endpoint": "/api/roles",
 					"body": {
-						"name": "student",
-						"displayName": "Student",
+						"name": "guest",
+						"displayName": "Guest",
 						"isAdmin": false,
-						"description": "A registered student"
-					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/roles",
-					"body": {
-						"name": "teacher",
-						"displayName": "Teacher",
-						"isAdmin": false,
-						"description": "A registered teacher"
-					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/roles",
-					"body": {
-						"name": "principal",
-						"displayName": "Principal",
-						"isAdmin": true,
-						"description": "Has access to every school resource and data"
-					}
-				},
-				{
-					"method": "POST",
-					"endpoint": "/api/roles",
-					"body": {
-						"name": "parent",
-						"displayName": "Parent",
-						"isAdmin": false,
-						"description": "The parent/guardian of a registered student"
+						"description": "A guest to the system"
 					}
 				}
 			]
