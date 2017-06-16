@@ -52,29 +52,29 @@ var __genAppToken = function (app) {
 };
 
 var __addErrorHandlerMiddleware = function(app) {
-	app.use($_); //error handler
+    app.use($_); //error handler
 }
 var __removeErrorHandlerMiddleware = function(app) {
-	function removeMiddleware(route, index, routes) {
-	    switch (route.handle.name) {
-	        case '$_': routes.splice(index, 1);
-	    }
-	    if (route.route) {
-	        route.route.stack.forEach(removeMiddleware);
-	    }
-	}
-	var routes = app._router.stack;
-	routes.forEach(removeMiddleware);
+    function removeMiddleware(route, index, routes) {
+        switch (route.handle.name) {
+            case '$_': routes.splice(index, 1);
+        }
+        if (route.route) {
+            route.route.stack.forEach(removeMiddleware);
+        }
+    }
+    var routes = app._router.stack;
+    routes.forEach(removeMiddleware);
 }
 
 var __loadRouters = function(app) {
-	//remove '$_'
-	__removeErrorHandlerMiddleware(app);
+    //remove '$_'
+    __removeErrorHandlerMiddleware(app);
 
-	//load routers
-	models.router.find({}, function (err, routers) {
+    //load routers
+    models.router.find({}, function (err, routers) {
         if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(routers)) {
-        	routers.sort(function (a, b) {
+            routers.sort(function (a, b) {
                 var orderA = a.order || 0;
                 var orderB = b.order || 0;
                 return parseInt(orderA, 10) - parseInt(orderB, 10);
@@ -82,40 +82,40 @@ var __loadRouters = function(app) {
             var loadRouter = function (idx) {
                 if (idx >= routers.length) {
                     __addErrorHandlerMiddleware(app);
-            		console.log('');
+                    console.log('');
                 } else {
-                	var rtr = routers[idx];
+                    var rtr = routers[idx];
                     if (!utils.Misc.isNullOrUndefined(rtr.main)) {
-	                    var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
-	                    //load the router only if its app is a system app
-	                    models.app.findOne({name: rtr.app, system: true}, function(systemAppError, systemApp){
-	                    	if (utils.Misc.isNullOrUndefined(systemAppError) && !utils.Misc.isNullOrUndefined(systemApp)) {
-	                    		if (utils.Misc.isNullOrUndefined(rtr.root)) {
-		                            app.use(router);
-		                        } else {
-		                            app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
-		                        }
-		                        console.log("Loaded router%s%s%s",
-		                                (!utils.Misc.isNullOrUndefined(rtr.name)
-		                            ? " '" + rtr.name + "'"
-		                            : ""),
-		                                (!utils.Misc.isNullOrUndefined(rtr.app)
-		                            ? " (" + rtr.app + ")"
-		                            : ""),
-		                                (!utils.Misc.isNullOrUndefined(rtr.root)
-		                            ? " on " + rtr.root
-		                            : ""));
+                        var router = require(path.join(__dirname, 'node_modules', rtr.path, rtr.main));
+                        //load the router only if its app is a system app
+                        models.app.findOne({name: rtr.app, system: true}, function(systemAppError, systemApp){
+                            if (utils.Misc.isNullOrUndefined(systemAppError) && !utils.Misc.isNullOrUndefined(systemApp)) {
+                                if (utils.Misc.isNullOrUndefined(rtr.root)) {
+                                    app.use(router);
+                                } else {
+                                    app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
+                                }
+                                console.log("Loaded router%s%s%s",
+                                        (!utils.Misc.isNullOrUndefined(rtr.name)
+                                    ? " '" + rtr.name + "'"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(rtr.app)
+                                    ? " (" + rtr.app + ")"
+                                    : ""),
+                                        (!utils.Misc.isNullOrUndefined(rtr.root)
+                                    ? " on " + rtr.root
+                                    : ""));
                                 utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(rtr) }, __genAppToken('bolt'), function(eventError, eventResponse){});
-		                        loadRouter(++idx);
-	                    	}
-	                    	else {
-	                    		loadRouter(++idx);
-	                    	}
-	                    });
-	                }
-	                else {
-	                	loadRouter(++idx);
-	                }
+                                loadRouter(++idx);
+                            }
+                            else {
+                                loadRouter(++idx);
+                            }
+                        });
+                    }
+                    else {
+                        loadRouter(++idx);
+                    }
                 }
             };
 
@@ -152,7 +152,7 @@ var app = configure(express());
 
 //pass in info native views can use
 app.use(function (request, response, next) {
-	request.addErrorHandlerMiddleware = __addErrorHandlerMiddleware;
+    request.addErrorHandlerMiddleware = __addErrorHandlerMiddleware;
     request.contextToAppTokenMap = __contextToAppTokenMap;
     request.destroyAppToken = __destroyAppToken; //TODO: test this
     request.genAppToken = __genAppToken; //TODO: test this
@@ -195,9 +195,10 @@ app.use(uiViewsRouter);
 // catch 404 and forward to error handler
 var $_ = function (request, response) {
     var error = new Error("The endpoint '" + request.path + "' could not be found!");
+    var msg = "Could not find specified endpoint '" + request.path + "'";
     response
         .set('Content-Type', 'application/json')
-        .end(utils.Misc.createResponse(null, error, 103));
+        .end(utils.Misc.createResponse(null, error, 103, null, null, msg));
 };
 
 var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {

@@ -87,6 +87,7 @@ module.exports = {
 									});
 									newAppRoleAssoc.start = request.body.start || false;
 									newAppRoleAssoc.features = request.body.features || [];
+									newAppRoleAssoc.files = request.body.files || [];
 									newAppRoleAssoc.save(function(saveError, savedAppRole){
 										if (!utils.Misc.isNullOrUndefined(saveError)) {
 											response.end(utils.Misc.createResponse(null, saveError, 322));
