@@ -81,37 +81,45 @@ module.exports = {
 					}
 					else { //if (hook.type == "server" || typeof hook.type == "undefined") {
 						//start the subscriber server
-						superagent
-							.post(process.env.BOLT_ADDRESS + '/api/apps/start')
-							.send({ name: hook.subscriber })
-							.end(function(appstartError, appstartResponse){
-								var context = appstartResponse.body.body;
+						if (hook.subscriber == 'bolt') {
+							superagent
+								.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")))
+								.send(event)
+								.end(function(evntError, evntResponse){});
+						}
+						else {
+							superagent
+								.post(process.env.BOLT_ADDRESS + '/api/apps/start')
+								.send({ name: hook.subscriber })
+								.end(function(appstartError, appstartResponse){
+									var context = appstartResponse.body.body;
 
-								//POST the event
-								if (!utils.Misc.isNullOrUndefined(context)) {
-									var event = evnt;
-									event.token = request.genAppToken(context.name); //set the event token to equal the app token
+									//POST the event
+									if (!utils.Misc.isNullOrUndefined(context)) {
+										var event = evnt;
+										event.token = request.genAppToken(context.name); //set the event token to equal the app token
 
-									if (!utils.Misc.isNullOrUndefined(context.port)) {
-										superagent
-											.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")))
-											.send(event)
-											.end(function(evntError, evntResponse){});
+										if (!utils.Misc.isNullOrUndefined(context.port)) {
+											superagent
+												.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")))
+												.send(event)
+												.end(function(evntError, evntResponse){});
+										}
+										else if (context.app.system) {
+											superagent
+												.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")))
+												.send(event)
+												.end(function(evntError, evntResponse){});
+										}
+											
+										/*//send event to socket for the app
+										var socket = sockets.getSocket(context.name); //socket will always be undefined if context is running on another process
+										if (!utils.Misc.isNullOrUndefined(socket)) 
+											//socket.send(JSON.stringify(event));
+											socket.broadcast.to(context.name).emit("message", JSON.stringify(event));*/
 									}
-									else if (context.app.system) {
-										superagent
-											.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")))
-											.send(event)
-											.end(function(evntError, evntResponse){});
-									}
-										
-									/*//send event to socket for the app
-									var socket = sockets.getSocket(context.name); //socket will always be undefined if context is running on another process
-									if (!utils.Misc.isNullOrUndefined(socket)) 
-										//socket.send(JSON.stringify(event));
-										socket.broadcast.to(context.name).emit("message", JSON.stringify(event));*/
-								}
-							});
+								});
+						}
 					}
 				});
 			}
@@ -132,6 +140,64 @@ module.exports = {
 			//I dont feel like doing this since everybody will get the event irrespective of the "subscribers" specified by the publisher
 			
 		//send a response back
+		response.send();
+	},
+	postSub: function(request, response){
+		var hook = request.params[0];
+		hook = hook.replace("\\", "/");
+
+		var publisher, evnt;
+
+		if (hook.indexOf("/") == -1) {
+			publisher = "*";
+			evnt = hook;
+		}
+		else {
+			publisher = hook.substring(0, hook.indexOf("/"));
+			if (publisher == "") publisher = "*";
+
+			evnt = hook.substr(hook.indexOf("/") + 1);
+			if (evnt == "") evnt = "*";
+		}
+
+		var newHook = new models.hook({
+			event: evnt,
+			publisher: publisher,
+			subscriber: request.appName,
+			transient: true
+		});
+
+		var hookObj = request.body;console.log(hookObj)
+		newHook.route = hookObj.route;
+		if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type.toString().toLowerCase();
+
+		newHook.save();
+		response.send();
+	},
+	deleteSub: function(request, response){
+		var hook = request.params[0];
+		hook = hook.replace("\\", "/");
+
+		var publisher, evnt;
+
+		if (hook.indexOf("/") == -1) {
+			publisher = "*";
+			evnt = hook;
+		}
+		else {
+			publisher = hook.substring(0, hook.indexOf("/"));
+			if (publisher == "") publisher = "*";
+
+			evnt = hook.substr(hook.indexOf("/") + 1);
+			if (evnt == "") evnt = "*";
+		}
+
+		models.hook.remove({ 
+			event: evnt, 
+			publisher: publisher,
+			subscriber: request.appName,
+			transient: true 
+		}, function(hookRemoveError){});
 		response.send();
 	}
 };

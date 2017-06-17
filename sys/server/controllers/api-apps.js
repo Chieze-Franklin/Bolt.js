@@ -289,7 +289,7 @@ module.exports = {
 											newHook.route = hookObj;
 										}
 										else {
-											if (!utils.Misc.isNullOrUndefined(hookObj.route)) newHook.route = hookObj.route;
+											newHook.route = hookObj.route;
 											if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type.toString().toLowerCase();
 										}
 
@@ -595,7 +595,7 @@ module.exports = {
 										setTimeout(function(){
 											utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(context));
-										}, 3000);
+										}, 2000);
 									});
 							}
 							else { //if app is NOT a system app, start it on a child process
@@ -635,7 +635,7 @@ module.exports = {
 												setTimeout(function(){
 													utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
 													response.send(utils.Misc.createResponse(context));
-												}, 3000);
+												}, 2000);
 											});
 									});
 								}
@@ -710,6 +710,9 @@ module.exports = {
 						function(eventError, eventResponse){
 							//TODO: technically u r supposed to receive a response here to know if the app actually stopped
 							//after which we do all the killing and destroying, and fire 'app-stopped'
+
+							//remove transient hooks
+							models.hook.remove({ subscriber: context.name, transient: true }, function(hookRemoveError){});
 						});
 					utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
 					response.send(utils.Misc.createResponse(context));

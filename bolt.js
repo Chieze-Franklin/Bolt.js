@@ -224,6 +224,11 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
 
     mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
     mongoose.connection.on('open', function () {
+        //remove transient hooks
+        models.hook.remove({ transient: true }, function(hookRemoveError){
+            //now create transient hooks for Bolt
+            utils.Events.sub('bolt/app-router-loaded', { route: "x/bolt/hooks/bolt/app-router-loaded" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+        });
         //load routers
         __loadRouters(app);
         //start start-up apps
