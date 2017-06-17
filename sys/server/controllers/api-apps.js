@@ -591,9 +591,12 @@ module.exports = {
 									function(eventError, eventResponse){
 										//TODO: technically u r supposed to receive a response here to know if the app actually started
 										//after which we add the context to running contexts and fire 'app-started'
+										//but for now we will just wait a few seconds and assume it started
+										setTimeout(function(){
+											utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
+											response.send(utils.Misc.createResponse(context));
+										}, 3000);
 									});
-								utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
-								response.send(utils.Misc.createResponse(context));
 							}
 							else { //if app is NOT a system app, start it on a child process
 								context.protocol = process.env.BOLT_PROTOCOL;
@@ -628,9 +631,12 @@ module.exports = {
 											function(eventError, eventResponse){
 												//TODO: technically u r supposed to receive a response here to know if the app actually started
 												//after which we add the context to running contexts and fire 'app-started'
+												//but for now we will just wait a few seconds and assume it started
+												setTimeout(function(){
+													utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
+													response.send(utils.Misc.createResponse(context));
+												}, 3000);
 											});
-										utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
-										response.send(utils.Misc.createResponse(context));
 									});
 								}
 								else{
