@@ -25,11 +25,6 @@ module.exports = {
 					else {
 						roles = utils.Misc.sanitizeRoles(roles);
 						roles.forEach(function(role){
-							//delete user-roles
-							models.userRoleAssoc.remove({ role: role.name }, function(userRoleRemoveError){});
-							//delete app-roles
-							models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
-
 							utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(roles));
@@ -58,11 +53,6 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						//delete user-roles
-						models.userRoleAssoc.remove({ role: role.name }, function(userRoleRemoveError){});
-						//delete app-roles
-						models.appRoleAssoc.remove({ role: role.name }, function(appRoleRemoveError){});
-
 						role = utils.Misc.sanitizeRole(role);
 						utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(role));

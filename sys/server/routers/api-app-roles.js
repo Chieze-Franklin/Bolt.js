@@ -6,8 +6,6 @@ var apiAppRolesCtrlr = require('../controllers/api-app-roles');
 
 var router = express.Router();
 
-//TODO: DEL: / //usage: ?app=settings&role=admin
-
 //returns an array of app-role objects matching the specified criteria
 router.get('/', apiAppRolesCtrlr.get);
 

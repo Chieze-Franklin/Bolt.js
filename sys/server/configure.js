@@ -11,6 +11,9 @@ var Showdown = require("showdown");
 var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');
 
+const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
+const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
+
 module.exports = function(app) {
 	app.use(bodyParser.json({limit: '100mb'}));
 	app.use(bodyParser.urlencoded({limit: '100mb', extended: true}));
@@ -35,7 +38,42 @@ module.exports = function(app) {
 		resave: true*/				//for express-session
 	}));
 	app.use(function(request, response, next) {
-		if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) {
+		if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_NAME))) {
+			var username = request.get(X_BOLT_USER_NAME);
+
+			models.user.findOne({ 
+				name: username
+			}, function(error, user){
+				if(!utils.Misc.isNullOrUndefined(user)){
+					request.user = utils.Misc.sanitizeUser(user);
+				}
+				next();
+			});
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.get(X_BOLT_USER_TOKEN))) {
+			var token = request.get(X_BOLT_USER_TOKEN);
+			
+			superagent
+				.get(process.env.BOLT_ADDRESS + '/api/tokens/' + encodeURIComponent(token))
+				.end(function(tokenError, tokenResponse){
+					var realResponse = tokenResponse.body;
+					if (!utils.Misc.isNullOrUndefined(realResponse) && !utils.Misc.isNullOrUndefined(realResponse.body)) {
+						var userid = realResponse.body;
+						models.user.findOne({ 
+							_id: userid
+						}, function(error, user){
+							if(!utils.Misc.isNullOrUndefined(user)){
+								request.user = utils.Misc.sanitizeUser(user);
+							}
+							next();
+						});
+					}
+					else {
+						next();
+					}
+				});
+		}
+		else if (!utils.Misc.isNullOrUndefined(request.session) && !utils.Misc.isNullOrUndefined(request.session.user)) {
 			models.user.findOne({ name: request.session.user.name }, function(error, user) {
 				if (!utils.Misc.isNullOrUndefined(user)) {
 					if (user.isBlocked) { //TODO: test this
@@ -49,7 +87,7 @@ module.exports = function(app) {
 				}
 				next();
 			});
-		} 
+		}
 		else {
 			next();
 		}

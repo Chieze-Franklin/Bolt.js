@@ -63,10 +63,6 @@ module.exports = {
 					else {
 						users = utils.Misc.sanitizeUsers(users);
 						users.forEach(function(user){
-							//delete user-roles
-							models.userRoleAssoc.remove({ user: user.name }, function(userRoleRemoveError){});
-							//delete app-users
-							models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
 							//delete dp
 							if(!utils.Misc.isNullOrUndefined(user.displayPic)) {
 								fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
@@ -100,10 +96,6 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						//delete user-roles
-						models.userRoleAssoc.remove({ user: user.name }, function(userRoleRemoveError){});
-						//delete app-users
-						models.appUserAssoc.remove({ user: user.name }, function(appUserRemoveError){});
 						//delete dp
 						if(!utils.Misc.isNullOrUndefined(user.displayPic)) {
 							fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this

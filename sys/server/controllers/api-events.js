@@ -74,16 +74,37 @@ module.exports = {
 						//event.token = ??? //TODO: how to generate tokens for web
 
 						//start the subscriber server
-						superagent
-							.post(url)
+						var smthn = superagent.post(url);
+						if(!utils.Misc.isNullOrUndefined(request.body.headers)) {
+							var headers = request.body.headers;
+							for (var header in headers) {
+								if (headers.hasOwnProperty(header)) {
+									var headerValue = headers[header];
+									smthn.set(header, headerValue);
+								}
+							}
+						}
+						smthn
 							.send(event)
 							.end(function(evntError, evntResponse){});
 					}
 					else { //if (hook.type == "server" || typeof hook.type == "undefined") {
 						//start the subscriber server
 						if (hook.subscriber == 'bolt') {
-							superagent
-								.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")))
+							var event = evnt;
+							event.token = request.genAppToken('bolt'); //set the event token to equal the app token
+
+							var smthn = superagent.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")));
+							if(!utils.Misc.isNullOrUndefined(request.body.headers)) {
+								var headers = request.body.headers;
+								for (var header in headers) {
+									if (headers.hasOwnProperty(header)) {
+										var headerValue = headers[header];
+										smthn.set(header, headerValue);
+									}
+								}
+							}
+							smthn
 								.send(event)
 								.end(function(evntError, evntResponse){});
 						}
@@ -99,18 +120,28 @@ module.exports = {
 										var event = evnt;
 										event.token = request.genAppToken(context.name); //set the event token to equal the app token
 
+										var smthn = superagent;
+
 										if (!utils.Misc.isNullOrUndefined(context.port)) {
-											superagent
-												.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")))
-												.send(event)
-												.end(function(evntError, evntResponse){});
+											smthn = superagent.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
 										else if (context.app.system) {
-											superagent
-												.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")))
-												.send(event)
-												.end(function(evntError, evntResponse){});
+											smthn = superagent.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
+
+										if(!utils.Misc.isNullOrUndefined(request.body.headers)) {
+											var headers = request.body.headers;
+											for (var header in headers) {
+												if (headers.hasOwnProperty(header)) {
+													var headerValue = headers[header];
+													smthn.set(header, headerValue);
+												}
+											}
+										}
+
+										smthn
+											.send(event)
+											.end(function(evntError, evntResponse){});
 											
 										/*//send event to socket for the app
 										var socket = sockets.getSocket(context.name); //socket will always be undefined if context is running on another process
@@ -167,7 +198,7 @@ module.exports = {
 			transient: true
 		});
 
-		var hookObj = request.body;console.log(hookObj)
+		var hookObj = request.body;
 		newHook.route = hookObj.route;
 		if (!utils.Misc.isNullOrUndefined(hookObj.type)) newHook.type = hookObj.type.toString().toLowerCase();
 

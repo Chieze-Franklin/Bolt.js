@@ -16,6 +16,7 @@ var request = require("request");
 var configure = require("./sys/server/configure");
 
 var apiAppRolesRouter = require('./sys/server/routers/api-app-roles');
+var apiAppUsersRouter = require('./sys/server/routers/api-app-users');
 var apiAppsRouter = require('./sys/server/routers/api-apps');
 var apiChecksRouter = require('./sys/server/routers/api-checks');
 var apiEventsRouter = require('./sys/server/routers/api-events');
@@ -28,6 +29,8 @@ var apiUsersRouter = require('./sys/server/routers/api-users');
 var uiAppsRouter = require('./sys/server/routers/ui-apps');
 var uiFilesRouter = require('./sys/server/routers/ui-files');
 var uiViewsRouter = require('./sys/server/routers/ui-views');
+
+var xBoltRouter = require('./sys/server/routers/x-bolt');
 
 //---------Helpers
 
@@ -167,6 +170,8 @@ app.use(function (request, response, next) {
 //<API-Endpoints>
 app.use('/api/app-roles', apiAppRolesRouter);
 
+app.use('/api/app-users', apiAppUsersRouter);
+
 app.use('/api/apps', apiAppsRouter);
 
 app.use('/api/checks', apiChecksRouter);
@@ -183,6 +188,10 @@ app.use('/api/user-roles', apiUserRolesRouter);
 
 app.use('/api/users', apiUsersRouter);
 //</API-Endpoints>
+
+//<X-Endpoints>
+app.use('/x/bolt', xBoltRouter);
+//</X-Endpoints>
 
 //<UI-Endpoints>
 app.use('/apps', uiAppsRouter);
@@ -227,7 +236,10 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
         //remove transient hooks
         models.hook.remove({ transient: true }, function(hookRemoveError){
             //now create transient hooks for Bolt
-            utils.Events.sub('bolt/app-router-loaded', { route: "x/bolt/hooks/bolt/app-router-loaded" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/app-deleted', { route: "x/bolt/hooks/bolt/app-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/app-started', { route: "x/bolt/hooks/bolt/app-started" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/role-deleted', { route: "x/bolt/hooks/bolt/role-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/user-deleted', { route: "x/bolt/hooks/bolt/user-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
         });
         //load routers
         __loadRouters(app);

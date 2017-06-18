@@ -587,13 +587,21 @@ module.exports = {
 
 								//pass info to the app
 								var appstartingData = { appName: app.name, appToken: request.genAppToken(app.name) };
-								utils.Events.fire('app-starting', { body: appstartingData, subscribers: [app.name] }, request.appToken, 
+								var appstartingEventBody = { body: appstartingData, subscribers: [app.name] };
+								if (!utils.Misc.isNullOrUndefined(request.user)) {
+									appstartingEventBody.headers = {'X-Bolt-User-Name': request.user.name };
+								}
+								utils.Events.fire('app-starting', appstartingEventBody, request.appToken, 
 									function(eventError, eventResponse){
 										//TODO: technically u r supposed to receive a response here to know if the app actually started
 										//after which we add the context to running contexts and fire 'app-started'
 										//but for now we will just wait a few seconds and assume it started
 										setTimeout(function(){
-											utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
+											var eventBody = { body: context };
+											if (!utils.Misc.isNullOrUndefined(request.user)) {
+												eventBody.headers = {'X-Bolt-User-Name': request.user.name };
+											}
+											utils.Events.fire('app-started', eventBody, request.appToken, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(context));
 										}, 2000);
 									});
@@ -627,13 +635,21 @@ module.exports = {
 											appPort: context.port,
 											appToken: request.genAppToken(context.name) 
 										};
-										utils.Events.fire('app-starting', { body: appstartingData, subscribers: [context.name] }, request.appToken, 
+										var appstartingEventBody = { body: appstartingData, subscribers: [context.name] };
+										if (!utils.Misc.isNullOrUndefined(request.user)) {
+											appstartingEventBody.headers = {'X-Bolt-User-Name': request.user.name };
+										}
+										utils.Events.fire('app-starting', appstartingEventBody, request.appToken, 
 											function(eventError, eventResponse){
 												//TODO: technically u r supposed to receive a response here to know if the app actually started
 												//after which we add the context to running contexts and fire 'app-started'
 												//but for now we will just wait a few seconds and assume it started
 												setTimeout(function(){
-													utils.Events.fire('app-started', { body: context }, request.appToken, function(eventError, eventResponse){});
+													var eventBody = { body: context };
+													if (!utils.Misc.isNullOrUndefined(request.user)) {
+														eventBody.headers = {'X-Bolt-User-Name': request.user.name };
+													}
+													utils.Events.fire('app-started', eventBody, request.appToken, function(eventError, eventResponse){});
 													response.send(utils.Misc.createResponse(context));
 												}, 2000);
 											});
@@ -713,8 +729,11 @@ module.exports = {
 
 							//remove transient hooks
 							models.hook.remove({ subscriber: context.name, transient: true }, function(hookRemoveError){});
+
+							setTimeout(function(){
+								utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
+							}, 2000);
 						});
-					utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
 					response.send(utils.Misc.createResponse(context));
 					return;
 				}
