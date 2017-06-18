@@ -94,7 +94,7 @@ module.exports = {
 		        superagent
 					.post(process.env.BOLT_ADDRESS + '/api/apps/reg')
 					.set({'X-Bolt-App-Token': request.appToken})
-					.send({ path: appnm, startup: request.body.startup || false, system: request.body.system || false })
+					.send({ path: appnm, system: request.body.system || false })
 					.end(function(appregError, appregResponse){
 						if (!utils.Misc.isNullOrUndefined(appregError)) {
 							response.end(utils.Misc.createResponse(null, appregError));
@@ -206,17 +206,12 @@ module.exports = {
 							/*a module can't have/do the things in this block
 							* a module can't have 'main'
 							* a module can't have 'index'
-							* a module can't have 'startup' privileges
 							* a module can't register extensions
 							*/
 							if (!package.bolt.module) {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
 
 								if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
-
-								newApp.startup = false;
-								if (!utils.Misc.isNullOrUndefined(request.body.startup)) newApp.startup = request.body.startup;
-								else if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) newApp.startup = package.bolt.startup;
 
 								if (!utils.Misc.isNullOrUndefined(package.bolt.extensions)) {
 									var extensions = package.bolt.extensions;
@@ -376,16 +371,6 @@ module.exports = {
 							                        } else {
 							                            request.app.use("/" + utils.String.trimStart(savedRouter.root, "/"), routerObject);
 							                        }
-							                        console.log("Loaded router%s%s%s",
-							                                (!utils.Misc.isNullOrUndefined(savedRouter.name)
-							                            ? " '" + savedRouter.name + "'"
-							                            : ""),
-							                                (!utils.Misc.isNullOrUndefined(savedRouter.app)
-							                            ? " (" + savedRouter.app + ")"
-							                            : ""),
-							                                (!utils.Misc.isNullOrUndefined(savedRouter.root)
-							                            ? " on " + savedRouter.root
-							                            : ""));
 							                        utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(savedRouter) }, request.appToken, 
 							                        	function(eventError, eventResponse){});
 
@@ -709,23 +694,22 @@ module.exports = {
 			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){
 				if (__runningContexts[index].name === appnm){
-					//TODO: inform the app you are about to stop it (using a lifecycle-stopping event), if u get an OK from the app go ahead and stop it
-
-					//remove context
 					var context = __runningContexts[index];
-					__runningContexts.pop(context);
-
-					//remove app token
-					request.destroyAppToken(context.name); //TODO: test this
-
-					//kill process
-					processes.killProcess(context.name); //TODO: haven't tested this
-
+					
 					//TODO: the 'body' of the event should hold the reason why the app is stopping
 					utils.Events.fire('app-stopping', { body: context, subscribers: [context.name] }, request.appToken, 
 						function(eventError, eventResponse){
 							//TODO: technically u r supposed to receive a response here to know if the app actually stopped
 							//after which we do all the killing and destroying, and fire 'app-stopped'
+
+							//remove context
+							__runningContexts.pop(context);
+
+							//remove app token
+							request.destroyAppToken(context.name); //TODO: test this
+
+							//kill process
+							processes.killProcess(context.name); //TODO: haven't tested this
 
 							//remove transient hooks
 							models.hook.remove({ subscriber: context.name, transient: true }, function(hookRemoveError){});

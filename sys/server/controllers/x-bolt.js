@@ -8,6 +8,21 @@ const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
 
 module.exports = {
 	postHooksBoltAppDeleted: function(request, response) {},
+	postHooksBoltAppRouterLoaded: function(request, response) {
+		var event = request.body;
+		//TODO: verify the event
+		var rtr = event.body;
+		console.log("Loaded router%s%s%s",
+	            (!utils.Misc.isNullOrUndefined(rtr.name)
+	        ? " '" + rtr.name + "'"
+	        : ""),
+	            (!utils.Misc.isNullOrUndefined(rtr.app)
+	        ? " (" + rtr.app + ")"
+	        : ""),
+	            (!utils.Misc.isNullOrUndefined(rtr.root)
+	        ? " on " + rtr.root
+	        : ""));
+	},
 	postHooksBoltAppStarted: function(request, response) {
 		//TODO: create app-user object, or increase starts by 1 if it already exists
 		var event = request.body;

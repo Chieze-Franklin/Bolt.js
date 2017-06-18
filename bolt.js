@@ -85,7 +85,6 @@ var __loadRouters = function(app) {
             var loadRouter = function (idx) {
                 if (idx >= routers.length) {
                     __addErrorHandlerMiddleware(app);
-                    console.log('');
                 } else {
                     var rtr = routers[idx];
                     if (!utils.Misc.isNullOrUndefined(rtr.main)) {
@@ -98,16 +97,6 @@ var __loadRouters = function(app) {
                                 } else {
                                     app.use("/" + utils.String.trimStart(rtr.root, "/"), router);
                                 }
-                                console.log("Loaded router%s%s%s",
-                                        (!utils.Misc.isNullOrUndefined(rtr.name)
-                                    ? " '" + rtr.name + "'"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(rtr.app)
-                                    ? " (" + rtr.app + ")"
-                                    : ""),
-                                        (!utils.Misc.isNullOrUndefined(rtr.root)
-                                    ? " on " + rtr.root
-                                    : ""));
                                 utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(rtr) }, __genAppToken('bolt'), function(eventError, eventResponse){});
                                 loadRouter(++idx);
                             }
@@ -233,73 +222,24 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
 
     mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
     mongoose.connection.on('open', function () {
+
         //remove transient hooks
         models.hook.remove({ transient: true }, function(hookRemoveError){
+            //fire system-db-connected (if you need a Bolt transient hook for this event, move this below the last utils.Events.sub(...))
+            utils.Events.fire('system-db-connected', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
+
             //now create transient hooks for Bolt
             utils.Events.sub('bolt/app-deleted', { route: "x/bolt/hooks/bolt/app-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/app-router-loaded', { route: "x/bolt/hooks/bolt/app-router-loaded" }, __genAppToken('bolt'), function(eventError, eventResponse){});
             utils.Events.sub('bolt/app-started', { route: "x/bolt/hooks/bolt/app-started" }, __genAppToken('bolt'), function(eventError, eventResponse){});
             utils.Events.sub('bolt/role-deleted', { route: "x/bolt/hooks/bolt/role-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
             utils.Events.sub('bolt/user-deleted', { route: "x/bolt/hooks/bolt/user-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
-        });
-        //load routers
-        __loadRouters(app);
-        //start start-up apps
-        models.app.find({
-            startup: true
-        }, function (err, apps) {
-            var startups = [];
-            if (utils.Misc.isNullOrUndefined(err) && !utils.Misc.isNullOrUndefined(apps)) {
-                apps.forEach(function (app) {
-                    startups.push(app.name);
-                });
-            }
 
-            var runStartups = function (index) {
-                if (index >= startups.length) {
-                    console.log('============================================');
-                    console.log('');
-                } else {
-                    var name = startups[index];
-                    request
-                        .post({url: process.env.BOLT_ADDRESS + '/api/apps/start', json: {name: name}}, 
-                        function(appstartError, appstartResponse, appstartBody) {
-                            if (!utils.Misc.isNullOrUndefined(appstartError)) {
-                                runStartups(++index);
-                                return;
-                            }
+            //load routers
+            __loadRouters(app);
 
-                            var context = appstartBody.body;
-
-                            if (!utils.Misc.isNullOrUndefined(context)) {
-                                if (!utils.Misc.isNullOrUndefined(context.port)) {
-                                    console.log("Started startup app%s%s at %s:%s",
-                                            (!utils.Misc.isNullOrUndefined(context.app.displayName)
-                                        ? " '" + context.app.displayName + "'"
-                                        : ""),
-                                            (!utils.Misc.isNullOrUndefined(context.name)
-                                        ? " (" + context.name + ")"
-                                        : ""),
-                                            (!utils.Misc.isNullOrUndefined(context.host)
-                                        ? context.host
-                                        : ""),
-                                        context.port);
-                                }
-                                else {
-                                    console.log("Started startup app%s",
-                                            (!utils.Misc.isNullOrUndefined(context.app.displayName)
-                                        ? " '" + context.app.displayName + "'"
-                                        : ""),
-                                            (!utils.Misc.isNullOrUndefined(context.name)
-                                        ? " (" + context.name + ")"
-                                        : ""));
-                                }
-                            }
-                            runStartups(++index);
-                        });
-                }
-            };
-
-            runStartups(0);
+            //fire system-started
+            utils.Events.fire('system-started', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
         });
     });
 });

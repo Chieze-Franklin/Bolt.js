@@ -61,7 +61,7 @@ module.exports = {
 							(shud it be prepended b4 checking registered urls or after??)
 						if url is registered for the app (hook.subscriber)
 							event.token = request.genWebHookToken("{hook.subscriber}")//("{hook.subscriber}\{url}")
-							event.bolt = process.env.BOLT_ADDRESS;
+							event.bolt = process.env.BOLT_ADDRESS; //TODO: don't forget to document this
 							POST: url, body: event
 						*/
 

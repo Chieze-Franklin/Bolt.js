@@ -21,7 +21,11 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						response.send(utils.Misc.createResponse(utils.Misc.sanitizeUserRoles(userRoles)));
+						userRoles = utils.Misc.sanitizeUserRoles(userRoles);
+						userRoles.forEach(function(userRole){
+							utils.Events.fire('user-role-deleted', { body: userRole }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(userRoles));
 					}
 				});
 			}
@@ -86,7 +90,9 @@ module.exports = {
 											response.end(utils.Misc.createResponse(null, saveError, 312));
 										}
 										else {
-											response.send(utils.Misc.createResponse(utils.Misc.sanitizeUserRole(savedUserRole)));
+											savedUserRole = utils.Misc.sanitizeUserRole(savedUserRole);
+											utils.Events.fire('user-role-created', { body: savedUserRole }, request.appToken, function(eventError, eventResponse){});
+											response.send(utils.Misc.createResponse(savedUserRole));
 										}
 									});
 								}

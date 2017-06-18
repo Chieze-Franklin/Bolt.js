@@ -18,19 +18,6 @@
         <div class="row">
           <div class="col-sm-12">
             <div class="checkbox check-success checkbox-circle">
-              {{#if startup}}
-              <input name="startup" id="startup" type="checkbox" checked>
-              {{else}}
-              <input name="startup" id="startup" type="checkbox">
-              {{/if}}
-              <label for="startup">Start this app as soon as Bolt starts (even before a user is logged in)</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-sm-12">
-            <div class="checkbox check-success checkbox-circle">
               {{#if system}}
               <input name="system" id="system" type="checkbox" checked>
               {{else}}
@@ -59,7 +46,7 @@ function redirect(){
 }
 
 $(document).ready(function(){
-    var startup, system;
+    var system;
 
     var readmeVisible = false;
     $("#readme").click(function(){
@@ -77,12 +64,11 @@ $(document).ready(function(){
 
     $("#submit").click(function(){
         //TODO: show a toast saying "downloading..."
-        startup = $("#startup").is(":checked");
         system = $("#system").is(":checked");
 
         $.ajax({
           url: "/api/apps/reg",
-          data: { path: "{{path}}", startup: startup, system: system },
+          data: { path: "{{path}}", system: system },
           type: "POST",
           headers: {'X-Bolt-App-Token': '{{appToken}}'},
           success: function(response, status, xhr){

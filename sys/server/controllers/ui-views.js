@@ -127,12 +127,10 @@ module.exports = {
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
-									var startup = false;
 									var system = false;
 									scope.displayName = package.name;
 									
 									if (!utils.Misc.isNullOrUndefined(package.bolt)) {
-										if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) startup = package.bolt.startup;
 										if (!utils.Misc.isNullOrUndefined(package.bolt.system)) system = package.bolt.system;
 
 										if (!utils.Misc.isNullOrUndefined(package.bolt.displayName)) scope.displayName = package.bolt.displayName;
@@ -140,7 +138,6 @@ module.exports = {
 
 									scope.description = package.description;
 									scope.readme = readme;
-									scope.startup = startup;
 									scope.system = system;
 								}
 									
@@ -231,15 +228,12 @@ module.exports = {
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
-									var startup = false;
-									if (!utils.Misc.isNullOrUndefined(package.bolt.startup)) startup = package.bolt.startup;
 									var system = false;
 									if (!utils.Misc.isNullOrUndefined(package.bolt.system)) system = package.bolt.system;
 
 									scope.displayName = package.bolt.displayName || package.name;
 									scope.description = package.description;
 									scope.readme = readme;
-									scope.startup = startup;
 									scope.system = system;
 								}
 									

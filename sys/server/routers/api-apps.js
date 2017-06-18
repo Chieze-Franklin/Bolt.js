@@ -38,10 +38,10 @@ router.post('/reg-package', checksCtrlr.forAdminRight, apiAppsCtrlr.postRegPacka
 router.post('/reg-readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postRegReadme);
 
 //starts the server of the app with the specified name
-router.post('/start', /*checksCtrlr.forAppRight,*/ apiAppsCtrlr.postStart);
+router.post('/start', apiAppsCtrlr.postStart);
 
 //stops the server of the app with the specified name
-router.post('/stop', /*checksCtrlr.forAppRight,*/ apiAppsCtrlr.postStop);
+router.post('/stop', apiAppsCtrlr.postStop);
 
 ////gets an array of app objects for all installed apps with the specified tag
 //router.get('/:tag', apiAppsCtrlr.getTag);
