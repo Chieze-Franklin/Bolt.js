@@ -1,0 +1,62 @@
+<div class="register-container full-height sm-p-t-30">
+  <div class="container-sm-height full-height">
+    <div class="row row-sm-height">
+      <div class="col-sm-12 col-sm-height col-middle">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="form-group form-group-default">
+              <label>App</label>
+              <input type="text" name="app" id="app" placeholder="app name" class="form-control" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              <input name="delete_folder" id="delete_folder" type="checkbox">
+              <label for="delete_folder">Delete app's folder from <i>node_modules</i></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              <input name="delete_public" id="delete_public" type="checkbox">
+              <label for="delete_public">Delete app's public files</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="checkbox check-success checkbox-circle">
+              <input name="delete_database" id="delete_database" type="checkbox">
+              <label for="delete_database">Delete app's database</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-cons m-t-10" name="uninstall" id="uninstall">Uninstall</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+    $("#app").val("{{app}}")
+    var success_redirect = "{{success}}";
+
+    $("#uninstall").click(function(){
+        var appnm = $("#app").val();
+
+        if (!appnm) {
+          sweetAlert("Error", "App name not specified!", "error");
+          return;
+        }
+
+        window.location.href = "/sideload?app=" + appnm + (success_redirect ? "&success=" + success_redirect : "");
+    });
+  });
+</script>

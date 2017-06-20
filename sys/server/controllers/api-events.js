@@ -107,6 +107,13 @@ module.exports = {
 							smthn
 								.send(event)
 								.end(function(evntError, evntResponse){});
+
+							//send event to socket for bolt
+							var socket = sockets.getSocket("bolt");
+							if (!utils.Misc.isNullOrUndefined(socket)) {
+								//socket.send(JSON.stringify(event));
+								socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
+							}
 						}
 						else {
 							superagent
@@ -143,11 +150,12 @@ module.exports = {
 											.send(event)
 											.end(function(evntError, evntResponse){});
 											
-										/*//send event to socket for the app
+										//send event to socket for the app
 										var socket = sockets.getSocket(context.name); //socket will always be undefined if context is running on another process
-										if (!utils.Misc.isNullOrUndefined(socket)) 
+										if (!utils.Misc.isNullOrUndefined(socket)) {
 											//socket.send(JSON.stringify(event));
-											socket.broadcast.to(context.name).emit("message", JSON.stringify(event));*/
+											socket.broadcast.to(context.name).emit("message", JSON.stringify(event));
+										}
 									}
 								});
 						}
@@ -155,20 +163,6 @@ module.exports = {
 				});
 			}
 		});
-
-		//send event to socket for bolt
-		var socket = sockets.getSocket("bolt");
-		if (!utils.Misc.isNullOrUndefined(socket)) {
-			var event = evnt;
-			event.token = request.genAppToken("bolt"); //set the event token to equal he app token
-
-			//socket.send(JSON.stringify(event));
-			socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
-		}
-		
-		//send event to an event emitter so ppl can do something like BoltEventEmitter.on("bolt/user-login", callback)
-			//do this only if no other component can make BoltEventEmitter to emit the event
-			//I dont feel like doing this since everybody will get the event irrespective of the "subscribers" specified by the publisher
 			
 		//send a response back
 		response.send();

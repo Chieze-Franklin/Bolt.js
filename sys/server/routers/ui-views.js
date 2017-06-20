@@ -27,6 +27,9 @@ router.get('/setup', checksCtrlr.forSystemApp, uiViewsCtrlr.getSetup);
 //this endpoint displays the sideload view
 router.get('/sideload', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getSideload);
 
+//this endpoint displays the uninstall view
+router.get('/uninstall', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getUninstall);
+
 //this endpoint displays the specified view
 router.get('/:view', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getView);
 

@@ -68,7 +68,7 @@ module.exports = {
 					var users = usersResponse.body.body;
 
 					if (!utils.Misc.isNullOrUndefined(responseError)) {
-						var encodedCode = encodeURIComponent(appstartResponse.body.code);
+						var encodedCode = encodeURIComponent(usersResponse.body.code);
 						if(!utils.Misc.isNullOrUndefined(responseError.errorUserTitle) && !utils.Misc.isNullOrUndefined(responseError.errorUserMessage)) {
 							var encodedTitle = encodeURIComponent(responseError.errorUserTitle);
 							var encodedMessage = encodeURIComponent(responseError.errorUserMessage);
@@ -153,6 +153,7 @@ module.exports = {
 	getInstall: function(request, response){
 		var scope = {
 			app: request.query.app,
+			version: request.query.version,
 			success: request.query.success,
 			failure: request.query.failure,
 
@@ -245,6 +246,19 @@ module.exports = {
 					}
 				}
 			});
+	},
+	getUninstall: function(request, response){
+		var scope = {
+			app: request.query.app,
+			success: request.query.success,
+			failure: request.query.failure,
+
+			appToken: request.appToken
+		};
+		response.locals.title = "Uninstall";
+		response
+			.set('Content-type', 'text/html')
+			.render('uninstall.html', scope);
 	},
 	getView: function(request, response){
 		//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
