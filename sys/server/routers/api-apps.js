@@ -21,7 +21,6 @@ router.get('/:name', apiAppsCtrlr.getApp);
 
 //installs an app from an online repository (current only npm is supported)
 router.post('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.post);
-//TODO: PUT: /:app //updates an app from an online repository (delete existing folder from node_modules first; do not touch public files and collections)
 
 //returns the package.json of an app from an online repository (current only npm is supported)
 router.post('/package', checksCtrlr.forAdminRight, apiAppsCtrlr.postPackage);
@@ -31,7 +30,6 @@ router.post('/readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postReadme);
 
 //installs an app from a local repository (current only the node_modules folder is supported)
 router.post('/local', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.postLocal);
-//TODO: PUT: /local/:app //updates an app from a local repository (do NOT delete existing folder from node_modules; do not touch public files and collections)
 
 //returns the package.json of an app from a local repository (current only the node_modules folder is supported)
 router.post('/local-package', checksCtrlr.forAdminRight, apiAppsCtrlr.postLocalPackage);
@@ -45,7 +43,7 @@ router.post('/start', apiAppsCtrlr.postStart);
 //stops the server of the app with the specified name
 router.post('/stop', apiAppsCtrlr.postStop);
 
-////gets an array of app objects for all installed apps with the specified tag
-//router.get('/:tag', apiAppsCtrlr.getTag);
+//TODO: PUT: /
+//TODO: PUT: /:name
 
 module.exports = router;

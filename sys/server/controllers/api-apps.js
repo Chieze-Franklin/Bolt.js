@@ -40,23 +40,23 @@ module.exports = {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
-						apps = utils.Misc.sanitizeApp(apps);
+						apps = utils.Misc.sanitizeApps(apps);
 
 						apps.forEach(function(app) {
 							//delete folder from node_modules
-							if (request.body.deleteSourceFolder) {
+							if (request.body.deleteSourceFolder === 'true') {
 								var sourceFolder = path.join(__node_modulesDir, app.path);
 								fse.remove(sourceFolder, function(unlinkError){});
 							}
 
 							//delete public folder
-							if (request.body.deletePublicFolder) {
+							if (request.body.deletePublicFolder === 'true') {
 								var publicFolder = path.join(__publicDir, appnm);
 								fse.remove(publicFolder, function(unlinkError){});
 							}
 
 							//delete database
-							if (request.body.deleteDatabase) {
+							if (request.body.deleteDatabase === 'true') {
 								superagent
 									.post(process.env.BOLT_ADDRESS + "/api/db/drop")
 									.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
@@ -88,7 +88,7 @@ module.exports = {
 			}
 		});
 	},
-	deleteApp: function(request, response) {
+	deleteApp: function(request, response) {console.log(request.body);
 		var appnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: appnm };
 
@@ -109,19 +109,19 @@ module.exports = {
 						app = utils.Misc.sanitizeApp(app);
 
 						//delete folder from node_modules
-						if (request.body.deleteSourceFolder) {
+						if (request.body.deleteSourceFolder === 'true') {
 							var sourceFolder = path.join(__node_modulesDir, app.path);
 							fse.remove(sourceFolder, function(unlinkError){});
 						}
 
 						//delete public folder
-						if (request.body.deletePublicFolder) {
+						if (request.body.deletePublicFolder === 'true') {
 							var publicFolder = path.join(__publicDir, appnm);
 							fse.remove(publicFolder, function(unlinkError){});
 						}
 
 						//delete database
-						if (request.body.deleteDatabase) {
+						if (request.body.deleteDatabase === 'true') {
 							superagent
 								.post(process.env.BOLT_ADDRESS + "/api/db/drop")
 								.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))

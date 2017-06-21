@@ -1,0 +1,98 @@
+<div class="register-container full-height sm-p-t-30">
+  <div class="container-sm-height full-height">
+    <div class="row row-sm-height">
+      <div class="col-sm-12 col-sm-height col-middle">
+        <div class="row">
+          <div class="col-sm-8">
+            <div class="form-group form-group-default">
+              <label>App</label>
+              <input type="text" name="app" id="app" placeholder="app name" class="form-control" required>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="form-group form-group-default">
+              <label>Version</label>
+              <input type="text" name="version" id="version" placeholder="(for download only)" class="form-control" required>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-cons m-t-10" name="download" id="download">Download</button>
+        <button class="btn btn-primary btn-cons m-t-10" name="sideload" id="sideload">Sideload</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+    $("#app").val("{{app}}")
+    $("#version").val("{{version}}")
+    var success_redirect = "{{success}}";
+
+    $("#download").click(function(){
+        //first you uninstall the app, then you reinstall
+
+        //here we remove the source folder from node_modules
+        var delete_folder = true, delete_public = false, delete_db = false;
+        var appname = $("#app").val();
+
+        if (!appname) {
+          sweetAlert("Error", "App name not specified!", "error");
+          return;
+        }
+alert(" "+delete_folder+" "+delete_public+" "+delete_db);
+        $.ajax({
+          url: "/api/apps/" + appname,
+          data: { deleteSourceFolder: delete_folder, deletePublicFolder: delete_public, deleteDatabase: delete_db },
+          type: "DELETE",
+          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              //now download
+              var version = $("#version").val();
+
+              window.location.href = "/download?app=" + appname + (success_redirect ? "&success=" + success_redirect : "") + (version ? "&version=" + version : "");
+            }
+            else {
+              swal(response.errorUserTitle, response.errorUserMessage, "error");
+            }
+          },
+          error: function(xhr, status, err){
+            alert(xhr.responseText);
+          }
+        });
+    });
+
+    $("#sideload").click(function(){
+        //first you uninstall the app, then you reinstall
+
+        var delete_folder = false, delete_public = false, delete_db = false;
+        var apppath = $("#app").val();
+
+        if (!apppath) {
+          sweetAlert("Error", "App name not specified!", "error");
+          return;
+        }
+alert(" "+delete_folder+" "+delete_public+" "+delete_db);
+        $.ajax({
+          url: "/api/apps/" + apppath,
+          data: { deleteSourceFolder: delete_folder, deletePublicFolder: delete_public, deleteDatabase: delete_db },
+          type: "DELETE",
+          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              //now sideload
+
+              window.location.href = "/sideload?app=" + apppath + (success_redirect ? "&success=" + success_redirect : "");
+            }
+            else {
+              swal(response.errorUserTitle, response.errorUserMessage, "error");
+            }
+          },
+          error: function(xhr, status, err){
+            alert(xhr.responseText);
+          }
+        });
+    });
+  });
+</script>

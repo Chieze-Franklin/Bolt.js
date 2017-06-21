@@ -30,6 +30,9 @@ router.get('/sideload', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getSideload)
 //this endpoint displays the uninstall view
 router.get('/uninstall', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getUninstall);
 
+//this endpoint displays the update view
+router.get('/update', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getUpdate);
+
 //this endpoint displays the specified view
 router.get('/:view', checksCtrlr.forLoggedInUiUser, uiViewsCtrlr.getView);
 

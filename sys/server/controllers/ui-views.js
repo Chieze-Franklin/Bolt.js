@@ -168,7 +168,7 @@ module.exports = {
 		var scope = {
 			success: request.query.success,
 			failure: request.query.failure,
-			noQuery: request.query.no_query || false,
+			noQuery: request.query.no_query === 'true',
 
 			appToken: request.appToken
 		};
@@ -259,6 +259,20 @@ module.exports = {
 		response
 			.set('Content-type', 'text/html')
 			.render('uninstall.html', scope);
+	},
+	getUpdate: function(request, response){
+		var scope = {
+			app: request.query.app,
+			version: request.query.version,
+			success: request.query.success,
+			failure: request.query.failure,
+
+			appToken: request.appToken
+		};
+		response.locals.title = "Update";
+		response
+			.set('Content-type', 'text/html')
+			.render('update.html', scope);
 	},
 	getView: function(request, response){
 		//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
