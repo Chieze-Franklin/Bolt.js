@@ -29,11 +29,70 @@ module.exports = {
 		if (!utils.Misc.isNullOrUndefined(request.query)) {
 			searchCriteria = request.query;
 		}
+
+		models.app.find(searchCriteria, function(error, apps) {
+			if (!utils.Misc.isNullOrUndefined(error)) {
+				response.end(utils.Misc.createResponse(null, error));
+			}
+			else if(!utils.Misc.isNullOrUndefined(apps)) {
+				models.app.remove(searchCriteria, function (removeError, removeResult) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
+					}
+					else {
+						apps = utils.Misc.sanitizeApp(apps);
+
+						apps.forEach(function(app) {
+							//delete folder from node_modules
+							if (request.body.deleteSourceFolder) {
+								var sourceFolder = path.join(__node_modulesDir, app.path);
+								fse.remove(sourceFolder, function(unlinkError){});
+							}
+
+							//delete public folder
+							if (request.body.deletePublicFolder) {
+								var publicFolder = path.join(__publicDir, appnm);
+								fse.remove(publicFolder, function(unlinkError){});
+							}
+
+							//delete database
+							if (request.body.deleteDatabase) {
+								superagent
+									.post(process.env.BOLT_ADDRESS + "/api/db/drop")
+									.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+									.send({app: app.name})
+									.end(function(err, res){});
+							}
+
+							//since collections don't raise events (yet) we can delete them here
+							models.collection.remove({app: app.name}, function(err){});
+
+							//since extensions don't raise events (yet) we can delete them here
+							models.extension.remove({app: app.name}, function(err){});
+
+							//since hooks don't raise events (yet) we can delete them here
+							models.hook.remove({subscriber: app.name}, function(err){});
+
+							//since deleting a router doesn't raise events (yet) we can delete them here
+							models.router.remove({app: app.name}, function(err){});
+
+							utils.Events.fire('app-deleted', { body: app }, request.appToken, function(eventError, eventResponse){});
+						});
+
+						response.send(utils.Misc.createResponse(apps));
+					}
+				});
+			}
+			else {
+				response.send(utils.Misc.createResponse([]));
+			}
+		});
 	},
 	deleteApp: function(request, response) {
 		var appnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: appnm };
-		models.app.findOne(searchCriteria, function(error, app){
+
+		models.app.findOne(searchCriteria, function(error, app) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
 				response.end(utils.Misc.createResponse(null, error));
 			}
@@ -42,11 +101,13 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 403));
 			}
 			else{
-				models.app.remove(searchCriteria, function (removeError) {
+				models.app.remove(searchCriteria, function (removeError, removeResult) {
 					if (!utils.Misc.isNullOrUndefined(removeError)) {
 						response.end(utils.Misc.createResponse(null, removeError));
 					}
 					else {
+						app = utils.Misc.sanitizeApp(app);
+
 						//delete folder from node_modules
 						if (request.body.deleteSourceFolder) {
 							var sourceFolder = path.join(__node_modulesDir, app.path);
@@ -80,7 +141,6 @@ module.exports = {
 						//since deleting a router doesn't raise events (yet) we can delete them here
 						models.router.remove({app: app.name}, function(err){});
 
-						app = utils.Misc.sanitizeApp(app);
 						utils.Events.fire('app-deleted', { body: app }, request.appToken, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(app));
 					}
