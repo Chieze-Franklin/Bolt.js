@@ -7,7 +7,33 @@ var superagent = require('superagent');
 const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
 
 module.exports = {
-	postHooksBoltAppDeleted: function(request, response) {},
+	postHooksBoltAppDeleted: function(request, response) {
+		var event = request.body;
+		//TODO: verify the event
+		var app = event.body;
+
+		//delete app-roles
+		superagent
+			.delete(process.env.BOLT_ADDRESS + "/api/app-roles?app=" + app.name)
+			.set(X_BOLT_APP_TOKEN, request.appToken)
+			.end(function(err, res){});
+
+		//delete app-users
+		superagent
+			.delete(process.env.BOLT_ADDRESS + "/api/app-users?app=" + app.name)
+			.set(X_BOLT_APP_TOKEN, request.appToken)
+			.end(function(err, res){});
+
+		/*//delete collections
+		superagent
+			.post(process.env.BOLT_ADDRESS + "/api/db/drop")
+			.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+			.send({app: app.name})
+			.end(function(err, res){});*/
+		//-----------------------------
+		//why are we not deleting db here?
+		//it is possible that an app may be deleted without its database being deleted (for instance during app update)
+	},
 	postHooksBoltAppRouterLoaded: function(request, response) {
 		var event = request.body;
 		//TODO: verify the event
@@ -38,7 +64,7 @@ module.exports = {
 						.post(process.env.BOLT_ADDRESS + "/api/app-users")
 						.set(X_BOLT_APP_TOKEN, request.appToken) //TODO: check request.appToken for foreign requests
 						.send({ app: context.name, user: user.name, starts: 1 })
-						.end(function(evntError, evntResponse){});
+						.end(function(err, res){});
 				}
 				else {
 					//increase starts by 1 if it already exists
@@ -61,13 +87,13 @@ module.exports = {
 		superagent
 			.delete(process.env.BOLT_ADDRESS + "/api/app-roles?role=" + role.name)
 			.set(X_BOLT_APP_TOKEN, request.appToken)
-			.end(function(evntError, evntResponse){});
+			.end(function(err, res){});
 
 		//delete user-roles
 		superagent
 			.delete(process.env.BOLT_ADDRESS + "/api/user-roles?role=" + role.name)
 			.set(X_BOLT_APP_TOKEN, request.appToken)
-			.end(function(evntError, evntResponse){});
+			.end(function(err, res){});
 
 		response.send();
 	},
@@ -81,13 +107,13 @@ module.exports = {
 		superagent
 			.delete(process.env.BOLT_ADDRESS + "/api/app-users?user=" + user.name)
 			.set(X_BOLT_APP_TOKEN, request.appToken)
-			.end(function(evntError, evntResponse){});
+			.end(function(err, res){});
 
 		//delete user-roles
 		superagent
 			.delete(process.env.BOLT_ADDRESS + "/api/user-roles?user=" + user.name)
 			.set(X_BOLT_APP_TOKEN, request.appToken)
-			.end(function(evntError, evntResponse){});
+			.end(function(err, res){});
 
 		response.send();
 	}

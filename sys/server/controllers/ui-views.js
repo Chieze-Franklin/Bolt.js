@@ -191,7 +191,7 @@ module.exports = {
 	},
 	getSideload: function(request, response){
 		superagent
-			.post(process.env.BOLT_ADDRESS + '/api/apps/reg-package')
+			.post(process.env.BOLT_ADDRESS + '/api/apps/local-package')
 			.send({ path: request.query.app })
 			.end(function(err, res){
 				if (!utils.Misc.isNullOrUndefined(err)) {
@@ -215,7 +215,7 @@ module.exports = {
 					}
 					else {
 						superagent
-							.post(process.env.BOLT_ADDRESS + '/api/apps/reg-readme')
+							.post(process.env.BOLT_ADDRESS + '/api/apps/local-readme')
 							.send({ path: request.query.app })
 							.end(function(errReadme, resReadme){
 								var readme = resReadme.body.body || "";

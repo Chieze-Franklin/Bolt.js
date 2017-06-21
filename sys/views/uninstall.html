@@ -32,8 +32,8 @@
         <div class="row">
           <div class="col-sm-12">
             <div class="checkbox check-success checkbox-circle">
-              <input name="delete_database" id="delete_database" type="checkbox">
-              <label for="delete_database">Delete app's database</label>
+              <input name="delete_db" id="delete_db" type="checkbox">
+              <label for="delete_db">Delete app's database</label>
             </div>
           </div>
         </div>
@@ -44,19 +44,51 @@
   </div>
 </div>
 <script>
+function redirect(){
+  var success_redirect = "{{success}}";
+
+  if (success_redirect) {
+    window.location.href = success_redirect;
+  }
+  else {
+    window.location.href = "/home";
+  }
+}
+
 $(document).ready(function(){
     $("#app").val("{{app}}")
-    var success_redirect = "{{success}}";
+
+    var delete_folder = false, delete_public = false, delete_db = false;
 
     $("#uninstall").click(function(){
         var appnm = $("#app").val();
+        delete_folder = $("#delete_folder").is(":checked");
+        delete_public = $("#delete_public").is(":checked");
+        delete_db = $("#delete_db").is(":checked");
 
         if (!appnm) {
           sweetAlert("Error", "App name not specified!", "error");
           return;
         }
 
-        window.location.href = "/sideload?app=" + appnm + (success_redirect ? "&success=" + success_redirect : "");
+        $.ajax({
+          url: "/api/apps/" + appnm,
+          data: { deleteSourceFolder: delete_folder, deletePublicFiles: delete_public, deleteDatabase: delete_db },
+          type: "DELETE",
+          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          success: function(response, status, xhr){
+            if(response.code == 0){
+              sweetAlert("App uninstalled!", response.body.displayName + " has been uninstalled!", "success");
+              redirect();
+            }
+            else {
+              swal(response.errorUserTitle, response.errorUserMessage, "error");
+            }
+          },
+          error: function(xhr, status, err){
+            alert(xhr.responseText);
+          }
+        });
     });
   });
 </script>

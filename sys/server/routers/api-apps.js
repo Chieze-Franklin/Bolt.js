@@ -6,7 +6,7 @@ var apiAppsCtrlr = require('../controllers/api-apps');
 
 var router = express.Router();
 
-//TODO: DEL: /:app //uninstalls an app (remember to delete app-user, app-role, extensions, routers, collections, hooks, public files...)
+//uninstalls an app
 router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.delete);
 router.delete('/:name', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.deleteApp);
 

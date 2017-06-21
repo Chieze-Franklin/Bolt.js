@@ -22,8 +22,56 @@ var __publicDir = path.join(__dirname + './../../../public');
 var __runningContexts = [];
 
 module.exports = {
-	delete: function(request, response) {},
-	deleteApp: function(request, response) {},
+	delete: function(request, response) {
+		var searchCriteria = {};
+		if (!utils.Misc.isNullOrUndefined(request.query)) {
+			searchCriteria = request.query;
+		}
+	},
+	deleteApp: function(request, response) {
+		var appnm = utils.String.trim(request.params.name.toLowerCase());
+		var searchCriteria = { name: appnm };
+		models.app.findOne(searchCriteria, function(error, app){
+			if (!utils.Misc.isNullOrUndefined(error)) {
+				response.end(utils.Misc.createResponse(null, error));
+			}
+			else if(utils.Misc.isNullOrUndefined(app)){
+				var err = new Error(errors['403']);
+				response.end(utils.Misc.createResponse(null, err, 403));
+			}
+			else{
+				models.app.remove(searchCriteria, function (removeError) {
+					if (!utils.Misc.isNullOrUndefined(removeError)) {
+						response.end(utils.Misc.createResponse(null, removeError));
+					}
+					else {
+						//delete folder from node_modules
+						//delete public files
+						//delete database
+						if (request.body.deleteDatabase) {
+							//
+						}
+
+						//since collections don't raise events (yet) we can delete them here
+						models.collection.remove({app: app.name}, function(err){});
+
+						//since extensions don't raise events (yet) we can delete them here
+						models.extension.remove({app: app.name}, function(err){});
+
+						//since hooks don't raise events (yet) we can delete them here
+						models.hook.remove({subscriber: app.name}, function(err){});
+
+						//since deleting a router doesn't raise events (yet) we can delete them here
+						models.router.remove({app: app.name}, function(err){});
+
+						app = utils.Misc.sanitizeApp(app);
+						utils.Events.fire('app-deleted', { body: app }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(app));
+					}
+				});
+			}
+		});
+	},
 	get: function(request, response){
 		var searchCriteria = {};
 		if (!utils.Misc.isNullOrUndefined(request.query)) {
