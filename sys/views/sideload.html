@@ -73,8 +73,17 @@ $(document).ready(function(){
           headers: {'X-Bolt-App-Token': '{{appToken}}'},
           success: function(response, status, xhr){
             if(response.code == 0){
-              sweetAlert("App installed!", response.body.displayName + " has been installed!", "success");
-              redirect();
+              sweetAlert({
+                title: "App installed!",
+                text: response.body.displayName + " has been installed!",
+                type: "success",
+                showCancelButton: false,
+                closeOnConfirm: true
+                }, function(isConfirm){
+                  if (isConfirm) {
+                    redirect();
+                  }
+                });
             }
             else {
               swal(response.errorUserTitle, response.errorUserMessage, "error");

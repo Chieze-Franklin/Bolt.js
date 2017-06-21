@@ -65,7 +65,7 @@ module.exports = {
 						users.forEach(function(user){
 							//delete dp
 							if(!utils.Misc.isNullOrUndefined(user.displayPic)) {
-								fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
+								fs.unlink(path.resolve(user.displayPic), function(unlinkError){});
 							}
 
 							utils.Events.fire('user-deleted', { body: user }, request.appToken, function(eventError, eventResponse){});
@@ -98,7 +98,7 @@ module.exports = {
 					else {
 						//delete dp
 						if(!utils.Misc.isNullOrUndefined(user.displayPic)) {
-							fs.unlink(path.resolve(user.displayPic), function(unlinkError){}); //TODO: test this
+							fs.unlink(path.resolve(user.displayPic), function(unlinkError){});
 						}
 
 						user = utils.Misc.sanitizeUser(user);

@@ -18,6 +18,8 @@ var __boltDir = path.join(__dirname + './../../../');
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __publicDir = path.join(__dirname + './../../../public');
 
+const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
+
 //holds all running contexts
 var __runningContexts = [];
 
@@ -46,10 +48,24 @@ module.exports = {
 					}
 					else {
 						//delete folder from node_modules
-						//delete public files
+						if (request.body.deleteSourceFolder) {
+							var sourceFolder = path.join(__node_modulesDir, app.path);
+							fse.remove(sourceFolder, function(unlinkError){});
+						}
+
+						//delete public folder
+						if (request.body.deletePublicFolder) {
+							var publicFolder = path.join(__publicDir, appnm);
+							fse.remove(publicFolder, function(unlinkError){});
+						}
+
 						//delete database
 						if (request.body.deleteDatabase) {
-							//
+							superagent
+								.post(process.env.BOLT_ADDRESS + "/api/db/drop")
+								.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+								.send({app: app.name})
+								.end(function(err, res){});
 						}
 
 						//since collections don't raise events (yet) we can delete them here
