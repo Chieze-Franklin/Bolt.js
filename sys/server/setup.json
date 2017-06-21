@@ -27,14 +27,14 @@
 			"requestsSync": [
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-module-system"
 					}
 				},
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-module-db"
 					}
@@ -54,7 +54,7 @@
 				},
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-ui-sweetalert"
 					}
@@ -67,14 +67,14 @@
 			"requests": [
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-ui-pages"
 					}
 				},
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-ui-sweetalert"
 					}
@@ -100,7 +100,7 @@
 			"requestsSync": [
 				{
 					"method": "POST",
-					"endpoint": "/api/apps/reg",
+					"endpoint": "/api/apps/local",
 					"body": {
 						"path": "bolt-settings"
 					}

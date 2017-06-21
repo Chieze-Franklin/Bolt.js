@@ -22,6 +22,8 @@ var __publicDir = path.join(__dirname + './../../../public');
 var __runningContexts = [];
 
 module.exports = {
+	delete: function(request, response) {},
+	deleteApp: function(request, response) {},
 	get: function(request, response){
 		var searchCriteria = {};
 		if (!utils.Misc.isNullOrUndefined(request.query)) {
@@ -92,7 +94,7 @@ module.exports = {
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
 		        //call /api/apps/reg
 		        superagent
-					.post(process.env.BOLT_ADDRESS + '/api/apps/reg')
+					.post(process.env.BOLT_ADDRESS + '/api/apps/local')
 					.set({'X-Bolt-App-Token': request.appToken})
 					.send({ path: appnm, system: request.body.system || false })
 					.end(function(appregError, appregResponse){
@@ -153,7 +155,7 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 400));
 		}
 	},
-	postReg: function(request, response){
+	postLocal: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 			var _path = utils.String.trim(request.body.path);
 			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
@@ -483,7 +485,7 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 410));
 		}
 	},
-	postRegPackage: function(request, response){
+	postLocalPackage: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 			var _path = utils.String.trim(request.body.path);
 			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
@@ -502,7 +504,7 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 410));
 		}
 	},
-	postRegReadme: function(request, response){
+	postLocalReadme: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.path)) {
 			var _path = utils.String.trim(request.body.path);
 			fs.readFile(path.join(__node_modulesDir, _path, 'readme.md'), function (error, data) {

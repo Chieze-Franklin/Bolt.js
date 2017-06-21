@@ -41,7 +41,7 @@
 
         $("#sideload").click(function(){
             $.ajax({
-              url: "/api/apps/reg",
+              url: "/api/apps/local",
               data: { path: "bolt-settings" },
               type: "POST",
               headers: {'X-Bolt-App-Token': '{{appToken}}'},

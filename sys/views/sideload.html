@@ -67,7 +67,7 @@ $(document).ready(function(){
         system = $("#system").is(":checked");
 
         $.ajax({
-          url: "/api/apps/reg",
+          url: "/api/apps/local",
           data: { path: "{{path}}", system: system },
           type: "POST",
           headers: {'X-Bolt-App-Token': '{{appToken}}'},
