@@ -40,7 +40,7 @@ $(document).ready(function(){
           sweetAlert("Error", "App name not specified!", "error");
           return;
         }
-alert(" "+delete_folder+" "+delete_public+" "+delete_db);
+
         $.ajax({
           url: "/api/apps/" + appname,
           data: { deleteSourceFolder: delete_folder, deletePublicFolder: delete_public, deleteDatabase: delete_db },
@@ -73,7 +73,7 @@ alert(" "+delete_folder+" "+delete_public+" "+delete_db);
           sweetAlert("Error", "App name not specified!", "error");
           return;
         }
-alert(" "+delete_folder+" "+delete_public+" "+delete_db);
+
         $.ajax({
           url: "/api/apps/" + apppath,
           data: { deleteSourceFolder: delete_folder, deletePublicFolder: delete_public, deleteDatabase: delete_db },

@@ -9,7 +9,7 @@
 					"method": "POST",
 					"endpoint": "/api/apps",
 					"body": {
-						"name": "bolt-system-module"
+						"name": "bolt-module-system"
 					}
 				},
 				{
@@ -49,7 +49,7 @@
 					"method": "POST",
 					"endpoint": "/api/apps",
 					"body": {
-						"path": "bolt-module-ui-pages"
+						"path": "bolt-ui-pages"
 					}
 				},
 				{

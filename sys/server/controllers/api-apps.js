@@ -88,7 +88,7 @@ module.exports = {
 			}
 		});
 	},
-	deleteApp: function(request, response) {console.log(request.body);
+	deleteApp: function(request, response) {
 		var appnm = utils.String.trim(request.params.name.toLowerCase());
 		var searchCriteria = { name: appnm };
 
@@ -226,7 +226,15 @@ module.exports = {
 							response.end(utils.Misc.createResponse(null, appregError));
 						}
 						else {
-							response.send(utils.Misc.createResponse(appregResponse.body));
+							var realResponse = appregResponse.body;
+							if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
+								response.end(utils.Misc.createResponse(null, realResponse.error, realResponse.code, 
+									realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
+								return;
+							}
+
+							var app = realResponse.body;
+							response.send(utils.Misc.createResponse(app));
 						}
 					});
 		    })
