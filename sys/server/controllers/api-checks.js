@@ -30,7 +30,6 @@ module.exports = {
 
 						var loopThroughRoles = function(index) {
 							if (index >= userRoles.length) {
-								response.send(utils.Misc.createResponse(filteredApps));
 								return;
 							}
 
@@ -64,6 +63,8 @@ module.exports = {
 						}
 
 						loopThroughRoles(0);
+
+						response.send(utils.Misc.createResponse(filteredApps));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
