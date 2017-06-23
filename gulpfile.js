@@ -110,6 +110,11 @@ gulp.task('copy:bolt-module-system', function(){
 					 '!node_modules/bolt-module-system/node_modules', '!node_modules/bolt-module-system/.coveralls.yml'])
 		.pipe(gulp.dest('node_modules-dev/bolt-module-system'))
 });
+gulp.task('copy:bolt-admin', function(){
+	return gulp.src(['node_modules/bolt-admin/**/*', 'node_modules/bolt-admin/.*', 
+					 '!node_modules/bolt-admin/node_modules', '!node_modules/bolt-admin/.coveralls.yml'])
+		.pipe(gulp.dest('node_modules-dev/bolt-admin'))
+});
 gulp.task('copy:bolt-settings', function(){
 	return gulp.src(['node_modules/bolt-settings/**/*', 'node_modules/bolt-settings/.*', 
 					 '!node_modules/bolt-settings/node_modules', '!node_modules/bolt-settings/.coveralls.yml'])
@@ -124,16 +129,6 @@ gulp.task('copy:bolt-ui-sweetalert', function(){
 	return gulp.src(['node_modules/bolt-ui-sweetalert/**/*', 'node_modules/bolt-ui-sweetalert/.*', 
 					 '!node_modules/bolt-ui-sweetalert/node_modules', '!node_modules/bolt-ui-sweetalert/.coveralls.yml'])
 		.pipe(gulp.dest('node_modules-dev/bolt-ui-sweetalert'))
-});
-gulp.task('copy:ctl-sms-home', function(){
-	return gulp.src(['node_modules/ctl-sms-home/**/*', 'node_modules/ctl-sms-home/.*', 
-					 '!node_modules/ctl-sms-home/node_modules', '!node_modules/ctl-sms-home/.coveralls.yml'])
-		.pipe(gulp.dest('node_modules-dev/ctl-sms-home'))
-});
-gulp.task('copy:ctl-sms-students', function(){
-	return gulp.src(['node_modules/ctl-sms-students/**/*', 'node_modules/ctl-sms-students/.*', 
-					 '!node_modules/ctl-sms-students/node_modules', '!node_modules/ctl-sms-students/.coveralls.yml'])
-		.pipe(gulp.dest('node_modules-dev/ctl-sms-students'))
 });
 
 gulp.task('del:bolt-internal-checks', function(){
@@ -172,6 +167,9 @@ gulp.task('del:bolt-module-db', function(){
 gulp.task('del:bolt-module-system', function(){
 	return del(['node_modules-dev/bolt-module-system/**/*', '!node_modules-dev/bolt-module-system/.git'])
 });
+gulp.task('del:bolt-admin', function(){
+	return del(['node_modules-dev/bolt-admin/**/*', '!node_modules-dev/bolt-admin/.git'])
+});
 gulp.task('del:bolt-settings', function(){
 	return del(['node_modules-dev/bolt-settings/**/*', '!node_modules-dev/bolt-settings/.git'])
 });
@@ -180,12 +178,6 @@ gulp.task('del:bolt-ui-pages', function(){
 });
 gulp.task('del:bolt-ui-sweetalert', function(){
 	return del(['node_modules-dev/bolt-ui-sweetalert/**/*', '!node_modules-dev/bolt-ui-sweetalert/.git'])
-});
-gulp.task('del:ctl-sms-home', function(){
-	return del(['node_modules-dev/ctl-sms-home/**/*', '!node_modules-dev/ctl-sms-home/.git'])
-});
-gulp.task('del:ctl-sms-students', function(){
-	return del(['node_modules-dev/ctl-sms-students/**/*', '!node_modules-dev/ctl-sms-students/.git'])
 });
 
 gulp.task('watch-dev', function(){
@@ -213,14 +205,12 @@ gulp.task('watch-dev', function(){
 		function(){runSequence('del:bolt-module-db', 'copy:bolt-module-db')});
 	gulp.watch(['node_modules/bolt-module-system/**/*', 'node_modules/bolt-module-system/.*'], 
 		function(){runSequence('del:bolt-module-system', 'copy:bolt-module-system')});
+	gulp.watch(['node_modules/bolt-admin/**/*', 'node_modules/bolt-admin/.*'], 
+		function(){runSequence('del:bolt-admin', 'copy:bolt-admin')});
 	gulp.watch(['node_modules/bolt-settings/**/*', 'node_modules/bolt-settings/.*'], 
 		function(){runSequence('del:bolt-settings', 'copy:bolt-settings')});
 	gulp.watch(['node_modules/bolt-ui-pages/**/*', 'node_modules/bolt-ui-pages/.*'], 
 		function(){runSequence('del:bolt-ui-pages', 'copy:bolt-ui-pages')});
 	gulp.watch(['node_modules/bolt-ui-sweetalert/**/*', 'node_modules/bolt-ui-sweetalert/.*'], 
 		function(){runSequence('del:bolt-ui-sweetalert', 'copy:bolt-ui-sweetalert')});
-	gulp.watch(['node_modules/ctl-sms-home/**/*', 'node_modules/ctl-sms-home/.*'], 
-		function(){runSequence('del:ctl-sms-home', 'copy:ctl-sms-home')});
-	gulp.watch(['node_modules/ctl-sms-students/**/*', 'node_modules/ctl-sms-students/.*'], 
-		function(){runSequence('del:ctl-sms-students', 'copy:ctl-sms-students')});
 });

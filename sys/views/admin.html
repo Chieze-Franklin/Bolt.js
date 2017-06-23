@@ -1,0 +1,62 @@
+<div class="container-xs-height full-height">
+  <div class="row-xs-height">
+    <div class="col-xs-height col-middle">
+      <div class="error-container text-center">
+        <h1 class="error-number">No System Adminsitration App</h1>
+        <p>You have no <b>System Adminsitration</b> app installed. You can download one online or sideload an already-downloaded copy.
+        </p>
+        <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="download">
+            <i class="fa fa-cloud-download"></i> 
+            <span class="bold">Download (from npm)</span>
+        </button>
+        <button class="btn btn-block btn-info btn-cons m-b-10" type="button" id="sideload">
+            <i class="fa fa-copy"></i> 
+            <span class="bold">Sideload (ensure it is first copied to the node_modules folder)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $("#download").click(function(){
+            $.ajax({
+              url: "/api/apps",
+              data: { name: "bolt-admin" },
+              type: "POST",
+              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              success: function(response, status, xhr){
+                if(response.code == 0){
+                  window.location.href="/Admin";
+                }
+                else {
+                  sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
+                }
+              },
+              error: function(xhr, status, err){
+                alert(xhr.responseText);
+              }
+            });
+        });
+
+        $("#sideload").click(function(){
+            $.ajax({
+              url: "/api/apps/local",
+              data: { path: "bolt-admin" },
+              type: "POST",
+              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              success: function(response, status, xhr){
+                if(response.code == 0){
+                  window.location.href="/Admin";
+                }
+                else {
+                  sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
+                }
+              },
+              error: function(xhr, status, err){
+                alert(xhr.responseText);
+              }
+            });
+        });
+      });
+</script>

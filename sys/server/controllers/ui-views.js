@@ -263,6 +263,7 @@ module.exports = {
 	getUpdate: function(request, response){
 		var scope = {
 			app: request.query.app,
+			folder: request.query.folder,
 			version: request.query.version,
 			success: request.query.success,
 			failure: request.query.failure,
