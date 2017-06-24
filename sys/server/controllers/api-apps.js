@@ -20,6 +20,8 @@ var __publicDir = path.join(__dirname + './../../../public');
 
 const X_BOLT_APP_TOKEN = 'X-Bolt-App-Token';
 
+var __updatableProps = ["displayName", "controlledVisibility", "description", "order", "system"];
+
 //holds all running contexts
 var __runningContexts = [];
 
@@ -35,53 +37,60 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, error));
 			}
 			else if(!utils.Misc.isNullOrUndefined(apps)) {
-				models.app.remove(searchCriteria, function (removeError, removeResult) {
-					if (!utils.Misc.isNullOrUndefined(removeError)) {
-						response.end(utils.Misc.createResponse(null, removeError));
-					}
-					else {
-						apps = utils.Misc.sanitizeApps(apps);
-
-						apps.forEach(function(app) {
-							//delete folder from node_modules
-							if (request.body.deleteSourceFolder === 'true') {
-								var sourceFolder = path.join(__node_modulesDir, app.path);
-								fse.remove(sourceFolder, function(unlinkError){});
-							}
-
-							//delete public folder
-							if (request.body.deletePublicFolder === 'true') {
-								var publicFolder = path.join(__publicDir, appnm);
-								fse.remove(publicFolder, function(unlinkError){});
-							}
-
-							//delete database
-							if (request.body.deleteDatabase === 'true') {
-								superagent
-									.post(process.env.BOLT_ADDRESS + "/api/db/drop")
-									.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
-									.send({app: app.name})
-									.end(function(err, res){});
-							}
-
-							//since collections don't raise events (yet) we can delete them here
-							models.collection.remove({app: app.name}, function(err){});
-
-							//since extensions don't raise events (yet) we can delete them here
-							models.extension.remove({app: app.name}, function(err){});
-
-							//since hooks don't raise events (yet) we can delete them here
-							models.hook.remove({subscriber: app.name}, function(err){});
-
-							//since deleting a router doesn't raise events (yet) we can delete them here
-							models.router.remove({app: app.name}, function(err){});
-
-							utils.Events.fire('app-deleted', { body: app }, request.appToken, function(eventError, eventResponse){});
-						});
-
-						response.send(utils.Misc.createResponse(apps));
-					}
+				apps = utils.Misc.sanitizeApps(apps);
+				apps.forEach(function(app) {
+					//TODO: the 'body' of the event should hold the reason why the app is uninstalling
+					utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.appToken, 
+						function(eventError, eventResponse) {});
 				});
+
+				setTimeout(function() {
+					models.app.remove(searchCriteria, function (removeError, removeResult) {
+						if (!utils.Misc.isNullOrUndefined(removeError)) {
+							response.end(utils.Misc.createResponse(null, removeError));
+						}
+						else {
+							apps.forEach(function(app) {
+								//delete folder from node_modules
+								if (request.body.deleteSourceFolder === 'true') {
+									var sourceFolder = path.join(__node_modulesDir, app.path);
+									fse.remove(sourceFolder, function(unlinkError){});
+								}
+
+								//delete public folder
+								if (request.body.deletePublicFolder === 'true') {
+									var publicFolder = path.join(__publicDir, appnm);
+									fse.remove(publicFolder, function(unlinkError){});
+								}
+
+								//delete database
+								if (request.body.deleteDatabase === 'true') {
+									superagent
+										.delete(process.env.BOLT_ADDRESS + "/api/db")
+										.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+										.send({app: app.name})
+										.end(function(err, res){});
+								}
+
+								//since collections don't raise events (yet) we can delete them here
+								models.collection.remove({app: app.name}, function(err){});
+
+								//since extensions don't raise events (yet) we can delete them here
+								models.extension.remove({app: app.name}, function(err){});
+
+								//since hooks don't raise events (yet) we can delete them here
+								models.hook.remove({subscriber: app.name}, function(err){});
+
+								//since deleting a router doesn't raise events (yet) we can delete them here
+								models.router.remove({app: app.name}, function(err){});
+
+								utils.Events.fire('app-uninstalled', { body: app }, request.appToken, function(eventError, eventResponse){});
+							});
+
+							response.send(utils.Misc.createResponse(apps));
+						}
+					});
+				}, 2000);
 			}
 			else {
 				response.send(utils.Misc.createResponse([]));
@@ -101,50 +110,55 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 403));
 			}
 			else{
-				models.app.remove(searchCriteria, function (removeError, removeResult) {
-					if (!utils.Misc.isNullOrUndefined(removeError)) {
-						response.end(utils.Misc.createResponse(null, removeError));
-					}
-					else {
-						app = utils.Misc.sanitizeApp(app);
+				app = utils.Misc.sanitizeApp(app);
+				//TODO: the 'body' of the event should hold the reason why the app is uninstalling
+				utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.appToken, 
+					function(eventError, eventResponse) {
+						setTimeout(function() {
+							models.app.remove(searchCriteria, function (removeError, removeResult) {
+								if (!utils.Misc.isNullOrUndefined(removeError)) {
+									response.end(utils.Misc.createResponse(null, removeError));
+								}
+								else {
+									//delete folder from node_modules
+									if (request.body.deleteSourceFolder === 'true') {
+										var sourceFolder = path.join(__node_modulesDir, app.path);
+										fse.remove(sourceFolder, function(unlinkError){});
+									}
 
-						//delete folder from node_modules
-						if (request.body.deleteSourceFolder === 'true') {
-							var sourceFolder = path.join(__node_modulesDir, app.path);
-							fse.remove(sourceFolder, function(unlinkError){});
-						}
+									//delete public folder
+									if (request.body.deletePublicFolder === 'true') {
+										var publicFolder = path.join(__publicDir, appnm);
+										fse.remove(publicFolder, function(unlinkError){});
+									}
 
-						//delete public folder
-						if (request.body.deletePublicFolder === 'true') {
-							var publicFolder = path.join(__publicDir, appnm);
-							fse.remove(publicFolder, function(unlinkError){});
-						}
+									//delete database
+									if (request.body.deleteDatabase === 'true') {
+										superagent
+											.delete(process.env.BOLT_ADDRESS + "/api/db")
+											.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+											.send({app: app.name})
+											.end(function(err, res){});
+									}
 
-						//delete database
-						if (request.body.deleteDatabase === 'true') {
-							superagent
-								.post(process.env.BOLT_ADDRESS + "/api/db/drop")
-								.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
-								.send({app: app.name})
-								.end(function(err, res){});
-						}
+									//since collections don't raise events (yet) we can delete them here
+									models.collection.remove({app: app.name}, function(err){});
 
-						//since collections don't raise events (yet) we can delete them here
-						models.collection.remove({app: app.name}, function(err){});
+									//since extensions don't raise events (yet) we can delete them here
+									models.extension.remove({app: app.name}, function(err){});
 
-						//since extensions don't raise events (yet) we can delete them here
-						models.extension.remove({app: app.name}, function(err){});
+									//since hooks don't raise events (yet) we can delete them here
+									models.hook.remove({subscriber: app.name}, function(err){});
 
-						//since hooks don't raise events (yet) we can delete them here
-						models.hook.remove({subscriber: app.name}, function(err){});
+									//since deleting a router doesn't raise events (yet) we can delete them here
+									models.router.remove({app: app.name}, function(err){});
 
-						//since deleting a router doesn't raise events (yet) we can delete them here
-						models.router.remove({app: app.name}, function(err){});
-
-						utils.Events.fire('app-deleted', { body: app }, request.appToken, function(eventError, eventResponse){});
-						response.send(utils.Misc.createResponse(app));
-					}
-				});
+									utils.Events.fire('app-uninstalled', { body: app }, request.appToken, function(eventError, eventResponse){});
+									response.send(utils.Misc.createResponse(app));
+								}
+							});
+						}, 2000);
+					});
 			}
 		});
 	},
@@ -843,7 +857,7 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 400));
 		}
 	},
-	postStop: function(request, response){ //TODO: how to stop system apps
+	postStop: function(request, response) { //TODO: how to stop system apps
 		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
 			var appnm = utils.String.trim(request.body.name.toLowerCase());
 			for (var index = 0; index < __runningContexts.length; index++){
@@ -886,5 +900,70 @@ module.exports = {
 			var error = new Error(errors['400']);
 			response.end(utils.Misc.createResponse(null, error, 400));
 		}
+	},
+	put: function(request, response){
+		var searchCriteria = {};
+		if (!utils.Misc.isNullOrUndefined(request.query)) {
+			searchCriteria = request.query;
+		}
+
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
+
+		models.app.update(searchCriteria,
+			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+			{ upsert: false }, 
+			function (updateError) {
+			if (!utils.Misc.isNullOrUndefined(updateError)) {
+				response.end(utils.Misc.createResponse(null, updateError));
+			}
+			else {
+				models.app.find(searchCriteria, function (error, apps) {
+					if (!utils.Misc.isNullOrUndefined(error)) {
+						response.end(utils.Misc.createResponse(null, error));
+					}
+					else if (!utils.Misc.isNullOrUndefined(apps)) {
+						apps = utils.Misc.sanitizeApps(apps);
+						apps.forEach(function(app){
+							utils.Events.fire('app-updated', { body: app }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(apps));
+					}
+					else {
+						response.send(utils.Misc.createResponse([]));
+					}
+				});
+			}
+		});
+	},
+	putApp: function(request, response){
+		var appnm = utils.String.trim(request.params.name.toLowerCase());
+		var searchCriteria = { name: appnm };
+
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
+
+		models.app.update(searchCriteria,
+			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+			{ upsert: false }, 
+			function (updateError) {
+			if (!utils.Misc.isNullOrUndefined(updateError)) {
+				response.end(utils.Misc.createResponse(null, updateError));
+			}
+			else {
+				models.app.findOne(searchCriteria, function(error, app){
+					if (!utils.Misc.isNullOrUndefined(error)) {
+						response.end(utils.Misc.createResponse(null, error));
+					}
+					else if(utils.Misc.isNullOrUndefined(app)){
+						var err = new Error(errors['403']);
+						response.end(utils.Misc.createResponse(null, err, 403));
+					}
+					else{
+						app = utils.Misc.sanitizeApp(app);
+						utils.Events.fire('app-updated', { body: app }, request.appToken, function(eventError, eventResponse){});
+						response.send(utils.Misc.createResponse(app));
+					}
+				});
+			}
+		});
 	}
 };

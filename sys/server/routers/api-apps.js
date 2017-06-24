@@ -6,8 +6,10 @@ var apiAppsCtrlr = require('../controllers/api-apps');
 
 var router = express.Router();
 
-//uninstalls an app
+//uninstalls an array of app objects matching the specified criteria
 router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, checksCtrlr.forBulkDeleteCriterion, apiAppsCtrlr.delete);
+
+//uninstalls an app
 router.delete('/:name', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.deleteApp);
 
 //gets an array of app objects for all installed apps matching the specified criteria
@@ -43,7 +45,10 @@ router.post('/start', apiAppsCtrlr.postStart);
 //stops the server of the app with the specified name
 router.post('/stop', apiAppsCtrlr.postStop);
 
-//TODO: PUT: /
-//TODO: PUT: /:name
+//updates an array of role objects matching the specified criteria
+router.put('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, checksCtrlr.forBulkUpdateCriterion, apiAppsCtrlr.put);
+
+//updates a role in the database
+router.put('/:name', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.putApp);
 
 module.exports = router;

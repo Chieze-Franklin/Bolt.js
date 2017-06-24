@@ -26,7 +26,7 @@ module.exports = {
 
 		/*//delete collections
 		superagent
-			.post(process.env.BOLT_ADDRESS + "/api/db/drop")
+			.delete(process.env.BOLT_ADDRESS + "/api/db")
 			.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
 			.send({app: app.name})
 			.end(function(err, res){});*/
