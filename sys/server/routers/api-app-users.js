@@ -13,6 +13,6 @@ router.get('/', apiAppUsersCtrlr.get);
 router.post('/', checksCtrlr.forSystemApp, apiAppUsersCtrlr.post);
 
 //deletes an array of app-user objects matching the specified criteria
-router.delete('/', checksCtrlr.forSystemApp, apiAppUsersCtrlr.delete);
+router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiAppUsersCtrlr.delete);
 
 module.exports = router;

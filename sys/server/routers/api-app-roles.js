@@ -13,6 +13,6 @@ router.get('/', apiAppRolesCtrlr.get);
 router.post('/', checksCtrlr.forSystemApp, apiAppRolesCtrlr.post);
 
 //deletes an array of app-role objects matching the specified criteria
-router.delete('/', checksCtrlr.forSystemApp, apiAppRolesCtrlr.delete);
+router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiAppRolesCtrlr.delete);
 
 module.exports = router;

@@ -13,6 +13,6 @@ router.get('/', apiUserRolesCtrlr.get);
 router.post('/', checksCtrlr.forSystemApp, apiUserRolesCtrlr.post);
 
 //deletes an array of user-role objects matching the specified criteria
-router.delete('/', checksCtrlr.forSystemApp, apiUserRolesCtrlr.delete);
+router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiUserRolesCtrlr.delete);
 
 module.exports = router;

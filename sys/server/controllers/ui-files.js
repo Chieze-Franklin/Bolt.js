@@ -5,8 +5,11 @@ var utils = require("bolt-internal-utils");
 var path = require("path");
 var superagent = require('superagent');
 
+var __publicDir = path.join(__dirname + './../../../public');
+
 module.exports = {
 	getAppFile: function(request, response){
+		var appnm = utils.String.trim(request.params.app.toLowerCase());
 		superagent
 			.get(process.env.BOLT_ADDRESS + '/api/files/' + request.params.app + '/' + request.params.file)
 			.end(function(error, fileinfoResponse){
@@ -30,7 +33,9 @@ module.exports = {
 					}
 					else if (!utils.Misc.isNullOrUndefined(fileInfo) && !utils.Misc.isNullOrUndefined(fileInfo.publicPath) && !utils.Misc.isNullOrUndefined(fileInfo.stats)) {
 						//response.redirect(fileInfo.publicPath);
-						response.sendFile(fileInfo.staticPath);
+
+						var staticPath = path.join(__publicDir, appnm, fileInfo.path);
+						response.sendFile(staticPath);
 					}
 					else {
 						response.redirect('/404?item=' + encodeURIComponent(request.params.app + '/' + request.params.file));

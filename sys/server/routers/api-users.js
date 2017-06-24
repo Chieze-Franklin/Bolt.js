@@ -46,13 +46,13 @@ router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);
 router.post('/logout', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogout);
 
 //deletes an array of user objects matching the specified criteria
-router.delete('/', checksCtrlr.forSystemApp, apiUsersCtrlr.delete);
+router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiUsersCtrlr.delete);
 
 //deletes a user from the database
 router.delete('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.deleteUser);
 
 //updates an array of user objects matching the specified criteria
-router.put('/', checksCtrlr.forSystemApp, apiUsersCtrlr.put);
+router.put('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkUpdateCriterion, apiUsersCtrlr.put);
 
 //updates a user in the database
 router.put('/:name', checksCtrlr.forSystemApp, upload.any()/*fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}])*/, apiUsersCtrlr.putUser);

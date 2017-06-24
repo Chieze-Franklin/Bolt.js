@@ -216,7 +216,7 @@ module.exports = {
 		    })
 		    .then(function(){
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
-		        //call /api/apps/reg
+		        //call /api/apps/local
 		        superagent
 					.post(process.env.BOLT_ADDRESS + '/api/apps/local')
 					.set({'X-Bolt-App-Token': request.appToken})
@@ -230,11 +230,11 @@ module.exports = {
 							if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
 								response.end(utils.Misc.createResponse(null, realResponse.error, realResponse.code, 
 									realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
-								return;
 							}
-
-							var app = realResponse.body;
-							response.send(utils.Misc.createResponse(app));
+							else {
+								var app = realResponse.body;
+								response.send(utils.Misc.createResponse(app));
+							}
 						}
 					});
 		    })
@@ -257,7 +257,11 @@ module.exports = {
 			}
 			packageJson(appnm, version, function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
-					response.end(utils.Misc.createResponse(null, error));
+					response.end(utils.Misc.createResponse(null, error, 416));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['416']);
+					response.end(utils.Misc.createResponse(null, error, 416));
 				}
 				else {
 					response.send(utils.Misc.createResponse(data));
@@ -275,7 +279,11 @@ module.exports = {
 			//another option: https://www.npmjs.com/package/readme-getter
 			getPackageReadme(appnm, function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
-					response.end(utils.Misc.createResponse(null, error));
+					response.end(utils.Misc.createResponse(null, error, 417));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['417']);
+					response.end(utils.Misc.createResponse(null, error, 417));
 				}
 				else {
 					response.send(utils.Misc.createResponse(data));
@@ -293,6 +301,10 @@ module.exports = {
 			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['418']);
+					response.end(utils.Misc.createResponse(null, error, 418));
 				}
 				else {
 					var package = JSON.parse(data);
@@ -622,7 +634,11 @@ module.exports = {
 			var _path = utils.String.trim(request.body.path);
 			fs.readFile(path.join(__node_modulesDir, _path, 'package.json'), function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
-					response.end(utils.Misc.createResponse(null, error));
+					response.end(utils.Misc.createResponse(null, error, 418));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['418']);
+					response.end(utils.Misc.createResponse(null, error, 418));
 				}
 				else {
 					var package = JSON.parse(data);
@@ -641,7 +657,11 @@ module.exports = {
 			var _path = utils.String.trim(request.body.path);
 			fs.readFile(path.join(__node_modulesDir, _path, 'readme.md'), function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
-					response.end(utils.Misc.createResponse(null, error));
+					response.end(utils.Misc.createResponse(null, error, 419));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['419']);
+					response.end(utils.Misc.createResponse(null, error, 419));
 				}
 				else {
 					response.send(utils.Misc.createResponse(data.toString('utf8')));

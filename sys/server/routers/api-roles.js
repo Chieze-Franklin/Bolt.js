@@ -18,13 +18,13 @@ router.get('/:name', apiRolesCtrlr.getRole);
 router.post('/', checksCtrlr.forSystemApp, apiRolesCtrlr.post);
 
 //deletes an array of role objects matching the specified criteria
-router.delete('/', checksCtrlr.forSystemApp, apiRolesCtrlr.delete);
+router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiRolesCtrlr.delete);
 
 //deletes a role from the database
 router.delete('/:name', checksCtrlr.forSystemApp, apiRolesCtrlr.deleteRole);
 
 //updates an array of role objects matching the specified criteria
-router.put('/', checksCtrlr.forSystemApp, apiRolesCtrlr.put);
+router.put('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkUpdateCriterion, apiRolesCtrlr.put);
 
 //updates a role in the database
 router.put('/:name', checksCtrlr.forSystemApp, apiRolesCtrlr.putRole);
