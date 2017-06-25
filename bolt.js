@@ -21,6 +21,7 @@ var apiAppsRouter = require('./sys/server/routers/api-apps');
 var apiChecksRouter = require('./sys/server/routers/api-checks');
 var apiEventsRouter = require('./sys/server/routers/api-events');
 var apiFilesRouter = require('./sys/server/routers/api-files');
+var apiPermissionsRouter = require('./sys/server/routers/api-permissions');
 var apiRolesRouter = require('./sys/server/routers/api-roles');
 var apiTokensRouter = require('./sys/server/routers/api-tokens');
 var apiUserRolesRouter = require('./sys/server/routers/api-user-roles');
@@ -168,6 +169,8 @@ app.use('/api/checks', apiChecksRouter);
 app.use('/api/events', apiEventsRouter);
 
 app.use('/api/files', apiFilesRouter);
+
+app.use('/api/permissions', apiPermissionsRouter);
 
 app.use('/api/roles', apiRolesRouter);
 

@@ -15,4 +15,7 @@ router.post('/', checksCtrlr.forSystemApp, apiAppRolesCtrlr.post);
 //deletes an array of app-role objects matching the specified criteria
 router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiAppRolesCtrlr.delete);
 
+//updates an array of app-role objects matching the specified criteria
+router.put('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkUpdateCriterion, apiAppRolesCtrlr.put);
+
 module.exports = router;

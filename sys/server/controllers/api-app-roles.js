@@ -4,6 +4,8 @@ var utils = require("bolt-internal-utils");
 
 var superagent = require('superagent');
 
+var __updatableProps = ["permissions"];
+
 module.exports = {
 	delete: function(request, response){
 		var searchCriteria = {};
@@ -113,5 +115,47 @@ module.exports = {
 			var error = new Error(errors['320']);
 			response.end(utils.Misc.createResponse(null, error, 320));
 		}
+	},
+	put: function(request, response){
+		var searchCriteria = {};
+		if (!utils.Misc.isNullOrUndefined(request.query)) {
+			searchCriteria = request.query;
+		}
+
+		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
+
+		//this is a hack
+		//I noticed that whenever I PUT an object with empty permissions array to this endpoint
+		//the 'permissions' field arrives here as undefined
+		//so I'm just going to add it since I know that is the only possible field they can update
+		if (utils.Misc.isNullOrUndefined(updateObject.permissions)) {
+			updateObject.permissions = [];
+		}
+
+		models.appRoleAssoc.update(searchCriteria,
+			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+			{ upsert: false }, 
+			function (updateError) {
+			if (!utils.Misc.isNullOrUndefined(updateError)) {
+				response.end(utils.Misc.createResponse(null, updateError));
+			}
+			else {
+				models.appRoleAssoc.find(searchCriteria, function (error, appRoles) {
+					if (!utils.Misc.isNullOrUndefined(error)) {
+						response.end(utils.Misc.createResponse(null, error));
+					}
+					else if (!utils.Misc.isNullOrUndefined(appRoles)) {
+						appRoles = utils.Misc.sanitizeAppRoles(appRoles);
+						appRoles.forEach(function(appRole){
+							utils.Events.fire('app-role-updated', { body: appRole }, request.appToken, function(eventError, eventResponse){});
+						});
+						response.send(utils.Misc.createResponse(appRoles));
+					}
+					else {
+						response.send(utils.Misc.createResponse([]));
+					}
+				});
+			}
+		});
 	}
 };

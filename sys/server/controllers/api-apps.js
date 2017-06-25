@@ -81,6 +81,9 @@ module.exports = {
 								//since hooks don't raise events (yet) we can delete them here
 								models.hook.remove({subscriber: app.name}, function(err){});
 
+								//since permissions don't raise events (yet) we can delete them here
+								models.permission.remove({app: app.name}, function(err){});
+
 								//since deleting a router doesn't raise events (yet) we can delete them here
 								models.router.remove({app: app.name}, function(err){});
 
@@ -149,6 +152,9 @@ module.exports = {
 
 									//since hooks don't raise events (yet) we can delete them here
 									models.hook.remove({subscriber: app.name}, function(err){});
+
+									//since permissions don't raise events (yet) we can delete them here
+									models.permission.remove({app: app.name}, function(err){});
 
 									//since deleting a router doesn't raise events (yet) we can delete them here
 									models.router.remove({app: app.name}, function(err){});
@@ -367,6 +373,7 @@ module.exports = {
 							* a module can't have 'main'
 							* a module can't have 'index'
 							* a module can't register extensions
+							* a module can't have permissions
 							*/
 							if (!package.bolt.module) {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
@@ -398,6 +405,29 @@ module.exports = {
 												newExtension.type = "view";
 											}
 											newExtension.save();
+										}
+									}
+								}
+
+								if (!utils.Misc.isNullOrUndefined(package.bolt.permissions)) {
+									var permissions = package.bolt.permissions;
+									for (var permission in permissions) {
+										if (permissions.hasOwnProperty(permission)) {
+											var newPermission = new models.permission({
+												name: permission,
+												app: appnm
+											});
+
+											var permObj = permissions[permission];
+											if (permObj.constructor === String) {
+												newPermission.displayName = permObj;
+											}
+											else {
+												newPermission.displayName = permObj.displayName;
+												if (!utils.Misc.isNullOrUndefined(permObj.description)) newPermission.description = permObj.description;
+											}
+
+											newPermission.save();
 										}
 									}
 								}
