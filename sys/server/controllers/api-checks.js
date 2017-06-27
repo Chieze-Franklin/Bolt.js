@@ -29,19 +29,27 @@ module.exports = {
 						var filteredAppNames = [];
 
 						var loopThroughRoles = function(index) {
-							if (index >= userRoles.length) {
+							if (index >= userRoles.length) {console.log(filteredApps.length)
+								response.send(utils.Misc.createResponse(filteredApps));
 								return;
 							}
 
 							var userRole = userRoles[index];
 
-							apps.forEach(function(app) {
+							var loopThroughApps = function(idx) {
+								if (idx >= apps.length) {
+									loopThroughRoles(index + 1);
+									return;
+								}
+
+								var app = apps[idx];
+
 								if (filteredAppNames.indexOf(app.name) < 0) { //consider only apps that havnt been picked in previous loops
 									//if app has controlledVisibility==false (its visibility is NOT controlled), then it is visible to everyone
 									if (app.controlledVisibility == false) {
 										filteredApps.push(app);
 										filteredAppNames.push(app.name);
-										loopThroughRoles(++index);
+										loopThroughApps(idx + 1);
 									}
 									else {
 										//check if there is an app-role relationship between the app and ANY of the user's assigned roles
@@ -49,22 +57,25 @@ module.exports = {
 											if (!utils.Misc.isNullOrUndefined(appRole)) {
 												filteredApps.push(app);
 												filteredAppNames.push(app.name);
-												loopThroughRoles(++index);
+												loopThroughApps(idx + 1);
 											}
 											else {
-												loopThroughRoles(++index);
+												loopThroughApps(idx + 1);
 											}
 										});
 									}
 								}
-							});
+								else {
+									loopThroughApps(idx + 1);
+								}
+							}
 
-							loopThroughRoles(++index);
+							loopThroughApps(0);
 						}
 
 						loopThroughRoles(0);
 
-						response.send(utils.Misc.createResponse(filteredApps));
+						//response.send(utils.Misc.createResponse(filteredApps));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -76,7 +87,7 @@ module.exports = {
 			}
 		});
 	},
-	postAppRight: function(request, response){
+	postHasPermission: function(request, response){
 		//get app
 		var appnm;
 		if (!utils.Misc.isNullOrUndefined(request.body.app)) {
@@ -95,8 +106,8 @@ module.exports = {
 		}
 		else { //TODO: (put in June 2017) I may remove this block
 			//use the current user's name
-			if (!utils.Misc.isNullOrUndefined(request.session.user)){
-				username = request.session.user.name;
+			if (!utils.Misc.isNullOrUndefined(request.user)){
+				username = request.user.name;
 			}
 		}
 
@@ -105,15 +116,18 @@ module.exports = {
 			return;
 		}
 
+		//TODO: if (utils.Misc.isNullOrUndefined(request.body.permission)) send error and return
+
 		//get user-roles associated with the user
 		models.userRoleAssoc.find({ user: username }, function(errorUserRole, userRoles){
 			if (!utils.Misc.isNullOrUndefined(errorUserRole)) {
 				response.end(utils.Misc.createResponse(null, errorUserRole));
 			}
 			else if (!utils.Misc.isNullOrUndefined(userRoles)) {
+				var foundPermission = false;
 				var loopThroughRoles = function(index) {
-					if (index >= userRoles.length) {
-						response.send(utils.Misc.createResponse(false));
+					if (index >= userRoles.length || foundPermission) {
+						response.send(utils.Misc.createResponse(foundPermission));
 						return;
 					}
 
@@ -122,60 +136,34 @@ module.exports = {
 					models.role.findOne({ name: userRole.role }, function(errorRole, role) {
 						if (!utils.Misc.isNullOrUndefined(role)) {
 							if (role.isAdmin) {
-								response.send(utils.Misc.createResponse(true));
+								foundPermission = true;
+								loopThroughRoles(index + 1);
 							}
 							else {
 								models.appRoleAssoc.findOne({ app: appnm, role: userRole.role }, function(errorAppRole, appRole) {
 									if (!utils.Misc.isNullOrUndefined(appRole)) {
-										var canStartApp = appRole.start || false;
-										if (!canStartApp) {
-											response.send(utils.Misc.createResponse(false));
-											return;
-										}
-										var canAccessFeature = false;
-										var canAccessFile = false;
-
-										if (!utils.Misc.isNullOrUndefined(request.body.feature)) {
-											//TODO: there has to be a better way to implement case-INsensitive search
-											var lowercaseFeatures = [];
-											appRole.features.forEach(function(feature, index){ //TODO: use .map
-												lowercaseFeatures.push(feature.toLowerCase());
-											});
-											canAccessFeature = (lowercaseFeatures.indexOf(request.body.feature.toLowerCase()) > -1);
-											if (!canAccessFeature) {
-												response.send(utils.Misc.createResponse(false));
-												return;
-											}
-										}
-
-										if (!utils.Misc.isNullOrUndefined(request.body.file)) {
-											//TODO: there has to be a better way to implement case-INsensitive search
-											var lowercaseFiles = [];
-											appRole.files.forEach(function(file, index){ //TODO: use .map
-												lowercaseFiles.push(file.toLowerCase());
-											});
-											canAccessFile = (lowercaseFiles.indexOf(request.body.file.toLowerCase()) > -1);
-											if (!canAccessFile) {
-												response.send(utils.Misc.createResponse(false));
-												return;
-											}
+										//TODO: there has to be a better way to implement case-INsensitive search
+										if (!utils.Misc.isNullOrUndefined(appRole.permissions)) {
+											var lowercasePermissions = appRole.permissions.map(function(p) { return p.toLowerCase(); });
+											foundPermission = (lowercasePermissions.indexOf(request.body.permission.toLowerCase()) > -1);
 										}
 										
-										response.send(utils.Misc.createResponse(true));
+										loopThroughRoles(index + 1);
 									}
 									else {
-										loopThroughRoles(++index);
+										loopThroughRoles(index + 1);
 									}
 								});
 							}
 						}
 						else {
-							loopThroughRoles(++index);
+							loopThroughRoles(index + 1);
 						}
 					});
 				}
 
 				loopThroughRoles(0);
+
 			}
 			else {
 				response.send(utils.Misc.createResponse(false));
