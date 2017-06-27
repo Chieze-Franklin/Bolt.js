@@ -29,7 +29,7 @@ module.exports = {
 						var filteredAppNames = [];
 
 						var loopThroughRoles = function(index) {
-							if (index >= userRoles.length) {console.log(filteredApps.length)
+							if (index >= userRoles.length) {
 								response.send(utils.Misc.createResponse(filteredApps));
 								return;
 							}
