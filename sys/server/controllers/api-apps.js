@@ -371,12 +371,15 @@ module.exports = {
 
 							/*a module can't have/do the things in this block
 							* a module can't have 'main'
+							* a module can't have checks
 							* a module can't have 'index'
 							* a module can't register extensions
 							* a module can't have permissions
 							*/
 							if (!package.bolt.module) {
 								if (!utils.Misc.isNullOrUndefined(package.bolt.main)) newApp.main = package.bolt.main;
+
+								newApp.checks = package.bolt.checks || [];
 
 								if (!utils.Misc.isNullOrUndefined(package.bolt.index)) newApp.index = "/" + utils.String.trimStart(package.bolt.index, "/");
 
@@ -619,8 +622,6 @@ module.exports = {
 								}
 							}
 
-							newApp.package = package;
-
 							var saveNewApp = function(){
 								newApp.save(function(saveError, savedApp){
 									if (!utils.Misc.isNullOrUndefined(saveError)) {
@@ -853,7 +854,7 @@ module.exports = {
 					if (!utils.Misc.isNullOrUndefined(app.appHash)) {
 						var totalHash = "";
 						var checksum = function(index){
-							if (index >= app.package.bolt.checks.length) {
+							if (index >= app.checks.length) {
 								var _appHash =  utils.Security.hashSync(totalHash);
 								if (app.appHash == _appHash) {
 									startApp();
@@ -865,7 +866,7 @@ module.exports = {
 								}
 							}
 							else {
-								var filename = app.package.bolt.checks[index];
+								var filename = app.checks[index];
 								var filepath = path.join(__node_modulesDir, app.path, filename);
 								utils.Security.checksumSync(filepath, function(errChecksum, hash){
 									if (!utils.Misc.isNullOrUndefined(hash)) {
