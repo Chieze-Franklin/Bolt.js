@@ -8,10 +8,7 @@ var __updatableProps = ["permissions"];
 
 module.exports = {
 	delete: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.appRoleAssoc.find(searchCriteria, function (error, appRoles) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -37,10 +34,7 @@ module.exports = {
 		});	
 	},
 	get: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.appRoleAssoc.find(searchCriteria, function (error, appRoles) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -117,10 +111,7 @@ module.exports = {
 		}
 	},
 	put: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 

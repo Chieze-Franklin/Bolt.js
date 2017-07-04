@@ -6,10 +6,7 @@ var superagent = require('superagent');
 
 module.exports = {
 	getAppsForUser: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.app.find(searchCriteria, function(error, apps){
 			if (!utils.Misc.isNullOrUndefined(error)) {

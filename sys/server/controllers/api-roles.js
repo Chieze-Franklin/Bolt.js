@@ -8,10 +8,7 @@ var __updatableProps = ["description", "displayName", "isAdmin"];
 
 module.exports = {
 	delete: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.role.find(searchCriteria, function (error, roles) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -62,10 +59,7 @@ module.exports = {
 		});
 	},
 	get: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.role.find(searchCriteria, function (error, roles) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -135,10 +129,7 @@ module.exports = {
 		}
 	},
 	put: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 

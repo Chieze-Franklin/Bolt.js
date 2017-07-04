@@ -46,10 +46,7 @@ const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
 
 module.exports = {
 	delete: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.user.find(searchCriteria, function (error, users) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -110,10 +107,7 @@ module.exports = {
 		});
 	},
 	get: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.user.find(searchCriteria, function (error, users) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
@@ -338,10 +332,7 @@ module.exports = {
 	  	response.end(utils.Misc.createResponse(user, null, 0));
 	},
 	put: function(request, response){ //TODO: there has to be a way to update 'displayPic'
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 

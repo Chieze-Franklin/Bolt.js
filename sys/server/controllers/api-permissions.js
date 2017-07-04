@@ -6,10 +6,7 @@ var superagent = require('superagent');
 
 module.exports = {
 	get: function(request, response){
-		var searchCriteria = {};
-		if (!utils.Misc.isNullOrUndefined(request.query)) {
-			searchCriteria = request.query;
-		}
+		var searchCriteria = request.query;
 
 		models.permission.find(searchCriteria, function (error, permissions) {
 			if (!utils.Misc.isNullOrUndefined(error)) {
