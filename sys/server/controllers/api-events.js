@@ -110,6 +110,7 @@ module.exports = {
 
 							//send event to socket for bolt
 							var socket = sockets.getSocket("bolt");
+							if(socket) {console.log(event.name);console.log(socket.id + "(bolt)");} else console.log("<undefined>");
 							if (!utils.Misc.isNullOrUndefined(socket)) {
 								//socket.send(JSON.stringify(event));
 								socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
@@ -129,10 +130,12 @@ module.exports = {
 
 										var smthn = superagent;
 
+										var socketName = context.name;
 										if (!utils.Misc.isNullOrUndefined(context.port)) {
 											smthn = superagent.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
 										else if (context.app.system) {
+											socketName = "bolt";
 											smthn = superagent.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
 
@@ -151,10 +154,11 @@ module.exports = {
 											.end(function(evntError, evntResponse){});
 											
 										//send event to socket for the app
-										var socket = sockets.getSocket(context.name); //socket will always be undefined if context is running on another process
+										var socket = sockets.getSocket(socketName); //socket will always be undefined if context is running on another process
+										if(socket) {console.log(event.name);console.log(socket.id + "(" +context.name+ ")");} else console.log("<undefined>");
 										if (!utils.Misc.isNullOrUndefined(socket)) {
 											//socket.send(JSON.stringify(event));
-											socket.broadcast.to(context.name).emit("message", JSON.stringify(event));
+											socket.broadcast.to(socketName).emit("message", JSON.stringify(event));
 										}
 									}
 								});
@@ -163,6 +167,14 @@ module.exports = {
 				});
 			}
 		});
+
+		/*var socket = sockets.getSocket("bolt");
+		if (!utils.Misc.isNullOrUndefined(socket)) {
+			var event = evnt;
+			event.token = request.genAppToken('bolt');
+			//socket.send(JSON.stringify(event));
+			socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
+		}*/
 			
 		//send a response back
 		response.send();
