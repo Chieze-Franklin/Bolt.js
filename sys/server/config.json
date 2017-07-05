@@ -4,6 +4,6 @@
 	"friendlyName": "Bolt Runtime Environment",
 	"friendlyVersion": "2017 Build 1",
 	"name": "Bolt.js",
-	"version": 0.53,
-	"minimumVersion": 0.53
+	"version": 0.54,
+	"minimumVersion": 0.54
 }

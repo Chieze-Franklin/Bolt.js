@@ -110,7 +110,6 @@ module.exports = {
 
 							//send event to socket for bolt
 							var socket = sockets.getSocket("bolt");
-							if(socket) {console.log(event.name);console.log(socket.id + "(bolt)");} else console.log("<undefined>");
 							if (!utils.Misc.isNullOrUndefined(socket)) {
 								//socket.send(JSON.stringify(event));
 								socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
@@ -155,7 +154,6 @@ module.exports = {
 											
 										//send event to socket for the app
 										var socket = sockets.getSocket(socketName); //socket will always be undefined if context is running on another process
-										if(socket) {console.log(event.name);console.log(socket.id + "(" +context.name+ ")");} else console.log("<undefined>");
 										if (!utils.Misc.isNullOrUndefined(socket)) {
 											//socket.send(JSON.stringify(event));
 											socket.broadcast.to(socketName).emit("message", JSON.stringify(event));

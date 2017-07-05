@@ -222,7 +222,7 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
 
     //socket.io
     sockets.createSocket("bolt", server);
-    //I noticed I had to put a delay
+    //I noticed I had to put a delay (did the same at app_host.js)
     setTimeout(function(){
         mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
         mongoose.connection.on('open', function () {

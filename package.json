@@ -1,6 +1,6 @@
 {
-  "name": "Bolt.js",
-  "version": "0.4.0",
+  "name": "bolt.js",
+  "version": "0.5.4",
   "description": "A Node.js-base runtime environment written in JavaScript",
   "main": "bolt.js",
   "repository": {

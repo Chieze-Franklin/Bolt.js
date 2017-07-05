@@ -336,6 +336,13 @@ module.exports = {
 						return;
 					}
 
+					if (appnm.indexOf('/') > -1 || appnm.indexOf('\\') > -1 || appnm.indexOf('?') > -1 || appnm.indexOf('&') > -1) {
+						//invalid characters in app name
+						var errr = new Error(errors['405']);
+						response.end(utils.Misc.createResponse(null, errr, 405));
+						return;
+					}
+
 					if (!utils.Misc.isNullOrUndefined(package.bolt.target)) {
 						var target = package.bolt.target;
 						var min = config.getMinimumVersion();
