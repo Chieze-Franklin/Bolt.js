@@ -222,31 +222,28 @@ var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
 
     //socket.io
     sockets.createSocket("bolt", server);
-    //I noticed I had to put a delay (did the same at app_host.js)
-    setTimeout(function(){
-        mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
-        mongoose.connection.on('open', function () {
+    mongoose.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI);
+    mongoose.connection.on('open', function () {
 
-            //remove transient hooks
-            models.hook.remove({ transient: true }, function(hookRemoveError){
-                //fire system-db-connected (if you need a Bolt transient hook for this event, move this below the last utils.Events.sub(...))
-                utils.Events.fire('system-db-connected', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
+        //remove transient hooks
+        models.hook.remove({ transient: true }, function(hookRemoveError){
+            //fire system-db-connected (if you need a Bolt transient hook for this event, move this below the last utils.Events.sub(...))
+            utils.Events.fire('system-db-connected', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
 
-                //now create transient hooks for Bolt
-                utils.Events.sub('bolt/app-deleted', { route: "x/bolt/hooks/bolt/app-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
-                utils.Events.sub('bolt/app-router-loaded', { route: "x/bolt/hooks/bolt/app-router-loaded" }, __genAppToken('bolt'), function(eventError, eventResponse){});
-                utils.Events.sub('bolt/app-started', { route: "x/bolt/hooks/bolt/app-started" }, __genAppToken('bolt'), function(eventError, eventResponse){});
-                utils.Events.sub('bolt/role-deleted', { route: "x/bolt/hooks/bolt/role-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
-                utils.Events.sub('bolt/user-deleted', { route: "x/bolt/hooks/bolt/user-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            //now create transient hooks for Bolt
+            utils.Events.sub('bolt/app-deleted', { route: "x/bolt/hooks/bolt/app-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/app-router-loaded', { route: "x/bolt/hooks/bolt/app-router-loaded" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/app-started', { route: "x/bolt/hooks/bolt/app-started" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/role-deleted', { route: "x/bolt/hooks/bolt/role-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
+            utils.Events.sub('bolt/user-deleted', { route: "x/bolt/hooks/bolt/user-deleted" }, __genAppToken('bolt'), function(eventError, eventResponse){});
 
-                //load routers
-                __loadRouters(app);
+            //load routers
+            __loadRouters(app);
 
-                //fire system-started
-                utils.Events.fire('system-started', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
-            });
+            //fire system-started
+            utils.Events.fire('system-started', { body: {} }, __genAppToken('bolt'), function(eventError, eventResponse){});
         });
-    }, 3000);
+    });
 });
 
 module.exports = server;

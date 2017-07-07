@@ -109,11 +109,13 @@ module.exports = {
 								.end(function(evntError, evntResponse){});
 
 							//send event to socket for bolt
-							var socket = sockets.getSocket("bolt");
-							if (!utils.Misc.isNullOrUndefined(socket)) {
-								//socket.send(JSON.stringify(event));
-								socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
-							}
+							var socketsForApp = sockets.getSockets("bolt");
+							socketsForApp.forEach(function(socket) {
+								if (!utils.Misc.isNullOrUndefined(socket)) {
+									socket.send(JSON.stringify(event));
+									//socket/*.broadcast.to("bolt")*/.emit("message", JSON.stringify(event));
+								}
+							});
 						}
 						else {
 							superagent
@@ -153,11 +155,13 @@ module.exports = {
 											.end(function(evntError, evntResponse){});
 											
 										//send event to socket for the app
-										var socket = sockets.getSocket(socketName); //socket will always be undefined if context is running on another process
-										if (!utils.Misc.isNullOrUndefined(socket)) {
-											//socket.send(JSON.stringify(event));
-											socket.broadcast.to(socketName).emit("message", JSON.stringify(event));
-										}
+										var socketsForApp = sockets.getSockets(socketName);
+										socketsForApp.forEach(function(socket) { //socket will always be undefined if context is running on another process
+											if (!utils.Misc.isNullOrUndefined(socket)) {
+												socket.send(JSON.stringify(event));
+												//socket/*.broadcast.to(socketName)*/.emit("message", JSON.stringify(event));
+											}
+										});
 									}
 								});
 						}
@@ -165,14 +169,6 @@ module.exports = {
 				});
 			}
 		});
-
-		/*var socket = sockets.getSocket("bolt");
-		if (!utils.Misc.isNullOrUndefined(socket)) {
-			var event = evnt;
-			event.token = request.genAppToken('bolt');
-			//socket.send(JSON.stringify(event));
-			socket.broadcast.to("bolt").emit("message", JSON.stringify(event));
-		}*/
 			
 		//send a response back
 		response.send();
