@@ -40,37 +40,17 @@ module.exports = {
 							//consider caching the function so we dont hv to do the long journey everytime
 						*/
 					}
-					/*else if (hook.type == "router") {
-						I would hv loved to support router types but:
-							* Routers are not "exact". Multiple routers may be loaded on the same endpoint. We dont want another person's router
-								function being invoked for an event you subscribed for, do we?
-							* Maybe in the future
-						
-					}*/
 					else if (hook.type == "web") {
-						//TODO:
-						/*
-						during installation, the user is shown something like:
-							The app {app-name} wants to register web hooks for the following events (You can change these at any time):
-							| event            | web hook                               | action |
-							----------------------------------------------------------------------
-							| bolt/app-started | https://bolt-app-monitor.herokuapp.com | [Allow]|
-						if the user allows, the web hook is registered for that app
-						....
-						//look for the right place to prepend "http://" in case it is missing 
-							(shud it be prepended b4 checking registered urls or after??)
-						if url is registered for the app (hook.subscriber)
-							event.token = request.genWebHookToken("{hook.subscriber}")//("{hook.subscriber}\{url}")
-							event.bolt = process.env.BOLT_ADDRESS; //TODO: don't forget to document this
-							POST: url, body: event
-						*/
-
 						var url = hook.route;
 						if (hook.route.indexOf("http://") != 0 && hook.route.indexOf("https://") != 0) {
 							url = "http://" + hook.route;
 						}
 
 						var event = evnt;
+						event.dispatchTime = new Date();
+						event.bolt = {
+							address: process.env.BOLT_ADDRESS
+						};
 						//event.token = ??? //TODO: how to generate tokens for web
 
 						//start the subscriber server
@@ -92,6 +72,7 @@ module.exports = {
 						//start the subscriber server
 						if (hook.subscriber == 'bolt') {
 							var event = evnt;
+							event.dispatchTime = new Date();
 							event.token = request.genAppToken('bolt'); //set the event token to equal the app token
 
 							var smthn = superagent.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")));
@@ -127,6 +108,7 @@ module.exports = {
 									//POST the event
 									if (!utils.Misc.isNullOrUndefined(context)) {
 										var event = evnt;
+										event.dispatchTime = new Date();
 										event.token = request.genAppToken(context.name); //set the event token to equal the app token
 
 										var smthn = superagent;

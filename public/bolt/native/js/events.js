@@ -3,7 +3,7 @@ var Bolt = (function(bolt){
 	hooks = [];
 
 	bolt.EventManager = {
-		fire: function(){
+		emit: function(event, appToken){
 			//
 		},
 		on: function(route, handler, name){
@@ -45,7 +45,7 @@ var Bolt = (function(bolt){
 		hooks.forEach(function(hook){
 			if ((hook.event == event.name || hook.event == "*") 
 				&& (hook.publisher == event.publisher || hook.publisher == "*")) {
-				hook.handler(event);
+				if (typeof hook.handler === "function") hook.handler(event);
 			}
 		});
 	});
