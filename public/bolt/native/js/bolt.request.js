@@ -11,12 +11,17 @@ var Bolt = (function(bolt){
 	}
 
 	bolt.Request = {
-		to: function(url, options, handler){
-			if(!options.body)
-				options.body = {};
+		to: function(url, options, callback){
+			if (url.indexOf("/") == 0) {
+				url = Bolt.Env.getAddress() + url;
+			}
+
+			if (url.indexOf("http://") != 0 && url.indexOf("https://") != 0) {
+				url = "http://" + url;
+			}
 			
 			var xhttp = __getXmlHttp();
-			xhttp.open(options.method, url, true);
+			xhttp.open(options.method || 'GET', url, true);
 			if(options.headers) {
 				var headers = options.headers;
 				for (var header in headers) {
@@ -29,11 +34,11 @@ var Bolt = (function(bolt){
 	      	xhttp.onreadystatechange = function(){
 	      		if(xhttp.readyState === 4){//=== XMLHttpRequest.DONE){
 	      			if(xhttp.status === 200 || xhttp.status === 0) {
-	      				handler(null, xhttp.responseText);
+	      				callback(null, xhttp.responseText);
 	      			} else {
 	      				var error = new Error(xhttp.statusText);
 						error.code = xhttp.status;
-	      				handler(error);
+	      				callback(error);
 	      			}
 	      		}
 	      	}

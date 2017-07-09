@@ -3,8 +3,13 @@ var Bolt = (function(bolt){
 	hooks = [];
 
 	bolt.Events = {
-		emit: function(eventName, eventData, appToken, headers){
-			//
+		emit: function(eventName, eventData, appToken, callback){
+			Bolt.Request.to("/api/events/" + eventName, 
+				{
+					method: 'POST', 
+					headers: {'Content-Type': 'application/json', 'X-Bolt-App-Token': appToken}, 
+					body: JSON.stringify(eventData)
+				}, callback);
 		},
 		on: function(route, handler, name){
 			route = route.replace("\\", "/");
@@ -34,7 +39,7 @@ var Bolt = (function(bolt){
 			hooks.push(newHook)
 		},
 		remove: function(name){
-			//
+			//for ()
 		}
 	};
 
