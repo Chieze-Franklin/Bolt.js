@@ -39,7 +39,19 @@ var Bolt = (function(bolt){
 			hooks.push(newHook)
 		},
 		remove: function(name){
-			//for ()
+			var indicesToRemove = [];
+			indicesToRemove = hooks.map(function(hook, index){
+				if (hook.name == name) {
+					return index;
+				}
+			});
+
+			var filteredHooks = [];
+			filteredHooks = hooks.filter(function(hook, index){
+              return indicesToRemove.indexOf(index) == -1;
+            });
+
+            hooks = filteredHooks;
 		}
 	};
 
