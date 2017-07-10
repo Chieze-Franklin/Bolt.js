@@ -4,6 +4,7 @@ var utils = require("bolt-internal-utils");
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var express = require("express");
+var fs = require("fs");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);
 var Showdown = require("showdown");
@@ -13,6 +14,9 @@ var __sysdir = path.join(__dirname + './../../sys');
 
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
 const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
+
+var multer = require('multer'), 
+	upload = multer({ dest : 'public/bolt/uploads/'});
 
 module.exports = function(app) {
 	app.use(bodyParser.json({limit: '100mb'}));
@@ -96,6 +100,43 @@ module.exports = function(app) {
 	app.use('/api', function (request, response, next) {
 	  response.set('Content-Type', 'application/json');
 	  next();
+	});
+
+	app.post('/public/upload', upload.any(), function (request, response) {
+		var files = [];
+		var fileNames = [];
+		
+		if (!utils.Misc.isNullOrUndefined(request.file)) file.push(request.file);
+		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
+
+		function loopThroughFiles (index) {
+			if (index >= files.length) {
+				response.end(utils.Misc.createResponse(fileNames));
+				return;
+			}
+
+			var file = files[index];
+			var fileName = "";
+
+			//since multer seems not to add extensions, I'm doing it manually here
+			var tempPath = path.resolve(file.path),
+				targetPath = path.resolve(file.path + path.extname(file.originalname));
+			fs.rename(tempPath, targetPath, function(renameError){
+				//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
+				//with which Mozilla doesn't work well sometimes
+				if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
+					fileName = file.destination + file.filename;
+				}
+				else {
+					fileName = file.destination + file.filename + path.extname(file.originalname);
+				}
+
+				fileNames.push(fileName);
+				loopThroughFiles(index + 1);
+			});
+		}
+
+		loopThroughFiles(0);
 	});
 
 	app.use('/public', express.static(__publicdir));
