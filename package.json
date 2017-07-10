@@ -57,6 +57,7 @@
     "handlebars": "^4.0.5",
     "jwt-simple": "^0.5.1",
     "lodash": "^4.11.1",
+    "moment": "^2.18.1",
     "mongodb": "^2.2.11",
     "mongoose": "^4.6.5",
     "multer": "^1.2.1",
