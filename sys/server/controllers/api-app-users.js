@@ -20,7 +20,7 @@ module.exports = {
 					else {
 						appUsers = utils.Misc.sanitizeAppUsers(appUsers);
 						appUsers.forEach(function(appUser){
-							utils.Events.fire('app-user-deleted', { body: appUser }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('app-user-deleted', { body: appUser }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(appUsers));
 					}
@@ -86,7 +86,7 @@ module.exports = {
 										}
 										else {
 											savedAppUser = utils.Misc.sanitizeAppUser(savedAppUser);
-											utils.Events.fire('app-user-created', { body: savedAppUser }, request.appToken, function(eventError, eventResponse){});
+											utils.Events.fire('app-user-created', { body: savedAppUser }, request.bolt.token, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(savedAppUser));
 										}
 									});

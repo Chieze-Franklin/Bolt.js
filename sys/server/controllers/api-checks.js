@@ -71,8 +71,6 @@ module.exports = {
 						}
 
 						loopThroughRoles(0);
-
-						//response.send(utils.Misc.createResponse(filteredApps));
 					}
 					else {
 						response.send(utils.Misc.createResponse([]));
@@ -96,6 +94,12 @@ module.exports = {
 			return;
 		}
 
+		if (utils.Misc.isNullOrUndefined(request.body.permission)) {
+			var error = new Error(errors['350']);
+			response.end(utils.Misc.createResponse(null, error, 350));
+			return;
+		}
+
 		//get user
 		var username;
 		if (!utils.Misc.isNullOrUndefined(request.body.user)) {
@@ -112,8 +116,6 @@ module.exports = {
 			response.send(utils.Misc.createResponse(false));
 			return;
 		}
-
-		//TODO: if (utils.Misc.isNullOrUndefined(request.body.permission)) send error and return
 
 		//get user-roles associated with the user
 		models.userRoleAssoc.find({ user: username }, function(errorUserRole, userRoles){

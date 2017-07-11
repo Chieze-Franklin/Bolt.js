@@ -22,7 +22,7 @@ module.exports = {
 					else {
 						appRoles = utils.Misc.sanitizeAppRoles(appRoles);
 						appRoles.forEach(function(appRole){
-							utils.Events.fire('app-role-deleted', { body: appRole }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('app-role-deleted', { body: appRole }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(appRoles));
 					}
@@ -90,7 +90,7 @@ module.exports = {
 										}
 										else {
 											savedAppRole = utils.Misc.sanitizeAppRole(savedAppRole);
-											utils.Events.fire('app-role-created', { body: savedAppRole }, request.appToken, function(eventError, eventResponse){});
+											utils.Events.fire('app-role-created', { body: savedAppRole }, request.bolt.token, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(savedAppRole));
 										}
 									});
@@ -138,7 +138,7 @@ module.exports = {
 					else if (!utils.Misc.isNullOrUndefined(appRoles)) {
 						appRoles = utils.Misc.sanitizeAppRoles(appRoles);
 						appRoles.forEach(function(appRole){
-							utils.Events.fire('app-role-updated', { body: appRole }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('app-role-updated', { body: appRole }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(appRoles));
 					}

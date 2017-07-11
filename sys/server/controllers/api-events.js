@@ -73,7 +73,7 @@ module.exports = {
 						if (hook.subscriber == 'bolt') {
 							var event = evnt;
 							event.dispatchTime = new Date();
-							event.token = request.genAppToken('bolt'); //set the event token to equal the app token
+							event.token = request.bolt.genAppToken('bolt'); //set the event token to equal the app token
 
 							var smthn = superagent.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")));
 							if(!utils.Misc.isNullOrUndefined(request.body.headers)) {
@@ -109,16 +109,16 @@ module.exports = {
 									if (!utils.Misc.isNullOrUndefined(context)) {
 										var event = evnt;
 										event.dispatchTime = new Date();
-										event.token = request.genAppToken(context.name); //set the event token to equal the app token
+										event.token = request.bolt.genAppToken(context.name); //set the event token to equal the app token
 
 										var smthn = superagent;
 
-										var socketName = context.name;
+										var appName = context.name;
 										if (!utils.Misc.isNullOrUndefined(context.port)) {
 											smthn = superagent.post(context.protocol + '://' + context.host + ':' + context.port + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
 										else if (context.app.system) {
-											socketName = "bolt";
+											appName = "bolt";
 											smthn = superagent.post(process.env.BOLT_ADDRESS + "/x/" + context.name + ("/" + utils.String.trimStart(hook.route, "/")));
 										}
 
@@ -137,11 +137,11 @@ module.exports = {
 											.end(function(evntError, evntResponse){});
 											
 										//send event to socket for the app
-										var socketsForApp = sockets.getSockets(socketName);
+										var socketsForApp = sockets.getSockets(appName);
 										socketsForApp.forEach(function(socket) { //socket will always be undefined if context is running on another process
 											if (!utils.Misc.isNullOrUndefined(socket)) {
 												socket.send(JSON.stringify(event));
-												//socket/*.broadcast.to(socketName)*/.emit("message", JSON.stringify(event));
+												//socket/*.broadcast.to(appName)*/.emit("message", JSON.stringify(event));
 											}
 										});
 									}

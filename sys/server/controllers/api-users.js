@@ -65,7 +65,7 @@ module.exports = {
 								fs.unlink(path.resolve(user.displayPic), function(unlinkError){});
 							}
 
-							utils.Events.fire('user-deleted', { body: user }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('user-deleted', { body: user }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(users));
 					}
@@ -99,7 +99,7 @@ module.exports = {
 						}
 
 						user = utils.Misc.sanitizeUser(user);
-						utils.Events.fire('user-deleted', { body: user }, request.appToken, function(eventError, eventResponse){});
+						utils.Events.fire('user-deleted', { body: user }, request.bolt.token, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(user));
 					}
 				});
@@ -227,7 +227,7 @@ module.exports = {
 							}
 							else {
 								savedUser = utils.Misc.sanitizeUser(savedUser);
-								utils.Events.fire('user-created', { body: savedUser }, request.appToken, function(eventError, eventResponse){});
+								utils.Events.fire('user-created', { body: savedUser }, request.bolt.token, function(eventError, eventResponse){});
 								response.send(utils.Misc.createResponse(savedUser));
 							}
 						});
@@ -306,12 +306,7 @@ module.exports = {
 
 						__registerLogin(request.user);
 						//fire the 'user-logged-in' (change to user_logged_in?) event
-						utils.Events.fire('user-logged-in', { body: request.user }, request.appToken, function(eventError, eventResponse){});
-						/*superagent
-							.post(process.env.BOLT_ADDRESS + '/api/events/user-logged-in')
-							.set(X_BOLT_APP_TOKEN, request.appToken)
-							.send({ body: request.user })
-							.end(function(eventError, eventResponse){});*/
+						utils.Events.fire('user-logged-in', { body: request.user }, request.bolt.token, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(request.user));
 					}
 				}
@@ -325,7 +320,7 @@ module.exports = {
 	postLogout: function(request, response){
 		if(!utils.Misc.isNullOrUndefined(request.session.user)) {
 			__registerLogout(request.session.user);
-			utils.Events.fire('user-logged-out', { body: request.session.user }, request.appToken, function(eventError, eventResponse){});
+			utils.Events.fire('user-logged-out', { body: request.session.user }, request.bolt.token, function(eventError, eventResponse){});
 		}
 		var user = request.session.user;
 		request.session.reset();
@@ -354,7 +349,7 @@ module.exports = {
 					else if (!utils.Misc.isNullOrUndefined(users)) {
 						users = utils.Misc.sanitizeUsers(users);
 						users.forEach(function(user){
-							utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('user-updated', { body: user }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(users));
 					}
@@ -394,7 +389,7 @@ module.exports = {
 						}
 						else{
 							user = utils.Misc.sanitizeUser(user);
-							utils.Events.fire('user-updated', { body: user }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('user-updated', { body: user }, request.bolt.token, function(eventError, eventResponse){});
 							response.send(utils.Misc.createResponse(user));
 						}
 					});

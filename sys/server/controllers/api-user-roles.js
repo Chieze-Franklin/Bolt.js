@@ -20,7 +20,7 @@ module.exports = {
 					else {
 						userRoles = utils.Misc.sanitizeUserRoles(userRoles);
 						userRoles.forEach(function(userRole){
-							utils.Events.fire('user-role-deleted', { body: userRole }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('user-role-deleted', { body: userRole }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(userRoles));
 					}
@@ -85,7 +85,7 @@ module.exports = {
 										}
 										else {
 											savedUserRole = utils.Misc.sanitizeUserRole(savedUserRole);
-											utils.Events.fire('user-role-created', { body: savedUserRole }, request.appToken, function(eventError, eventResponse){});
+											utils.Events.fire('user-role-created', { body: savedUserRole }, request.bolt.token, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(savedUserRole));
 										}
 									});

@@ -22,7 +22,7 @@ module.exports = {
 					else {
 						roles = utils.Misc.sanitizeRoles(roles);
 						roles.forEach(function(role){
-							utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('role-deleted', { body: role }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(roles));
 					}
@@ -51,7 +51,7 @@ module.exports = {
 					}
 					else {
 						role = utils.Misc.sanitizeRole(role);
-						utils.Events.fire('role-deleted', { body: role }, request.appToken, function(eventError, eventResponse){});
+						utils.Events.fire('role-deleted', { body: role }, request.bolt.token, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(role));
 					}
 				});
@@ -112,7 +112,7 @@ module.exports = {
 						}
 						else {
 							savedRole = utils.Misc.sanitizeRole(savedRole);
-							utils.Events.fire('role-created', { body: savedRole }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('role-created', { body: savedRole }, request.bolt.token, function(eventError, eventResponse){});
 							response.send(utils.Misc.createResponse(savedRole));
 						}
 					});
@@ -148,7 +148,7 @@ module.exports = {
 					else if (!utils.Misc.isNullOrUndefined(roles)) {
 						roles = utils.Misc.sanitizeRoles(roles);
 						roles.forEach(function(role){
-							utils.Events.fire('role-updated', { body: role }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('role-updated', { body: role }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(roles));
 					}
@@ -183,7 +183,7 @@ module.exports = {
 					}
 					else{
 						role = utils.Misc.sanitizeRole(role);
-						utils.Events.fire('role-updated', { body: role }, request.appToken, function(eventError, eventResponse){});
+						utils.Events.fire('role-updated', { body: role }, request.bolt.token, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(role));
 					}
 				});

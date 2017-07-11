@@ -37,7 +37,7 @@ module.exports = {
 				apps = utils.Misc.sanitizeApps(apps);
 				apps.forEach(function(app) {
 					//TODO: the 'body' of the event should hold the reason why the app is uninstalling
-					utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.appToken, 
+					utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.bolt.token, 
 						function(eventError, eventResponse) {});
 				});
 
@@ -64,7 +64,7 @@ module.exports = {
 								if (request.body.deleteDatabase === 'true') {
 									superagent
 										.delete(process.env.BOLT_ADDRESS + "/api/db")
-										.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+										.set(X_BOLT_APP_TOKEN, request.bolt.genAppToken(app.name))
 										.send({app: app.name})
 										.end(function(err, res){});
 								}
@@ -84,7 +84,7 @@ module.exports = {
 								//since deleting a router doesn't raise events (yet) we can delete them here
 								models.router.remove({app: app.name}, function(err){});
 
-								utils.Events.fire('app-uninstalled', { body: app }, request.appToken, function(eventError, eventResponse){});
+								utils.Events.fire('app-uninstalled', { body: app }, request.bolt.token, function(eventError, eventResponse){});
 							});
 
 							response.send(utils.Misc.createResponse(apps));
@@ -112,7 +112,7 @@ module.exports = {
 			else{
 				app = utils.Misc.sanitizeApp(app);
 				//TODO: the 'body' of the event should hold the reason why the app is uninstalling
-				utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.appToken, 
+				utils.Events.fire('app-uninstalling', { body: app, subscribers: [app.name] }, request.bolt.token, 
 					function(eventError, eventResponse) {
 						setTimeout(function() {
 							models.app.remove(searchCriteria, function (removeError, removeResult) {
@@ -136,7 +136,7 @@ module.exports = {
 									if (request.body.deleteDatabase === 'true') {
 										superagent
 											.delete(process.env.BOLT_ADDRESS + "/api/db")
-											.set(X_BOLT_APP_TOKEN, request.genAppToken(app.name))
+											.set(X_BOLT_APP_TOKEN, request.bolt.genAppToken(app.name))
 											.send({app: app.name})
 											.end(function(err, res){});
 									}
@@ -156,7 +156,7 @@ module.exports = {
 									//since deleting a router doesn't raise events (yet) we can delete them here
 									models.router.remove({app: app.name}, function(err){});
 
-									utils.Events.fire('app-uninstalled', { body: app }, request.appToken, function(eventError, eventResponse){});
+									utils.Events.fire('app-uninstalled', { body: app }, request.bolt.token, function(eventError, eventResponse){});
 									response.send(utils.Misc.createResponse(app));
 								}
 							});
@@ -229,11 +229,11 @@ module.exports = {
 		        cwd: __boltDir
 		    })
 		    .then(function(){
-		    	utils.Events.fire('app-downloaded', { body: appnm }, request.appToken, function(eventError, eventResponse){});
+		    	utils.Events.fire('app-downloaded', { body: appnm }, request.bolt.token, function(eventError, eventResponse){});
 		        //call /api/apps/local
 		        superagent
 					.post(process.env.BOLT_ADDRESS + '/api/apps/local')
-					.set({'X-Bolt-App-Token': request.appToken})
+					.set({'X-Bolt-App-Token': request.bolt.token})
 					.send({ path: appnm, system: request.body.system || false })
 					.end(function(appregError, appregResponse){
 						if (!utils.Misc.isNullOrUndefined(appregError)) {
@@ -556,7 +556,7 @@ module.exports = {
 											if (utils.Misc.isNullOrUndefined(saveRtrError) && !utils.Misc.isNullOrUndefined(savedRouter)) {
 												if (newApp.system) {
 													//remove '$_'
-													request.removeErrorHandlerMiddleware(request.app);
+													request.bolt.removeErrorHandlerMiddleware(request.app);
 
 													//load router
 													var routerObject = require(path.join(__node_modulesDir, savedRouter.path, savedRouter.main));
@@ -565,11 +565,11 @@ module.exports = {
 							                        } else {
 							                            request.app.use("/" + utils.String.trimStart(savedRouter.root, "/"), routerObject);
 							                        }
-							                        utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(savedRouter) }, request.appToken, 
+							                        utils.Events.fire('app-router-loaded', { body: utils.Misc.sanitizeRouter(savedRouter) }, request.bolt.token, 
 							                        	function(eventError, eventResponse){});
 
 													//add '$_'
-													request.addErrorHandlerMiddleware(request.app);
+													request.bolt.addErrorHandlerMiddleware(request.app);
 												}
 											}
 										});
@@ -631,7 +631,7 @@ module.exports = {
 									}
 									else {
 										savedApp = utils.Misc.sanitizeApp(savedApp);
-										utils.Events.fire('app-installed', { body: savedApp }, request.appToken, function(eventError, eventResponse){});
+										utils.Events.fire('app-installed', { body: savedApp }, request.bolt.token, function(eventError, eventResponse){});
 										response.send(utils.Misc.createResponse(savedApp));
 									}
 								});
@@ -761,22 +761,22 @@ module.exports = {
 								var subApp = require(path.join(__node_modulesDir, app.path, app.main));
 								
 								//remove '$_'
-								request.removeErrorHandlerMiddleware(request.app);
+								request.bolt.removeErrorHandlerMiddleware(request.app);
 
 								request.app.use("/x/" + app.name, subApp);
 
 								//add '$_'
-								request.addErrorHandlerMiddleware(request.app);
+								request.bolt.addErrorHandlerMiddleware(request.app);
 
 								__runningContexts.push(context);
 
 								//pass info to the app
-								var appstartingData = { appName: app.name, appToken: request.genAppToken(app.name) };
+								var appstartingData = { appName: app.name, appToken: request.bolt.genAppToken(app.name) };
 								var appstartingEventBody = { body: appstartingData, subscribers: [app.name] };
 								if (!utils.Misc.isNullOrUndefined(request.user)) {
 									appstartingEventBody.headers = {'X-Bolt-User-Name': request.user.name };
 								}
-								utils.Events.fire('app-starting', appstartingEventBody, request.appToken, 
+								utils.Events.fire('app-starting', appstartingEventBody, request.bolt.token, 
 									function(eventError, eventResponse){
 										//TODO: technically u r supposed to receive a response here to know if the app actually started
 										//after which we add the context to running contexts and fire 'app-started'
@@ -786,7 +786,7 @@ module.exports = {
 											if (!utils.Misc.isNullOrUndefined(request.user)) {
 												eventBody.headers = {'X-Bolt-User-Name': request.user.name };
 											}
-											utils.Events.fire('app-started', eventBody, request.appToken, function(eventError, eventResponse){});
+											utils.Events.fire('app-started', eventBody, request.bolt.token, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(context));
 										}, 2000);
 									});
@@ -818,13 +818,13 @@ module.exports = {
 											port: process.env.PORT || process.env.BOLT_PORT, 
 											appName: context.name, 
 											appPort: context.port,
-											appToken: request.genAppToken(context.name) 
+											appToken: request.bolt.genAppToken(context.name) 
 										};
 										var appstartingEventBody = { body: appstartingData, subscribers: [context.name] };
 										if (!utils.Misc.isNullOrUndefined(request.user)) {
 											appstartingEventBody.headers = {'X-Bolt-User-Name': request.user.name };
 										}
-										utils.Events.fire('app-starting', appstartingEventBody, request.appToken, 
+										utils.Events.fire('app-starting', appstartingEventBody, request.bolt.token, 
 											function(eventError, eventResponse){
 												//TODO: technically u r supposed to receive a response here to know if the app actually started
 												//after which we add the context to running contexts and fire 'app-started'
@@ -834,7 +834,7 @@ module.exports = {
 													if (!utils.Misc.isNullOrUndefined(request.user)) {
 														eventBody.headers = {'X-Bolt-User-Name': request.user.name };
 													}
-													utils.Events.fire('app-started', eventBody, request.appToken, function(eventError, eventResponse){});
+													utils.Events.fire('app-started', eventBody, request.bolt.token, function(eventError, eventResponse){});
 													response.send(utils.Misc.createResponse(context));
 												}, 2000);
 											});
@@ -897,7 +897,7 @@ module.exports = {
 					var context = __runningContexts[index];
 					
 					//TODO: the 'body' of the event should hold the reason why the app is stopping
-					utils.Events.fire('app-stopping', { body: context, subscribers: [context.name] }, request.appToken, 
+					utils.Events.fire('app-stopping', { body: context, subscribers: [context.name] }, request.bolt.token, 
 						function(eventError, eventResponse){
 							//TODO: technically u r supposed to receive a response here to know if the app actually stopped
 							//after which we do all the killing and destroying, and fire 'app-stopped'
@@ -906,7 +906,7 @@ module.exports = {
 							__runningContexts.pop(context);
 
 							//remove app token
-							request.destroyAppToken(context.name); //TODO: test this
+							request.bolt.destroyAppToken(context.name); //TODO: test this
 
 							//kill process
 							processes.killProcess(context.name); //TODO: haven't tested this
@@ -915,7 +915,7 @@ module.exports = {
 							models.hook.remove({ subscriber: context.name, transient: true }, function(hookRemoveError){});
 
 							setTimeout(function(){
-								utils.Events.fire('app-stopped', { body: context }, request.appToken, function(eventError, eventResponse){});
+								utils.Events.fire('app-stopped', { body: context }, request.bolt.token, function(eventError, eventResponse){});
 							}, 2000);
 						});
 					response.send(utils.Misc.createResponse(context));
@@ -953,7 +953,7 @@ module.exports = {
 					else if (!utils.Misc.isNullOrUndefined(apps)) {
 						apps = utils.Misc.sanitizeApps(apps);
 						apps.forEach(function(app){
-							utils.Events.fire('app-updated', { body: app }, request.appToken, function(eventError, eventResponse){});
+							utils.Events.fire('app-updated', { body: app }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(apps));
 					}
@@ -988,7 +988,7 @@ module.exports = {
 					}
 					else{
 						app = utils.Misc.sanitizeApp(app);
-						utils.Events.fire('app-updated', { body: app }, request.appToken, function(eventError, eventResponse){});
+						utils.Events.fire('app-updated', { body: app }, request.bolt.token, function(eventError, eventResponse){});
 						response.send(utils.Misc.createResponse(app));
 					}
 				});
