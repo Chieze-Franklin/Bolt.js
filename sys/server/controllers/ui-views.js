@@ -46,7 +46,7 @@ var __loadSetupView = function(request, response){
 
 	var scope = {
 		redirect: redirect,
-		appToken: request.appToken,
+		token: request.bolt.token,
 		title: "Setup"
 	};
 	//response.locals.title = "Setup";
@@ -123,7 +123,7 @@ module.exports = {
 
 									success: request.query.success,
 
-									appToken: request.appToken
+									token: request.bolt.token
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
@@ -157,7 +157,7 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			appToken: request.appToken
+			token: request.bolt.token
 		};
 		response.locals.title = "Install";
 		response
@@ -170,7 +170,7 @@ module.exports = {
 			failure: request.query.failure,
 			noQuery: request.query.no_query === 'true',
 
-			appToken: request.appToken
+			token: request.bolt.token
 		};
 		response.locals.title = "Login";
 		response
@@ -179,7 +179,7 @@ module.exports = {
 	},
 	getLogout: function(request, response){
 		var scope = {
-			appToken: request.appToken,
+			token: request.bolt.token,
 		};
 		response.locals.title = "Log Out";
 		response
@@ -225,7 +225,7 @@ module.exports = {
 
 									success: request.query.success,
 
-									appToken: request.appToken
+									token: request.bolt.token
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
@@ -253,7 +253,7 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			appToken: request.appToken
+			token: request.bolt.token
 		};
 		response.locals.title = "Uninstall";
 		response
@@ -268,7 +268,7 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			appToken: request.appToken
+			token: request.bolt.token
 		};
 		response.locals.title = "Update";
 		response
@@ -321,7 +321,7 @@ module.exports = {
 							errorUserTitle: request.query.error_user_title,
 							errorUserMessage: request.query.error_user_message,
 
-							appToken: request.appToken
+							token: request.bolt.token
 						};
 						response
 							.set('Content-type', 'text/html')

@@ -228,7 +228,7 @@ $(document).ready(function(){
         processData: false,
         contentType: false, //'multipart/form-data',
         beforeSend: function(xhr) {
-          xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
+          xhr.setRequestHeader('X-Bolt-App-Token', '{{token}}');
         },
         success: function(response){
           if(response.code == 0){
@@ -237,7 +237,7 @@ $(document).ready(function(){
               url: "/api/roles",
               data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Has complete access to every part of the system" },
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response2, status2, xhr2){
                 if(response2.code == 0){ 
                   //third, associate user and role
@@ -245,7 +245,7 @@ $(document).ready(function(){
                     url: "/api/user-roles",
                     data: { user: response.body.name, role: response2.body.name },
                     type: "POST",
-                    headers: {'X-Bolt-App-Token': '{{appToken}}'},
+                    headers: {'X-Bolt-App-Token': '{{token}}'},
                     success: function(response3, status3, xhr3){
                       if(response3.code == 0){ 
                         //fourth, log user in
@@ -253,7 +253,7 @@ $(document).ready(function(){
                           url: "/api/users/login",
                           data: { name: username, password: password },
                           type: "POST",
-                          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+                          headers: {'X-Bolt-App-Token': '{{token}}'},
                           success: function(response4, status4, xhr4){
                             if(response4.code == 0){ 
                                 swal({
@@ -351,7 +351,7 @@ var performRequests = function(index){
             type: req.method,
             //processData: false,
             beforeSend: function(xhr) {
-              xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
+              xhr.setRequestHeader('X-Bolt-App-Token', '{{token}}');
             },
             success: function(response, status, xhr){
               runRequest(++index);
@@ -373,7 +373,7 @@ var performRequests = function(index){
           type: req.method,
           //processData: false,
           beforeSend: function(xhr) {
-            xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
+            xhr.setRequestHeader('X-Bolt-App-Token', '{{token}}');
           },
           success: function(response, status, xhr){},
           error: function(xhr, status, err){}

@@ -53,7 +53,7 @@ function redirect(user){
       url: "/api/tokens",
       data: { object: user._id },
       type: "POST",
-      headers: {'X-Bolt-App-Token': '{{appToken}}'},
+      headers: {'X-Bolt-App-Token': '{{token}}'},
       success: function(response, status, xhr){
         if(response.code == 0){
           var token = response.body;
@@ -85,7 +85,7 @@ $(function()
     $.ajax({
       url: "/api/users/@current",
       type: "GET",
-      headers: {'X-Bolt-App-Token': '{{appToken}}'},
+      headers: {'X-Bolt-App-Token': '{{token}}'},
       success: function(response, status, xhr){
         if(response.code == 0){
           redirect(response.body);
@@ -113,7 +113,7 @@ $(document).ready(function(){
           data: { name: username, password: password },
           type: "POST",
           beforeSend: function(xhr) {
-            xhr.setRequestHeader('X-Bolt-App-Token', '{{appToken}}');
+            xhr.setRequestHeader('X-Bolt-App-Token', '{{token}}');
           },
           success: function(response, status, xhr){
             if(response.code == 0){

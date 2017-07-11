@@ -24,7 +24,7 @@
         $.ajax({
           url: "/api/users/@current",
           type: "GET",
-          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          headers: {'X-Bolt-App-Token': '{{token}}'},
           success: function(response, status, xhr){
             if(response.code == 0){
               var user = response.body;
@@ -44,7 +44,7 @@
               url: "/api/apps",
               data: { name: "bolt-home" },
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="/Home";
@@ -64,7 +64,7 @@
               url: "/api/apps/local",
               data: { path: "bolt-home" },
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="/Home";

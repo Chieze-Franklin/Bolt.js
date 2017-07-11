@@ -24,7 +24,7 @@
               url: "/api/apps",
               data: { name: "bolt-admin" },
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="/Admin";
@@ -44,7 +44,7 @@
               url: "/api/apps/local",
               data: { path: "bolt-admin" },
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="/Admin";

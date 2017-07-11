@@ -70,7 +70,7 @@ $(document).ready(function(){
           url: "/api/apps",
           data: { name: "{{name}}", system: system },
           type: "POST",
-          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          headers: {'X-Bolt-App-Token': '{{token}}'},
           success: function(response, status, xhr){
             if(response.code == 0){
               sweetAlert({

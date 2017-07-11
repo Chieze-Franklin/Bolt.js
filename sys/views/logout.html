@@ -19,7 +19,7 @@
         $.ajax({
           url: "/api/users/@current",
           type: "GET",
-          headers: {'X-Bolt-App-Token': '{{appToken}}'},
+          headers: {'X-Bolt-App-Token': '{{token}}'},
           success: function(response, status, xhr){
             if(response.code == 0){
               var user = response.body;
@@ -42,7 +42,7 @@
             $.ajax({
               url: "/api/users/logout",
               type: "POST",
-              headers: {'X-Bolt-App-Token': '{{appToken}}'},
+              headers: {'X-Bolt-App-Token': '{{token}}'},
               success: function(response, status, xhr){
                 if(response.code == 0){
                   window.location.href="/login";
