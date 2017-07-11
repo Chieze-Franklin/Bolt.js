@@ -25,6 +25,12 @@ var __updatableProps = ["displayName", "controlledVisibility", "description", "o
 //holds all running contexts
 var __runningContexts = [];
 
+var __beforeSystemApp = function (request, response, next) {
+    request.bolt = {}; //strip off all request.bolt fields before passing to system app
+
+    next();
+};
+
 module.exports = {
 	delete: function(request, response) {
 		var searchCriteria = request.query;
@@ -763,6 +769,7 @@ module.exports = {
 								//remove '$_'
 								request.bolt.removeErrorHandlerMiddleware(request.app);
 
+								request.app.use("/x/" + app.name, __beforeSystemApp);
 								request.app.use("/x/" + app.name, subApp);
 
 								//add '$_'

@@ -145,7 +145,7 @@ var app = configure(express());
 
 //pass in info native views can use
 app.use(function (request, response, next) {
-    //BEGIN BACKWARD-COMPATIBILITY
+    /*//BEGIN BACKWARD-COMPATIBILITY
     request.addErrorHandlerMiddleware = __addErrorHandlerMiddleware;
     request.contextToAppTokenMap = __contextToAppTokenMap;
     request.destroyAppToken = __destroyAppToken; //TODO: test this
@@ -154,7 +154,7 @@ app.use(function (request, response, next) {
     request.removeErrorHandlerMiddleware = __removeErrorHandlerMiddleware;
 
     request.appToken = __genAppToken('bolt');
-    //END
+    //END*/
 
     request.bolt = {
         addErrorHandlerMiddleware: __addErrorHandlerMiddleware,
@@ -166,12 +166,6 @@ app.use(function (request, response, next) {
 
         token: __genAppToken('bolt')
     };
-
-    //if the route starts with '/x/' but not '/x/bolt/'
-    if (request.originalUrl.indexOf('/x/') === 0 && request.originalUrl.indexOf('/x/bolt/') !== 0) {
-        //pass en empty bolt object
-        request.bolt = {};
-    }
 
     next();
 });
