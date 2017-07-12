@@ -145,17 +145,6 @@ var app = configure(express());
 
 //pass in info native views can use
 app.use(function (request, response, next) {
-    /*//BEGIN BACKWARD-COMPATIBILITY
-    request.addErrorHandlerMiddleware = __addErrorHandlerMiddleware;
-    request.contextToAppTokenMap = __contextToAppTokenMap;
-    request.destroyAppToken = __destroyAppToken; //TODO: test this
-    request.genAppToken = __genAppToken; //TODO: test this
-    request.loadRouters = __loadRouters;
-    request.removeErrorHandlerMiddleware = __removeErrorHandlerMiddleware;
-
-    request.appToken = __genAppToken('bolt');
-    //END*/
-
     request.bolt = {
         addErrorHandlerMiddleware: __addErrorHandlerMiddleware,
         contextToAppTokenMap: __contextToAppTokenMap,
