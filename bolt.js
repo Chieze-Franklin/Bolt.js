@@ -198,29 +198,30 @@ app.use(uiViewsRouter);
 
 // catch 404 and forward to error handler
 var $_ = function (request, response) {
-    //var url = request.originalUrl;
-    console.log(request.originalUrl);
     if (request.originalUrl.indexOf('/x/') == 0) {
         var name = '';
         var route = '';
-        var query = url.parse(request.url).query || '';
+        var query = url.parse(request.url).query;
 
-        var index = request.path.indexOf('/', 3);console.log(request.path)
+        var index = request.path.indexOf('/', 3);
         if (index > -1) {
             name = request.path.substring(3, index);
             route = request.path.substr(index);
         } else {
             name = request.path.substr(3);
         }
-        console.log(name)
-        console.log(route)
-        console.log(query)
+
+        var appnm = name + '?route=' + encodeURIComponent(route) + 
+            (utils.Misc.isNullOrUndefined(query) ? "" : "&query=" + encodeURIComponent(query));
+        response.redirect('/apps/' + appnm);
     }
-    var error = new Error("The endpoint '" + request.path + "' could not be found!");
-    var msg = "Could not find specified endpoint '" + request.path + "'";
-    response
-        .set('Content-Type', 'application/json')
-        .end(utils.Misc.createResponse(null, error, 103, null, null, msg));
+    else {
+        var error = new Error("The endpoint '" + request.path + "' could not be found!");
+        var msg = "Could not find specified endpoint '" + request.path + "'";
+        response
+            .set('Content-Type', 'application/json')
+            .end(utils.Misc.createResponse(null, error, 103, null, null, msg));
+    }
 };
 
 var server = app.listen(process.env.PORT || process.env.BOLT_PORT, function () {
