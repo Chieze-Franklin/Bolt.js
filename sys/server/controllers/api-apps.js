@@ -72,11 +72,15 @@ module.exports = {
 										.delete(process.env.BOLT_ADDRESS + "/api/db")
 										.set(X_BOLT_APP_TOKEN, request.bolt.genAppToken(app.name))
 										.send({app: app.name})
-										.end(function(err, res){});
+										.end(function(err, res){
+											//since collections don't raise events (yet) we can delete them here
+											models.collection.remove({app: app.name}, function(err){});
+										});
 								}
-
-								//since collections don't raise events (yet) we can delete them here
-								models.collection.remove({app: app.name}, function(err){});
+								else {
+									//since collections don't raise events (yet) we can delete them here
+									models.collection.remove({app: app.name}, function(err){});
+								}
 
 								//since extensions don't raise events (yet) we can delete them here
 								models.extension.remove({app: app.name}, function(err){});
@@ -144,11 +148,15 @@ module.exports = {
 											.delete(process.env.BOLT_ADDRESS + "/api/db")
 											.set(X_BOLT_APP_TOKEN, request.bolt.genAppToken(app.name))
 											.send({app: app.name})
-											.end(function(err, res){});
+											.end(function(err, res){
+												//since collections don't raise events (yet) we can delete them here
+												models.collection.remove({app: app.name}, function(err){});
+											});
 									}
-
-									//since collections don't raise events (yet) we can delete them here
-									models.collection.remove({app: app.name}, function(err){});
+									else {
+										//since collections don't raise events (yet) we can delete them here
+										models.collection.remove({app: app.name}, function(err){});
+									}
 
 									//since extensions don't raise events (yet) we can delete them here
 									models.extension.remove({app: app.name}, function(err){});
