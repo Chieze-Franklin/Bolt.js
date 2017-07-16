@@ -41,6 +41,19 @@ var __registerLogout = function(user) {
 	}
 }
 
+var __getRoles = function(user, callback) {
+	user.roles = [];
+	models.userRoleAssoc.find({user: user.name}, function (error, userRoles) {
+		if (!utils.Misc.isNullOrUndefined(userRoles)) {
+			userRoles.forEach(function(ur) {
+				user.roles.push(ur.role);
+			});
+		}
+
+		callback(user);
+	});
+}
+
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
 const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
 
@@ -199,7 +212,9 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 203));
 			}
 			else{
-				response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
+				__getRoles(user, function(user) {
+					response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
+				});
 			}
 		});
 	},
