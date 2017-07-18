@@ -18,7 +18,7 @@
     "test-style": "gulp test:style"
   },
   "engines": {
-    "node": "6.9.4",
+    "node": "6.11.1",
     "npm": "4.1.1"
   },
   "keywords": [

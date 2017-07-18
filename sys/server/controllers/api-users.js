@@ -41,19 +41,6 @@ var __registerLogout = function(user) {
 	}
 }
 
-var __getRoles = function(user, callback) {
-	user.roles = [];
-	models.userRoleAssoc.find({user: user.name}, function (error, userRoles) {
-		if (!utils.Misc.isNullOrUndefined(userRoles)) {
-			userRoles.forEach(function(ur) {
-				user.roles.push(ur.role);
-			});
-		}
-
-		callback(user);
-	});
-}
-
 const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
 const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
 
@@ -212,9 +199,7 @@ module.exports = {
 				response.end(utils.Misc.createResponse(null, err, 203));
 			}
 			else{
-				__getRoles(user, function(user) {
-					response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
-				});
+				response.send(utils.Misc.createResponse(utils.Misc.sanitizeUser(user)));
 			}
 		});
 	},
@@ -333,11 +318,11 @@ module.exports = {
 		}
 	},
 	postLogout: function(request, response){
-		if(!utils.Misc.isNullOrUndefined(request.session.user)) {
-			__registerLogout(request.session.user);
-			utils.Events.fire('user-logged-out', { body: request.session.user }, request.bolt.token, function(eventError, eventResponse){});
-		}
 		var user = request.session.user;
+		if(!utils.Misc.isNullOrUndefined(user)) {
+			__registerLogout(user);
+			utils.Events.fire('user-logged-out', { body: user }, request.bolt.token, function(eventError, eventResponse){});
+		}
 		request.session.reset();
 	  	response.end(utils.Misc.createResponse(user, null, 0));
 	},
@@ -346,7 +331,7 @@ module.exports = {
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
-		if (utils.Misc.isNullOrUndefined(updateObject.displayName))
+		if (utils.Misc.isNullOrUndefined(updateObject.displayName) && !utils.Misc.isNullOrUndefined(updateObject.dn))
 			updateObject.displayName = updateObject.dn;
 
 		models.user.update(searchCriteria,
@@ -382,7 +367,7 @@ module.exports = {
 		var updateObject = request.body;
 		updateObject = utils.Misc.extractModel(updateObject, __updatableProps);
 
-		if (utils.Misc.isNullOrUndefined(updateObject.displayName))
+		if (utils.Misc.isNullOrUndefined(updateObject.displayName) && !utils.Misc.isNullOrUndefined(updateObject.dn))
 			updateObject.displayName = updateObject.dn;
 
 		function updateUser() {

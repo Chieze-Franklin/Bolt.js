@@ -20,6 +20,16 @@ module.exports = {
 					else {
 						userRoles = utils.Misc.sanitizeUserRoles(userRoles);
 						userRoles.forEach(function(userRole){
+							models.user.findOne({name: userRole.user}, function(errorUser, user){
+								if(!utils.Misc.isNullOrUndefined(user)) {
+									user.roles = user.roles || [];
+									var index = user.roles.indexOf(userRole.role);
+									if (index > -1) {
+										user.roles.splice(index, 1);
+										user.save();
+									}
+								}
+							});
 							utils.Events.fire('user-role-deleted', { body: userRole }, request.bolt.token, function(eventError, eventResponse){});
 						});
 						response.send(utils.Misc.createResponse(userRoles));
@@ -84,6 +94,9 @@ module.exports = {
 											response.end(utils.Misc.createResponse(null, saveError, 312));
 										}
 										else {
+											user.roles = user.roles || [];
+											user.roles.push(savedUserRole.role);
+											user.save();
 											savedUserRole = utils.Misc.sanitizeUserRole(savedUserRole);
 											utils.Events.fire('user-role-created', { body: savedUserRole }, request.bolt.token, function(eventError, eventResponse){});
 											response.send(utils.Misc.createResponse(savedUserRole));
