@@ -111,7 +111,9 @@ module.exports = function(app) {
 
 		function loopThroughFiles (index) {
 			if (index >= files.length) {
-				response.end(utils.Misc.createResponse(fileNames));
+				response
+					.set('Content-Type', 'application/json')
+					.send(utils.Misc.createResponse(fileNames));
 				return;
 			}
 

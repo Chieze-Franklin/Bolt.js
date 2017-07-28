@@ -9,7 +9,7 @@ With Bolt.js you get to run your JavaScript web apps and websites in an environm
 ## Getting Started
 
 * Bolt is built on Node.js, so ensure you have [Node](https://nodejs.org) (and npm) installed.
-* Bolt also relies on MongoDB, so ensure you have [MonogoDB](https://www.mongodb.com/) installed and running.
+* Bolt also relies on MongoDB, so ensure you have [MongoDB](https://www.mongodb.com/) installed and running.
 * Set the following environment variables:
 	* PORT: Set this to the port on which the Bolt server will run. You do NOT set this on Heroku, as Heroku does that for you.
     * MONGODB_URI: Set this to your MongoDB URI, like 'mongodb://<user>:<password>@ds056789.mlab.com:56789/bolt' or 'mongodb://127.0.0.1:27017/bolt'

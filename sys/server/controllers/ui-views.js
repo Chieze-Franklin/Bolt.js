@@ -120,7 +120,7 @@ module.exports = {
 
 								var scope = {
 									name: request.query.app,
-
+									version: request.query.version,
 									success: request.query.success,
 
 									token: request.bolt.token
@@ -263,7 +263,7 @@ module.exports = {
 	getUpdate: function(request, response){
 		var scope = {
 			app: request.query.app,
-			folder: request.query.folder,
+			folder: request.query.path,
 			version: request.query.version,
 			success: request.query.success,
 			failure: request.query.failure,
