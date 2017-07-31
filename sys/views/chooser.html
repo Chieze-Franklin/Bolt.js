@@ -1,0 +1,26 @@
+<div class="container-xs-height full-height">
+  <div class="row-xs-height">
+    <div class="col-xs-height col-middle">
+      <div class="error-container text-center">
+        <h1 class="error-number">Chooser</h1>
+        <h2 class="semi-bold">Multiple apps found for <b>{{extension}}</b></h2>
+        <div data-init-list-view="ioslist" class="list-view bordered">
+          <div class="list-view-group-container">
+            <ul>
+              {{#each results}}
+              <li class="chat-user-list clearfix">
+                <a data-view-animation="push-parrallax" data-view-port="#chat" class="" href="/apps/{{path}}">
+                  <p class="p-l-10 col-xs-height col-middle col-xs-12 text-master">
+                    <img src="/files/{{name}}/icon" width="20" height="20"> 
+                    {{app.displayName}}
+                  </p>
+                </a>
+              </li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

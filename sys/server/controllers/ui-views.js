@@ -278,7 +278,8 @@ module.exports = {
 	getView: function(request, response){
 		//get the app that serves that view; if not get our native view; if not found show app for 404; if not show native 404.html
 
-		var app = null;
+		var extensionApps = [];
+		var results = [];
 		var ext = "/" + utils.String.trimStart(utils.String.trim(request.params.view.toLowerCase()), "/");
 		models.extension.find({ path: ext }, function(errorExtensions, extensions){
 			if (!utils.Misc.isNullOrUndefined(errorExtensions)){
@@ -288,24 +289,56 @@ module.exports = {
 			else if(!utils.Misc.isNullOrUndefined(extensions) && extensions.length > 0) {
 				var rawQuery = url.parse(request.url).query;
 				if (extensions.length == 1) {
-					app = extensions[0].app + '?route=' + encodeURIComponent(extensions[0].route) 
+					var app = extensions[0].app + '?route=' + encodeURIComponent(extensions[0].route) 
 						+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
+					extensionApps.push(app);
 				}
 				else {
 					for (var index = 0; index < extensions.length; index++) {
 						var extension = extensions[index];
+						var app = extension.app + '?route=' + encodeURIComponent(extension.route)
+							+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
 						if (extension.isDefault) {
-							app = extension.app + '?route=' + encodeURIComponent(extension.route)
-								+ (utils.Misc.isNullOrUndefined(rawQuery) ? "" : "&query=" + encodeURIComponent(rawQuery));
+							extensionApps = [];
+							extensionApps.push(app);
 							break;
+						} else {
+							extensionApps.push(app);
+							results.push({name: extension.app, path: app, displayName: ''});
 						}
 					}
 				}
 			}
 
 			//if an app that can serve this view is found
-			if (!utils.Misc.isNullOrUndefined(app)) {
-				response.redirect('/apps/' + app);
+			if (extensionApps.length == 1) {
+				response.redirect('/apps/' + extensionApps[0]);
+			}
+			//if more than one app can server this view
+			else if (extensionApps.length > 1) {
+				var loopThroughResults = function(index) {
+					if (index >= results.length) {
+						var scope = {
+							extension: ext,
+							results: results,
+							token: request.bolt.token
+						};
+						response
+							.set('Content-type', 'text/html')
+							.render('chooser.html', scope);
+						return;
+					}
+
+					var res = results[index];
+					models.app.findOne({ name: res.name }, function (appError, app) {
+						if (!utils.Misc.isNullOrUndefined(app)) {
+							res.app = app;
+							results[index] = res;
+						}
+						loopThroughResults(index + 1);
+					});
+				}
+				loopThroughResults(0);
 			}
 			//check for a native view
 			else {
