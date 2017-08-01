@@ -29,6 +29,7 @@
         </div>
 
         <button class="btn btn-primary btn-cons m-t-10" name="submit" id="submit">Install</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle" src="public/bolt/native/img/progress.svg" alt="Progress">
       </div>
     </div>
   </div>
@@ -46,6 +47,8 @@ function redirect(){
 }
 
 $(document).ready(function(){
+    $("#progress-circle").hide();
+
     var system;
 
     var readmeVisible = false;
@@ -63,7 +66,9 @@ $(document).ready(function(){
     });
 
     $("#submit").click(function(){
-        //TODO: show a toast saying "downloading..."
+        $("#submit").hide();
+        $("#progress-circle").show();
+        
         system = $("#system").is(":checked");
 
         $.ajax({
@@ -87,10 +92,14 @@ $(document).ready(function(){
             }
             else {
               swal(response.errorUserTitle, response.errorUserMessage, "error");
+              $("#submit").show();
+              $("#progress-circle").hide();
             }
           },
           error: function(xhr, status, err){
             alert(xhr.responseText);
+            $("#submit").show();
+            $("#progress-circle").hide();
           }
         });
     });

@@ -20,7 +20,7 @@ gulp.task('copy:build', function(){
 		.pipe(gulp.dest('dist/sys/views'))
 	gulp.src(['node_modules/bolt-*/**/*'])
 		.pipe(gulp.dest('dist/node_modules'))
-	gulp.src(['bolt.js', '_docs/LICENSE', '_docs/README.md', '_docs/package.json'])
+	gulp.src(['bolt.js', 'electron-app.js', '_docs/LICENSE', '_docs/README.md', '_docs/package.json'])
 		.pipe(gulp.dest('dist'))
 });
 gulp.task('del:build', function(){

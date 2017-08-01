@@ -39,6 +39,7 @@
         </div>
 
         <button class="btn btn-primary btn-cons m-t-10" name="uninstall" id="uninstall">Uninstall</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle" src="public/bolt/native/img/progress.svg" alt="Progress">
       </div>
     </div>
   </div>
@@ -56,11 +57,16 @@ function redirect(){
 }
 
 $(document).ready(function(){
+    $("#progress-circle").hide();
+
     $("#app").val("{{app}}")
 
     var delete_folder = false, delete_public = false, delete_db = false;
 
     $("#uninstall").click(function(){
+        $("#uninstall").hide();
+        $("#progress-circle").show();
+
         var appnm = $("#app").val();
         delete_folder = $("#delete_folder").is(":checked");
         delete_public = $("#delete_public").is(":checked");
@@ -92,10 +98,14 @@ $(document).ready(function(){
             }
             else {
               swal(response.errorUserTitle, response.errorUserMessage, "error");
+              $("#uninstall").show();
+              $("#progress-circle").hide();
             }
           },
           error: function(xhr, status, err){
             alert(xhr.responseText);
+            $("#uninstall").show();
+            $("#progress-circle").hide();
           }
         });
     });
