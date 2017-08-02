@@ -18,6 +18,7 @@
         </div>
 
         <button class="btn btn-primary btn-cons m-t-10" name="download" id="download">Download</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle-download" src="public/bolt/native/img/progress.svg" alt="Progress">
       </div>
     </div>
 
@@ -39,12 +40,16 @@
         </div>
 
         <button class="btn btn-primary btn-cons m-t-10" name="sideload" id="sideload">Sideload</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle-sideload" src="public/bolt/native/img/progress.svg" alt="Progress">
       </div>
     </div>
   </div>
 </div>
 <script>
 $(document).ready(function(){
+    $("#progress-circle-download").hide();
+    $("#progress-circle-sideload").hide();
+
     $("#app_name").val("{{app}}")
     $("#app_name_local").val("{{app}}")
     $("#version").val("{{version}}")
@@ -52,6 +57,10 @@ $(document).ready(function(){
     var success_redirect = "{{success}}";
 
     $("#download").click(function(){
+        $("#sideload").prop("disabled", true);
+        $("#download").hide();
+        $("#progress-circle-download").show();
+
         //first you uninstall the app, then you reinstall
 
         //here we remove the source folder from node_modules
@@ -77,15 +86,25 @@ $(document).ready(function(){
             }
             else {
               swal(response.errorUserTitle, response.errorUserMessage, "error");
+              $("#sideload").prop("disabled", false);
+              $("#download").show();
+              $("#progress-circle-download").hide();
             }
           },
           error: function(xhr, status, err){
             alert(xhr.responseText);
+            $("#sideload").prop("disabled", false);
+            $("#download").show();
+            $("#progress-circle-download").hide();
           }
         });
     });
 
     $("#sideload").click(function(){
+        $("#download").prop("disabled", true);
+        $("#sideload").hide();
+        $("#progress-circle-sideload").show();
+
         //first you uninstall the app, then you reinstall
 
         var delete_folder = false, delete_public = false, delete_db = false;
@@ -110,10 +129,16 @@ $(document).ready(function(){
             }
             else {
               swal(response.errorUserTitle, response.errorUserMessage, "error");
+              $("#download").prop("disabled", false);
+              $("#sideload").show();
+              $("#progress-circle-sideload").hide();
             }
           },
           error: function(xhr, status, err){
             alert(xhr.responseText);
+            $("#download").prop("disabled", false);
+            $("#sideload").show();
+            $("#progress-circle-sideload").hide();
           }
         });
     });

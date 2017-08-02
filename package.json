@@ -10,6 +10,8 @@
   "scripts": {
     "build": "gulp build",
     "start": "node bolt",
+    "start-electron": ".\\node_modules.bin\\electron .",
+    "start-in-electron": "npm run start-electron",
     "test": "npm run test-integration && npm run test-acceptance",
     "test-acceptance": "npm run test-acceptance-tobi && npm run test-acceptance-soda",
     "test-acceptance-soda": "nodeunit test/acceptance_test_with_soda.js",

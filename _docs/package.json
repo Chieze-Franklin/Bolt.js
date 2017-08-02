@@ -9,6 +9,8 @@
   },
   "scripts": {
     "start": "node bolt",
+    "start-electron": ".\\node_modules.bin\\electron .",
+    "start-in-electron": "npm run start-electron",
     "test": "echo \"This is the end user's copy; no tests specified\""
   },
   "dependencies": {
