@@ -18,23 +18,35 @@
         </div>
 
         <button class="btn btn-primary btn-cons m-t-10" name="download" id="download">Download</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle-download" src="public/bolt/native/img/progress.svg" alt="Progress">
         <button class="btn btn-primary btn-cons m-t-10" name="sideload" id="sideload">Sideload</button>
+        <img class="image-responsive-height demo-mw-50" id="progress-circle-sideload" src="public/bolt/native/img/progress.svg" alt="Progress">
       </div>
     </div>
   </div>
 </div>
 <script>
 $(document).ready(function(){
+    $("#progress-circle-download").hide();
+    $("#progress-circle-sideload").hide();
+
     $("#app").val("{{app}}")
     $("#version").val("{{version}}")
     var success_redirect = "{{success}}";
 
     $("#download").click(function(){
+        $("#sideload").prop("disabled", true);
+        $("#download").hide();
+        $("#progress-circle-download").show();
+
         var appname = $("#app").val();
         var version = $("#version").val();
 
         if (!appname) {
           sweetAlert("Error", "App name not specified!", "error");
+          $("#sideload").prop("disabled", false);
+          $("#download").show();
+          $("#progress-circle-download").hide();
           return;
         }
 
@@ -42,10 +54,17 @@ $(document).ready(function(){
     });
 
     $("#sideload").click(function(){
+        $("#download").prop("disabled", true);
+        $("#sideload").hide();
+        $("#progress-circle-sideload").show();
+        
         var apppath = $("#app").val();
 
         if (!apppath) {
           sweetAlert("Error", "App path not specified!", "error");
+          $("#download").prop("disabled", false);
+          $("#sideload").show();
+          $("#progress-circle-sideload").hide();
           return;
         }
 

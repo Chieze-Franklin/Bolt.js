@@ -74,6 +74,8 @@ $(document).ready(function(){
 
         if (!appnm) {
           sweetAlert("Error", "App name not specified!", "error");
+          $("#uninstall").show();
+          $("#progress-circle").hide();
           return;
         }
 

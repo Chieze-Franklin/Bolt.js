@@ -69,6 +69,9 @@ $(document).ready(function(){
 
         if (!appname) {
           sweetAlert("Error", "App name not specified!", "error");
+          $("#sideload").prop("disabled", false);
+          $("#download").show();
+          $("#progress-circle-download").hide();
           return;
         }
 
@@ -113,6 +116,9 @@ $(document).ready(function(){
 
         if (!appname) {
           sweetAlert("Error", "App name not specified!", "error");
+          $("#download").prop("disabled", false);
+          $("#sideload").show();
+          $("#progress-circle-sideload").hide();
           return;
         }
 
