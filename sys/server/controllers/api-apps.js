@@ -527,19 +527,31 @@ module.exports = {
 										else if (!utils.Misc.isNullOrUndefined(collObj.guests)) newCollection.guests = collObj.guests;
 
 										if (!utils.Misc.isNullOrUndefined(collObj.tenants)) newCollection.tenants = collObj.tenants;
+										//Should I store options (as shown below)?
+										//We really don't need it beyond this point (installation)
+										//if (!utils.Misc.isNullOrUndefined(collObj.options)) newCollection.options = collObj.options;
 										
 										/*
 										//create an actual capped collection named: appnm + '-' + newCollection.name
 										var MongoClient = mongodb.MongoClient;
 										MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
 											if (!utils.Misc.isNullOrUndefined(db)) 
-												db.createCollection(appnm + '-' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000});//TODO: config.getMax()...
+												db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000});//TODO: config.getMax()...
 										});
 
 										//I once encountered some little issues working with capped collections on mlab.com, so I'm skeptical of allowing it here.
 										//Also, even if we do allow capped collections, after a system reset (or if the app that owns the collection drops it) 
 										//the next time the app writes to its collection, an uncapped version is created automatically
 										*/
+
+										if (!utils.Misc.isNullOrUndefined(collObj.options)) {
+											//If we allow users to set capped size for collections, let the user's values override those in collObj.options
+											var MongoClient = mongodb.MongoClient;
+											MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
+												if (!utils.Misc.isNullOrUndefined(db)) 
+													db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), collObj.options);
+											});
+										}
 
 										newCollection.save();
 									}
