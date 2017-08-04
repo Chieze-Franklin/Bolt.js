@@ -536,7 +536,7 @@ module.exports = {
 										var MongoClient = mongodb.MongoClient;
 										MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
 											if (!utils.Misc.isNullOrUndefined(db)) 
-												db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000});//TODO: config.getMax()...
+												db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000}, function(err, coll){});//TODO: config.getMax()...
 										});
 
 										//I once encountered some little issues working with capped collections on mlab.com, so I'm skeptical of allowing it here.
