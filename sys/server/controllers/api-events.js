@@ -40,6 +40,34 @@ module.exports = {
 							//consider caching the function so we dont hv to do the long journey everytime
 						*/
 					}
+					else if (hook.type == "router") {
+						var event = evnt;
+						event.dispatchTime = new Date();
+						event.token = request.bolt.genAppToken('bolt'); //set the event token to equal the app token
+						
+						var smthn = superagent.post(process.env.BOLT_ADDRESS + ("/" + utils.String.trimStart(hook.route, "/")));
+						if(!utils.Misc.isNullOrUndefined(request.body.headers)) {
+							var headers = request.body.headers;
+							for (var header in headers) {
+								if (headers.hasOwnProperty(header)) {
+									var headerValue = headers[header];
+									smthn.set(header, headerValue);
+								}
+							}
+						}
+						smthn
+							.send(event)
+							.end(function(evntError, evntResponse){});
+
+						//send event to socket for bolt
+						var socketsForApp = sockets.getSockets("bolt");
+						socketsForApp.forEach(function(socket) {
+							if (!utils.Misc.isNullOrUndefined(socket)) {
+								socket.send(JSON.stringify(event));
+								//socket/*.broadcast.to("bolt")*/.emit("message", JSON.stringify(event));
+							}
+						});
+					}
 					else if (hook.type == "web") {
 						var url = hook.route;
 						if (hook.route.indexOf("http://") != 0 && hook.route.indexOf("https://") != 0) {

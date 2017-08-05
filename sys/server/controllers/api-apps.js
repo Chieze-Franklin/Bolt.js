@@ -7,7 +7,6 @@ var getPackageReadme = require('get-package-readme')
 var fs = require('fs');
 var fse = require('fs-extra');
 var mongodb = require('mongodb');
-var mongoose = require('mongoose');
 var npm = require('npm-programmatic');
 var packageJson = require("pkg.json");
 var path = require("path");
@@ -498,8 +497,8 @@ module.exports = {
 										}
 
 										if (package.bolt.module) {
-											//modules can only save type=="web" and type=="function"
-											if (newHook.type == "web" || newHook.type == "function") {
+											//modules can only save type=="function", type=="router" and type=="web"
+											if (newHook.type == "function" || newHook.type == "router" || newHook.type == "web") {
 												newHook.save();
 											}
 										}

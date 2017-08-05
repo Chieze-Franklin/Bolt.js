@@ -53,7 +53,7 @@ var Bolt = (function(bolt){
 
             hooks = filteredHooks;
 		}/*,
-		of: function(channel){
+		for: function(channel){
 			var s = io.connect("/" + channel);
 			s.on('message',...)
 		}*/
