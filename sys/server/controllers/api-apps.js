@@ -7,6 +7,7 @@ var getPackageReadme = require('get-package-readme')
 var fs = require('fs');
 var fse = require('fs-extra');
 var mongodb = require('mongodb');
+var mongoose = require('mongoose');
 var npm = require('npm-programmatic');
 var packageJson = require("pkg.json");
 var path = require("path");
@@ -531,25 +532,33 @@ module.exports = {
 										//We really don't need it beyond this point (installation)
 										//if (!utils.Misc.isNullOrUndefined(collObj.options)) newCollection.options = collObj.options;
 										
-										/*
-										//create an actual capped collection named: appnm + '-' + newCollection.name
-										var MongoClient = mongodb.MongoClient;
-										MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
-											if (!utils.Misc.isNullOrUndefined(db)) 
-												db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), {capped:true, size:5242880, max:5000}, function(err, coll){});//TODO: config.getMax()...
-										});
-
-										//I once encountered some little issues working with capped collections on mlab.com, so I'm skeptical of allowing it here.
-										//Also, even if we do allow capped collections, after a system reset (or if the app that owns the collection drops it) 
-										//the next time the app writes to its collection, an uncapped version is created automatically
-										*/
-
 										if (!utils.Misc.isNullOrUndefined(collObj.options)) {
-											//If we allow users to set capped size for collections, let the user's values override those in collObj.options
+											//If we allow users to set capped size for collections, let the user's values override those in collObj.options:
+											//config.getMax()...
 											var MongoClient = mongodb.MongoClient;
 											MongoClient.connect(process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.BOLT_DB_URI, function(error, db) {
-												if (!utils.Misc.isNullOrUndefined(db)) 
-													db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), collObj.options);
+												if (!utils.Misc.isNullOrUndefined(db)) {
+													db.createCollection(appnm + '/' + newCollection.name.toLowerCase(), collObj.options, function(err, res) {
+														//the above operation will fail if the collection already exists
+														//so we help out a little
+														if (!utils.Misc.isNullOrUndefined(collObj.options.validator)) {
+															db.command({
+																collMod: appnm + '/' + newCollection.name.toLowerCase(),
+																validator: collObj.options.validator,
+																validationLevel: collObj.options.validationLevel || "moderate",
+																validationAction: collObj.options.validationAction || "warn"
+															});
+														}
+														if (collObj.options.capped) {
+															db.command({
+																convertToCapped: appnm + '/' + newCollection.name.toLowerCase(),
+																size: collObj.options.size || 5242880, //TODO: config.getCollSize()
+																max: collObj.options.max || 5000 //TODO: config.getCollMax()
+																//apparently max isnt honoured by the convertToCapped command
+															});
+														}
+													});
+												}
 											});
 										}
 
