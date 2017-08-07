@@ -113,7 +113,7 @@ module.exports = {
 		}
 
 		if (utils.Misc.isNullOrUndefined(username)) { //if username is still null or undefined
-			response.send(utils.Misc.createResponse(false));
+			response.send(utils.Misc.createResponse({app: appnm, permission: request.body.permission, user: username, result: false}));
 			return;
 		}
 
@@ -126,7 +126,7 @@ module.exports = {
 				var foundPermission = false;
 				var loopThroughRoles = function(index) {
 					if (index >= userRoles.length || foundPermission) {
-						response.send(utils.Misc.createResponse(foundPermission));
+						response.send(utils.Misc.createResponse({app: appnm, permission: request.body.permission, user: username, result: foundPermission}));
 						return;
 					}
 
@@ -165,7 +165,7 @@ module.exports = {
 
 			}
 			else {
-				response.send(utils.Misc.createResponse(false));
+				response.send(utils.Misc.createResponse({app: appnm, permission: request.body.permission, user: username, result: false}));
 			}
 		});
 	}
