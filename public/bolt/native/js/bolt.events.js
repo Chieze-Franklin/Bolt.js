@@ -61,12 +61,30 @@ var Bolt = (function(bolt){
 
 	var socket = io.connect("/");
 
+	socket.on('connection', function () {
+		hooks.forEach(function(hook){
+			if ((hook.event == "server-connected" || hook.event == "*") 
+				&& (hook.publisher == "bolt" || hook.publisher == "*")) {
+				if (typeof hook.handler === "function") hook.handler();
+			}
+		});
+	});
+
 	socket.on('message', function (event) {
 		event = JSON.parse(event);
 		hooks.forEach(function(hook){
 			if ((hook.event == event.name || hook.event == "*") 
 				&& (hook.publisher == event.publisher || hook.publisher == "*")) {
 				if (typeof hook.handler === "function") hook.handler(event);
+			}
+		});
+	});
+
+	socket.on('disconnect', function () {
+		hooks.forEach(function(hook){
+			if ((hook.event == "server-disconnected" || hook.event == "*") 
+				&& (hook.publisher == "bolt" || hook.publisher == "*")) {
+				if (typeof hook.handler === "function") hook.handler();
 			}
 		});
 	});
