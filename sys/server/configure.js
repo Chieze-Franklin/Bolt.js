@@ -150,6 +150,8 @@ module.exports = function(app) {
 		partialsDir: [app.get('views') + '/partials'],
 		helpers: {
 			markdownToHtml: function(obj) {
+				if (!obj) return "";
+				
 				var converter;
 				try{
 					converter = new Showdown.converter(); //lowercase 'C'
@@ -161,6 +163,8 @@ module.exports = function(app) {
 				return content;
 			},
 			markdownToHtmlString: function(obj) {
+				if (!obj) return "";
+
 				var converter;
 				try{
 					converter = new Showdown.converter(); //lowercase 'C'

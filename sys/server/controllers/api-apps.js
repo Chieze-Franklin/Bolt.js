@@ -244,8 +244,11 @@ module.exports = {
 		    })
 		    .then(function(){
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.bolt.token, function(eventError, eventResponse){});
+		    	response.send();
+		    	//TODO: see if the folder(s) exist(s)
+		    		//if it is scoped, change @a/b to b@a and the package name to b@a too
 		        //call /api/apps/local
-		        superagent
+		        /*superagent
 					.post(process.env.BOLT_ADDRESS + '/api/apps/local')
 					.set({'X-Bolt-App-Token': request.bolt.token})
 					.send({ path: appnm, system: request.body.system || false })
@@ -264,7 +267,7 @@ module.exports = {
 								response.send(utils.Misc.createResponse(app));
 							}
 						}
-					});
+					});*/
 		    })
 		    .catch(function(){
 		        var error = new Error(errors['415']);
@@ -304,8 +307,7 @@ module.exports = {
 	postReadme: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
 			var appnm = utils.String.trim(request.body.name);
-			//another option: https://www.npmjs.com/package/readme-getter
-			getPackageReadme(appnm, function (error, data) {
+			getPackageReadme(appnm, function (error, data) {console.log(error);console.log(data);
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error, 417));
 				}
@@ -317,6 +319,20 @@ module.exports = {
 					response.send(utils.Misc.createResponse(data));
 				}
 			});
+
+			/*var readmeGetter = require('readme-getter')(require('request'));
+			readmeGetter.getReadme(appnm, function(error, data){console.log(error);console.log(data);
+			    if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error, 417));
+				}
+				else if (utils.Misc.isNullOrUndefined(data)) {
+					var error = new Error(errors['417']);
+					response.end(utils.Misc.createResponse(null, error, 417));
+				}
+				else {
+					response.send(utils.Misc.createResponse(data));
+				}
+			});*/
 		}
 		else {
 			var error = new Error(errors['400']);

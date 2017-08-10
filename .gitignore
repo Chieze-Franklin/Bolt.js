@@ -21,3 +21,4 @@ sys/data/mongodb/**/*
 !sys/data/mongodb/
 ./*.png
 ./*.jpg
+npm-debug.log*

@@ -67,6 +67,7 @@
     "mustache": "^2.2.1",
     "npm-programmatic": "0.0.8",
     "pkg.json": "^2.0.5",
+    "readme-getter": "^2.0.0",
     "request": "^2.81.0",
     "showdown": "*",
     "socket.io": "^1.5.1",
