@@ -244,30 +244,79 @@ module.exports = {
 		    })
 		    .then(function(){
 		    	utils.Events.fire('app-downloaded', { body: appnm }, request.bolt.token, function(eventError, eventResponse){});
-		    	response.send();
-		    	//TODO: see if the folder(s) exist(s)
-		    		//if it is scoped, change @a/b to b@a and the package name to b@a too
-		        //call /api/apps/local
-		        /*superagent
-					.post(process.env.BOLT_ADDRESS + '/api/apps/local')
-					.set({'X-Bolt-App-Token': request.bolt.token})
-					.send({ path: appnm, system: request.body.system || false })
-					.end(function(appregError, appregResponse){
-						if (!utils.Misc.isNullOrUndefined(appregError)) {
-							response.end(utils.Misc.createResponse(null, appregError));
-						}
-						else {
-							var realResponse = appregResponse.body;
-							if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
-								response.end(utils.Misc.createResponse(null, realResponse.error, realResponse.code, 
-									realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
+
+		    	function installLocal(appnm) {
+			        superagent
+						.post(process.env.BOLT_ADDRESS + '/api/apps/local')
+						.set({'X-Bolt-App-Token': request.bolt.token})
+						.send({ path: appnm, system: request.body.system || false })
+						.end(function(appregError, appregResponse){
+							if (!utils.Misc.isNullOrUndefined(appregError)) {
+								response.end(utils.Misc.createResponse(null, appregError));
 							}
 							else {
-								var app = realResponse.body;
-								response.send(utils.Misc.createResponse(app));
+								var realResponse = appregResponse.body;
+								if (!utils.Misc.isNullOrUndefined(realResponse.error)) {
+									response.end(utils.Misc.createResponse(null, realResponse.error, realResponse.code, 
+										realResponse.errorTraceId, realResponse.errorUserTitle, realResponse.errorUserMessage));
+								}
+								else {
+									var app = realResponse.body;
+									response.send(utils.Misc.createResponse(app));
+								}
 							}
+						});
+		    	}
+
+		    	var isScoped = (appnm.indexOf('@') == 0 && appnm.indexOf('/') > 0);
+		    	if (isScoped) {
+		    		var indexOfSlash = appnm.indexOf('/');
+		    		var scope = appnm.substring(0, indexOfSlash);
+		    		var _path = appnm.substr(indexOfSlash + 1);
+
+		    		fs.readFile(path.join(__node_modulesDir, scope, _path, 'package.json'), function (error, data) {
+						if (!utils.Misc.isNullOrUndefined(error)) {
+							response.end(utils.Misc.createResponse(null, error, 418));
 						}
-					});*/
+						else if (utils.Misc.isNullOrUndefined(data)) {
+							var error = new Error(errors['418']);
+							response.end(utils.Misc.createResponse(null, error, 418));
+						}
+						else {
+							var package = JSON.parse(data);
+							//rename the "name" field of the package.json
+							package.name = _path + scope;
+							//save the package.json
+							fs.writeFile(path.join(__node_modulesDir, scope, _path, 'package.json'), JSON.stringify(package), function (error2) {
+								if (!utils.Misc.isNullOrUndefined(error)) {
+									//TODO: consider another error other than 418
+									response.end(utils.Misc.createResponse(null, error, 418));
+								}
+								else {
+									appnm = _path + scope;
+									var destination = path.join(__node_modulesDir, appnm);
+
+									var transferFiles = function() {
+										var source = path.join(__node_modulesDir, scope, _path);
+										fse.move(source, destination, { clobber: true }, function(moveError){
+											//TODO: what shud I do if there's an error?
+											installLocal(appnm);
+										});
+									}
+
+									fse.emptyDir(destination, function(emptyError){
+										//TODO: what shud I do if there's an error?
+										transferFiles();
+									});
+								}
+							});
+						}
+					});
+		    	}
+		    	else {
+		    		installLocal(appnm);
+		    	}
+			        
 		    })
 		    .catch(function(){
 		        var error = new Error(errors['415']);
@@ -307,7 +356,7 @@ module.exports = {
 	postReadme: function(request, response){
 		if (!utils.Misc.isNullOrUndefined(request.body.name)) {
 			var appnm = utils.String.trim(request.body.name);
-			getPackageReadme(appnm, function (error, data) {console.log(error);console.log(data);
+			getPackageReadme(appnm, function (error, data) {
 				if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error, 417));
 				}
@@ -321,7 +370,7 @@ module.exports = {
 			});
 
 			/*var readmeGetter = require('readme-getter')(require('request'));
-			readmeGetter.getReadme(appnm, function(error, data){console.log(error);console.log(data);
+			readmeGetter.getReadme(appnm, function(error, data){
 			    if (!utils.Misc.isNullOrUndefined(error)) {
 					response.end(utils.Misc.createResponse(null, error, 417));
 				}
