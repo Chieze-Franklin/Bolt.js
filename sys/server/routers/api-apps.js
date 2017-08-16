@@ -39,6 +39,8 @@ router.post('/local-package', checksCtrlr.forAdminRight, apiAppsCtrlr.postLocalP
 //returns the readme.md of an app from a local repository (current only the node_modules folder is supported)
 router.post('/local-readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postLocalReadme);
 
+//TODO: /remote, /remote-package, /remote-readme
+
 //starts the server of the app with the specified name
 router.post('/start', apiAppsCtrlr.postStart);
 
