@@ -102,6 +102,44 @@ module.exports = function(app) {
 	  next();
 	});
 
+	/*app.post('/public/upload', upload.any(), function (request, response) {
+		var files = [];
+		var fileNames = [];
+		
+		if (!utils.Misc.isNullOrUndefined(request.file)) file.push(request.file);
+		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
+
+		function loopThroughFiles (index) {
+			if (index >= files.length) {
+				response
+					.set('Content-Type', 'application/json')
+					.send(utils.Misc.createResponse(fileNames));
+				return;
+			}
+
+			var file = files[index];
+			var fileName = "";
+
+			//since multer seems not to add extensions, I'm doing it manually here
+			var tempPath = path.resolve(file.path),
+				targetPath = path.resolve(file.path + path.extname(file.originalname));
+			fs.rename(tempPath, targetPath, function(renameError){
+				//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
+				//with which Mozilla doesn't work well sometimes
+				if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
+					fileName = file.destination + file.filename;
+				}
+				else {
+					fileName = file.destination + file.filename + path.extname(file.originalname);
+				}
+
+				fileNames.push(fileName);
+				loopThroughFiles(index + 1);
+			});
+		}
+
+		loopThroughFiles(0);
+	});*/
 	app.post('/public/upload', upload.any(), function (request, response) {
 		var files = [];
 		var fileNames = [];
