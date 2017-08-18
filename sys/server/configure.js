@@ -8,6 +8,7 @@ var fs = require("fs");
 var path = require("path");
 var session = require("client-sessions"/*"express-session"*/);
 var Showdown = require("showdown");
+var s3 = require('s3');
 
 var __publicdir = path.join(__dirname + './../../public');
 var __sysdir = path.join(__dirname + './../../sys');
@@ -106,7 +107,7 @@ module.exports = function(app) {
 		var files = [];
 		var fileNames = [];
 		
-		if (!utils.Misc.isNullOrUndefined(request.file)) file.push(request.file);
+		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
 		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
 
 		function loopThroughFiles (index) {
@@ -141,10 +142,12 @@ module.exports = function(app) {
 		loopThroughFiles(0);
 	});*/
 	app.post('/public/upload', upload.any(), function (request, response) {
+		//TODO: first check if the appropriate env variables have been set before doing anything
+		
 		var files = [];
 		var fileNames = [];
 		
-		if (!utils.Misc.isNullOrUndefined(request.file)) file.push(request.file);
+		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
 		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
 
 		function loopThroughFiles (index) {
@@ -158,20 +161,43 @@ module.exports = function(app) {
 			var file = files[index];
 			var fileName = "";
 
-			//since multer seems not to add extensions, I'm doing it manually here
-			var tempPath = path.resolve(file.path),
-				targetPath = path.resolve(file.path + path.extname(file.originalname));
-			fs.rename(tempPath, targetPath, function(renameError){
-				//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
-				//with which Mozilla doesn't work well sometimes
-				if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
-					fileName = file.destination + file.filename;
-				}
-				else {
-					fileName = file.destination + file.filename + path.extname(file.originalname);
-				}
+			var tempPath = path.resolve(file.path);
 
-				fileNames.push(fileName);
+			var client = s3.createClient({
+				maxAsyncS3: 20,     // this is the default 
+				s3RetryCount: 3,    // this is the default 
+				s3RetryDelay: 1000, // this is the default 
+				multipartUploadThreshold: 20971520, // this is the default (20 MB) 
+				multipartUploadSize: 15728640, // this is the default (15 MB) 
+				s3Options: {
+					accessKeyId: "your s3 key", //process.env.AWS_S3_ID******************************************
+					secretAccessKey: "your s3 secret", //process.env.AWS_S3_SECRET******************************************
+					// any other options are passed to new AWS.S3() 
+					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property 
+				},
+			});
+
+			var params = {
+				localFile: tempPath,
+
+				s3Params: {
+					Bucket: "s3 bucket name", //process.env.AWS_S3_UPLOADS_BUCKET******************************************
+					Key: file.path,
+					// other options supported by putObject, except Body and ContentLength. 
+					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property 
+				},
+			};
+			var uploader = client.uploadFile(params);
+			uploader.on('error', function(err) {
+				console.error("unable to upload:", err.stack);
+			});
+			uploader.on('progress', function() {
+				console.log("progress", uploader.progressMd5Amount,
+			        uploader.progressAmount, uploader.progressTotal);
+			});
+			uploader.on('end', function() {
+				console.log("done uploading", file.path);
+				fileNames.push(file.path); //TODO: the full http address***********************************
 				loopThroughFiles(index + 1);
 			});
 		}
