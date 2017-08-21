@@ -19,6 +19,7 @@ sys/bins/mongodb/win32/**/*
 sys/client/
 sys/data/mongodb/**/*
 !sys/data/mongodb/
+test_nodegit/*
 ./*.png
 ./*.jpg
 npm-debug.log*

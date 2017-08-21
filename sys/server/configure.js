@@ -141,7 +141,7 @@ module.exports = function(app) {
 
 		loopThroughFiles(0);
 	});*/
-	app.post('/public/upload', upload.any(), function (request, response) {
+	/*app.post('/public/upload', upload.any(), function (request, response) {
 		//TODO: first check if the appropriate env variables have been set before doing anything
 		
 		var files = [];
@@ -170,19 +170,20 @@ module.exports = function(app) {
 				multipartUploadThreshold: 20971520, // this is the default (20 MB) 
 				multipartUploadSize: 15728640, // this is the default (15 MB) 
 				s3Options: {
-					accessKeyId: "your s3 key", //process.env.AWS_S3_ID******************************************
-					secretAccessKey: "your s3 secret", //process.env.AWS_S3_SECRET******************************************
+					accessKeyId: "AKIAJHIN57E6S4R7KXUA", //process.env.AWS_S3_ID******************************************
+					secretAccessKey: "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", //process.env.AWS_S3_SECRET******************************************
 					// any other options are passed to new AWS.S3() 
 					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property 
 				},
 			});
 
+			console.log('local file: ', tempPath);
 			var params = {
 				localFile: tempPath,
 
 				s3Params: {
-					Bucket: "s3 bucket name", //process.env.AWS_S3_UPLOADS_BUCKET******************************************
-					Key: file.path,
+					Bucket: "bolt-test-bucket", //process.env.AWS_S3_UPLOADS_BUCKET******************************************
+					Key: "testfile",
 					// other options supported by putObject, except Body and ContentLength. 
 					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property 
 				},
@@ -200,6 +201,52 @@ module.exports = function(app) {
 				fileNames.push(file.path); //TODO: the full http address***********************************
 				loopThroughFiles(index + 1);
 			});
+		}
+
+		loopThroughFiles(0);
+	});*/
+	app.post('/public/upload', upload.any(), function (request, response) {
+		//TODO: first check if the appropriate env variables have been set before doing anything
+		
+		var files = [];
+		var fileNames = [];
+		
+		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
+		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
+
+		function loopThroughFiles (index) {
+			if (index >= files.length) {
+				response
+					.set('Content-Type', 'application/json')
+					.send(utils.Misc.createResponse(fileNames));
+				return;
+			}
+
+			var file = files[index];console.log(file)
+			var fileName = "";
+
+			var tempPath = path.resolve(file.path);
+
+			var S3FS = require('s3fs'),
+		    s3fsImpl = new S3FS('bolt-test-bucket-2', {
+		        accessKeyId: "AKIAJMYVCQGYTMVB4RAA",
+		        secretAccessKey: "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"
+		    });
+
+		    // Create our bucket if it doesn't exist
+			//s3fsImpl.create();
+
+			var stream = fs.createReadStream(file.path);
+		    return s3fsImpl.writeFile(file.originalFilename, stream).then(function () {
+		        /*fs.unlink(file.path, function (err) {
+		            if (err) {
+		                console.error(err);
+		            }
+		        });
+		        res.status(200).end();*/
+		        fileNames.push(file.path); //TODO: the full http address***********************************
+		        loopThroughFiles(index + 1);
+		    });
 		}
 
 		loopThroughFiles(0);
