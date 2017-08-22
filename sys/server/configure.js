@@ -141,7 +141,7 @@ module.exports = function(app) {
 
 		loopThroughFiles(0);
 	});*/
-	/*app.post('/public/upload', upload.any(), function (request, response) {
+	app.post('/public/upload', upload.any(), function (request, response) {
 		//TODO: first check if the appropriate env variables have been set before doing anything
 		
 		var files = [];
@@ -170,8 +170,8 @@ module.exports = function(app) {
 				multipartUploadThreshold: 20971520, // this is the default (20 MB) 
 				multipartUploadSize: 15728640, // this is the default (15 MB) 
 				s3Options: {
-					accessKeyId: "AKIAJHIN57E6S4R7KXUA", //process.env.AWS_S3_ID******************************************
-					secretAccessKey: "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", //process.env.AWS_S3_SECRET******************************************
+					accessKeyId: "---", //process.env.AWS_S3_ID******************************************
+					secretAccessKey: "---", //process.env.AWS_S3_SECRET******************************************
 					// any other options are passed to new AWS.S3() 
 					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property 
 				},
@@ -204,8 +204,8 @@ module.exports = function(app) {
 		}
 
 		loopThroughFiles(0);
-	});*/
-	app.post('/public/upload', upload.any(), function (request, response) {
+	});
+	/*app.post('/public/upload', upload.any(), function (request, response) {
 		//TODO: first check if the appropriate env variables have been set before doing anything
 		
 		var files = [];
@@ -229,8 +229,8 @@ module.exports = function(app) {
 
 			var S3FS = require('s3fs'),
 		    s3fsImpl = new S3FS('bolt-test-bucket-2', {
-		        accessKeyId: "AKIAJMYVCQGYTMVB4RAA",
-		        secretAccessKey: "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"
+		        accessKeyId: "---",
+		        secretAccessKey: "---"
 		    });
 
 		    // Create our bucket if it doesn't exist
@@ -250,7 +250,7 @@ module.exports = function(app) {
 		}
 
 		loopThroughFiles(0);
-	});
+	});*/
 
 	app.use('/public', express.static(__publicdir));
 
