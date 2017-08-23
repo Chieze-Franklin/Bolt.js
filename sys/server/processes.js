@@ -16,7 +16,8 @@ module.exports = {
 		this.killProcess(context.name); //kill existing process first
 
 		var childPath = path.join(__dirname, 'app_host.js');
-		var env = utils.Misc.sanitizeModel(process.env, ["MONGODB_URI", "MONGOLAB_URI", "BOLT_DB_URI", "BOLT_SESSION_SECRET"]);
+		var env = utils.Misc.sanitizeModel(process.env, ["MONGODB_URI", "MONGOLAB_URI", "BOLT_DB_URI", "BOLT_SESSION_SECRET",
+			"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]);
 		env.BOLT_CHILD_PROC = true; //check for process.env.BOLT_CHILD_PROC == true to know if you are running on a child process
 		child = exec('node ' + childPath, {env: env}); //filter out sensitive environment variables from the view of child process
 

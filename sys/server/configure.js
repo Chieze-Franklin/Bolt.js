@@ -103,7 +103,7 @@ module.exports = function(app) {
 	  next();
 	});
 
-	/*app.post('/public/upload', upload.any(), function (request, response) {
+	app.post('/public/upload', upload.any(), function (request, response) {
 		var files = [];
 		var fileNames = [];
 		
@@ -119,7 +119,45 @@ module.exports = function(app) {
 			}
 
 			var file = files[index];
-			var fileName = "";
+			var fileName = "", filePath = "";
+
+			function uploadToAWS(fileName, filePath) {
+				var bucket = process.env.AWS_S3_UPLOADS_BUCKET_NAME;
+				var region = process.env.AWS_S3_UPLOADS_BUCKET_REGION;
+
+				var AWS = require('aws-sdk');
+				AWS.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
+					region: region });
+
+				fs.readFile(filePath, function (err, data) {
+					if (err) { 
+						loopThroughFiles(index + 1);
+						return; 
+					}
+
+					var base64data = new Buffer(data, 'binary');
+
+					var s3 = new AWS.S3({signatureVersion: 'v4'});
+					s3.putObject({
+						Bucket: bucket,
+						Key: fileName,
+						Body: base64data,
+						ACL: 'public-read'
+					}, function (err, resp) {
+						console.log('err:');console.log(err);
+						if (err) {
+							//return the local file path (perhaps the user can retry)
+							fileNames.push(filePath);
+						}
+						else {
+							fileNames.push('https://s3.' + region + '.amazonaws.com/' + bucket + '/' + fileName);
+							fs.unlink(filePath, function(unlinkError){});
+						}
+						loopThroughFiles(index + 1);
+					});
+
+				});
+			}
 
 			//since multer seems not to add extensions, I'm doing it manually here
 			var tempPath = path.resolve(file.path),
@@ -128,129 +166,27 @@ module.exports = function(app) {
 				//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
 				//with which Mozilla doesn't work well sometimes
 				if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
-					fileName = file.destination + file.filename;
+					fileName = file.filename;
+					filePath = file.destination + file.filename;
 				}
 				else {
-					fileName = file.destination + file.filename + path.extname(file.originalname);
+					fileName = file.filename + path.extname(file.originalname);
+					filePath = file.destination + file.filename + path.extname(file.originalname);
 				}
 
-				fileNames.push(fileName);
-				loopThroughFiles(index + 1);
-			});
-		}
-
-		loopThroughFiles(0);
-	});*/
-	app.post('/public/upload', upload.any(), function (request, response) {
-		//TODO: first check if the appropriate env variables have been set before doing anything
-		
-		var files = [];
-		var fileNames = [];
-		
-		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
-		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
-
-		function loopThroughFiles (index) {
-			if (index >= files.length) {
-				response
-					.set('Content-Type', 'application/json')
-					.send(utils.Misc.createResponse(fileNames));
-				return;
-			}
-
-			var file = files[index];
-			var fileName = "";
-
-			var tempPath = path.resolve(file.path);
-
-			var client = s3.createClient({
-				maxAsyncS3: 20,     // this is the default 
-				s3RetryCount: 3,    // this is the default 
-				s3RetryDelay: 1000, // this is the default 
-				multipartUploadThreshold: 20971520, // this is the default (20 MB) 
-				multipartUploadSize: 15728640, // this is the default (15 MB) 
-				s3Options: {
-					accessKeyId: "---", //process.env.AWS_S3_ID******************************************
-					secretAccessKey: "---", //process.env.AWS_S3_SECRET******************************************
-					// any other options are passed to new AWS.S3() 
-					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property 
-				},
-			});
-
-			console.log('local file: ', tempPath);
-			var params = {
-				localFile: tempPath,
-
-				s3Params: {
-					Bucket: "bolt-test-bucket", //process.env.AWS_S3_UPLOADS_BUCKET******************************************
-					Key: "testfile",
-					// other options supported by putObject, except Body and ContentLength. 
-					// See: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property 
-				},
-			};
-			var uploader = client.uploadFile(params);
-			uploader.on('error', function(err) {
-				console.error("unable to upload:", err.stack);
-			});
-			uploader.on('progress', function() {
-				console.log("progress", uploader.progressMd5Amount,
-			        uploader.progressAmount, uploader.progressTotal);
-			});
-			uploader.on('end', function() {
-				console.log("done uploading", file.path);
-				fileNames.push(file.path); //TODO: the full http address***********************************
-				loopThroughFiles(index + 1);
+				if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && 
+					process.env.AWS_S3_UPLOADS_BUCKET_NAME && process.env.AWS_S3_UPLOADS_BUCKET_REGION) {
+					uploadToAWS(fileName, filePath);
+				}
+				else {
+					fileNames.push(filePath);
+					loopThroughFiles(index + 1);
+				}
 			});
 		}
 
 		loopThroughFiles(0);
 	});
-	/*app.post('/public/upload', upload.any(), function (request, response) {
-		//TODO: first check if the appropriate env variables have been set before doing anything
-		
-		var files = [];
-		var fileNames = [];
-		
-		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
-		else if (!utils.Misc.isNullOrUndefined(request.files)) files = request.files;
-
-		function loopThroughFiles (index) {
-			if (index >= files.length) {
-				response
-					.set('Content-Type', 'application/json')
-					.send(utils.Misc.createResponse(fileNames));
-				return;
-			}
-
-			var file = files[index];console.log(file)
-			var fileName = "";
-
-			var tempPath = path.resolve(file.path);
-
-			var S3FS = require('s3fs'),
-		    s3fsImpl = new S3FS('bolt-test-bucket-2', {
-		        accessKeyId: "---",
-		        secretAccessKey: "---"
-		    });
-
-		    // Create our bucket if it doesn't exist
-			//s3fsImpl.create();
-
-			var stream = fs.createReadStream(file.path);
-		    return s3fsImpl.writeFile(file.originalFilename, stream).then(function () {
-		        /*fs.unlink(file.path, function (err) {
-		            if (err) {
-		                console.error(err);
-		            }
-		        });
-		        res.status(200).end();*/
-		        fileNames.push(file.path); //TODO: the full http address***********************************
-		        loopThroughFiles(index + 1);
-		    });
-		}
-
-		loopThroughFiles(0);
-	});*/
 
 	app.use('/public', express.static(__publicdir));
 

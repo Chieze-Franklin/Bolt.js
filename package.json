@@ -39,6 +39,7 @@
     "environment"
   ],
   "dependencies": {
+    "aws-sdk": "*",
     "body-parser": "^1.15.2",
     "bolt-internal-checks": "*",
     "bolt-internal-config": "*",
@@ -69,7 +70,6 @@
     "pkg.json": "^2.0.5",
     "request": "^2.81.0",
     "s3": "^4.4.0",
-    "s3fs": "^2.5.0",
     "showdown": "*",
     "socket.io": "^1.5.1",
     "superagent": "^2.3.0",
