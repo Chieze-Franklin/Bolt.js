@@ -105,6 +105,7 @@ module.exports = function(app) {
 
 	app.post('/public/upload', upload.any(), function (request, response) {
 		var files = [];
+		var results = [];
 		var fileNames = [];
 		
 		if (!utils.Misc.isNullOrUndefined(request.file)) files.push(request.file);
@@ -114,7 +115,7 @@ module.exports = function(app) {
 			if (index >= files.length) {
 				response
 					.set('Content-Type', 'application/json')
-					.send(utils.Misc.createResponse(fileNames));
+					.send(utils.Misc.createResponse(results));
 				return;
 			}
 
@@ -122,8 +123,8 @@ module.exports = function(app) {
 			var fileName = "", filePath = "";
 
 			function uploadToAWS(fileName, filePath) {
-				var bucket = process.env.AWS_S3_UPLOADS_BUCKET_NAME;
-				var region = process.env.AWS_S3_UPLOADS_BUCKET_REGION;
+				var bucket = process.env.S3_BUCKET;
+				var region = process.env.AS3_REGION;
 
 				var AWS = require('aws-sdk');
 				AWS.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
@@ -131,6 +132,7 @@ module.exports = function(app) {
 
 				fs.readFile(filePath, function (err, data) {
 					if (err) { 
+						results.push({original: file.originalname, url: process.env.BOLT_ADDRESS + '/' + filePath, error: err});
 						loopThroughFiles(index + 1);
 						return; 
 					}
@@ -144,13 +146,14 @@ module.exports = function(app) {
 						Body: base64data,
 						ACL: 'public-read'
 					}, function (err, resp) {
-						console.log('err:');console.log(err);
 						if (err) {
 							//return the local file path (perhaps the user can retry)
-							fileNames.push(filePath);
+							results.push({original: file.originalname, url: process.env.BOLT_ADDRESS + '/' + filePath, error: err});
+							//fileNames.push(process.env.BOLT_ADDRESS + '/' + filePath);
 						}
 						else {
-							fileNames.push('https://s3.' + region + '.amazonaws.com/' + bucket + '/' + fileName);
+							results.push({original: file.originalname, url: 'https://s3.' + region + '.amazonaws.com/' + bucket + '/' + fileName});
+							//fileNames.push('https://s3.' + region + '.amazonaws.com/' + bucket + '/' + fileName);
 							fs.unlink(filePath, function(unlinkError){});
 						}
 						loopThroughFiles(index + 1);
@@ -175,11 +178,12 @@ module.exports = function(app) {
 				}
 
 				if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && 
-					process.env.AWS_S3_UPLOADS_BUCKET_NAME && process.env.AWS_S3_UPLOADS_BUCKET_REGION) {
+					process.env.S3_BUCKET && process.env.AS3_REGION) {console.log(true);
 					uploadToAWS(fileName, filePath);
 				}
 				else {
-					fileNames.push(filePath);
+					results.push({original: file.originalname, url: process.env.BOLT_ADDRESS + '/' + filePath});
+					//fileNames.push(process.env.BOLT_ADDRESS + '/' + filePath);
 					loopThroughFiles(index + 1);
 				}
 			});
