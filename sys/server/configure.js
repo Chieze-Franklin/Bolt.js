@@ -124,7 +124,7 @@ module.exports = function(app) {
 
 			function uploadToAWS(fileName, filePath) {
 				var bucket = process.env.S3_BUCKET;
-				var region = process.env.AS3_REGION;
+				var region = process.env.S3_REGION;
 
 				var AWS = require('aws-sdk');
 				AWS.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
@@ -178,7 +178,7 @@ module.exports = function(app) {
 				}
 
 				if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && 
-					process.env.S3_BUCKET && process.env.AS3_REGION) {console.log(true);
+					process.env.S3_BUCKET && process.env.S3_REGION) {
 					uploadToAWS(fileName, filePath);
 				}
 				else {
