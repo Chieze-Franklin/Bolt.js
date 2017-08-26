@@ -53,6 +53,7 @@
     "bolt-internal-utils": "*",
     "client-sessions": "^0.7.0",
     "cookie-parser": "^1.4.3",
+    "dotenv-extended": "^2.0.1",
     "electron": "^1.6.11",
     "express": "~4.14.0",
     "express-handlebars": "^3.0.0",
