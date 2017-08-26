@@ -192,6 +192,19 @@ module.exports = function(app) {
 		loopThroughFiles(0);
 	});
 
+	app.delete('/public/upload/:file', function (request, response) {
+		var filename = request.params.file;
+
+		//delete local copy
+		fs.unlink(path.resolve('public/bolt/uploads/' + filename), function(unlinkError){});
+
+		//delete AWS S3 copy
+
+		response
+			.set('Content-Type', 'application/json')
+			.send(JSON.stringify({}));
+	});
+
 	app.use('/public', express.static(__publicdir));
 
 	app.set('views', __sysdir + '/views');
