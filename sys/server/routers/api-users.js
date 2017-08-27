@@ -1,16 +1,6 @@
 var checksCtrlr = require("bolt-internal-checks");
 
 var express = require('express');
-var multer = require('multer'), 
-	/*storage =   multer.diskStorage({
-	  destination: function (req, file, callback) {
-	    callback(null, 'public/bolt/users/');
-	  },
-	  filename: function (req, file, callback) {
-	    callback(null, file.fieldname + '-' + Date.now());
-	  }
-	}),
-	upload = multer({ storage : storage})*/upload = multer({ dest : 'public/bolt/users/'});
 
 var apiUsersCtrlr = require('../controllers/api-users');
 
@@ -37,7 +27,7 @@ router.get('/@live', apiUsersCtrlr.getLive);
 router.get('/:name', apiUsersCtrlr.getUser);
 
 //adds a user to the database
-router.post('/', checksCtrlr.forSystemApp, upload.any()/*fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}])*/, apiUsersCtrlr.post);
+router.post('/', checksCtrlr.forSystemApp, apiUsersCtrlr.post);
 
 //logs a user into the system
 router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);
@@ -55,6 +45,6 @@ router.delete('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.deleteUser);
 router.put('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkUpdateCriterion, apiUsersCtrlr.put);
 
 //updates a user in the database
-router.put('/:name', checksCtrlr.forSystemApp, upload.any()/*fields([{ name: 'displayPic', maxCount: 1}, { name: 'dp', maxCount: 1}])*/, apiUsersCtrlr.putUser);
+router.put('/:name', checksCtrlr.forSystemApp, apiUsersCtrlr.putUser);
 
 module.exports = router;

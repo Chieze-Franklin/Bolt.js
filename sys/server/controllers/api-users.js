@@ -217,51 +217,20 @@ module.exports = {
 					});
 
 					newUser.displayName = request.body.displayName || request.body.dn || request.body.name;
+					newUser.displayPic = request.body.displayPic || request.body.dp;
 					if (!utils.Misc.isNullOrUndefined(request.body.email)) newUser.email = request.body.email;
 					if (!utils.Misc.isNullOrUndefined(request.body.phone)) newUser.phone = request.body.phone;
 
-					var saveUser = function() {
-						newUser.save(function(saveError, savedUser){
-							if (!utils.Misc.isNullOrUndefined(saveError)) {
-								response.end(utils.Misc.createResponse(null, saveError, 202));
-							}
-							else {
-								savedUser = utils.Misc.sanitizeUser(savedUser);
-								utils.Events.fire('user-created', { body: savedUser }, request.bolt.token, function(eventError, eventResponse){});
-								response.send(utils.Misc.createResponse(savedUser));
-							}
-						});
-					}
-
-					var file;
-					if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;
-					else if (!utils.Misc.isNullOrUndefined(request.files)) {
-						for(var index = 0; index < request.files.length; index++) {
-							if ("dp" == request.files[index].fieldname || "displayPic" == request.files[index].fieldname) {
-								file = request.files[index];
-								break;
-							}
+					newUser.save(function(saveError, savedUser){
+						if (!utils.Misc.isNullOrUndefined(saveError)) {
+							response.end(utils.Misc.createResponse(null, saveError, 202));
 						}
-					}
-					if (!utils.Misc.isNullOrUndefined(file)) {
-						//since multer seems not to add extensions, I'm doing it manually here
-						var tempPath = path.resolve(file.path),
-							targetPath = path.resolve(file.path + path.extname(file.originalname));
-						fs.rename(tempPath, targetPath, function(renameError){
-							//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
-							//with which Mozilla doesn't work well sometimes
-							if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
-								newUser.displayPic = file.destination + file.filename;
-							}
-							else {
-								newUser.displayPic = file.destination + file.filename + path.extname(file.originalname);
-							}
-							saveUser();
-						});
-					}
-					else  {
-						saveUser();
-					}
+						else {
+							savedUser = utils.Misc.sanitizeUser(savedUser);
+							utils.Events.fire('user-created', { body: savedUser }, request.bolt.token, function(eventError, eventResponse){});
+							response.send(utils.Misc.createResponse(savedUser));
+						}
+					});
 				}
 				else {
 					var err = new Error(errors['201']);

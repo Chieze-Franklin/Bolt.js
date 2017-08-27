@@ -214,15 +214,17 @@ $(document).ready(function(){
         return;
       }
 
-      formData.append('name', username);
-      formData.append('password', password);
-      formData.append('dn', displayname);
-      formData.append('email', email);
-      formData.append('phone', phone);
+      var user = {
+        name: username,
+        password: password,
+        displayName: displayname,
+        email: email,
+        phone: phone
+      };
 
-      //first, add the user
+      //upload picture
       $.ajax({
-        url: '/api/users',
+        url: '/public/upload',
         type: 'POST',
         data: formData,
         processData: false,
@@ -231,72 +233,92 @@ $(document).ready(function(){
           xhr.setRequestHeader('X-Bolt-App-Token', '{{token}}');
         },
         success: function(response){
-          if(response.code == 0){
-            //second, create an admin role
+          if(response.code === 0) {
+            if (response.body.length > 0) user.displayPic = response.body[0].url;
+
+            //first, add the user
             $.ajax({
-              url: "/api/roles",
-              data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Has complete access to every part of the system" },
-              type: "POST",
+              url: '/api/users',
+              type: 'POST',
+              data: user,
               headers: {'X-Bolt-App-Token': '{{token}}'},
-              success: function(response2, status2, xhr2){
-                if(response2.code == 0){ 
-                  //third, associate user and role
+              success: function(response1){
+                if(response1.code == 0){
+                  
+                  //second, create an admin role
                   $.ajax({
-                    url: "/api/user-roles",
-                    data: { user: response.body.name, role: response2.body.name },
+                    url: "/api/roles",
+                    data: { name: "admin", isAdmin: true, displayName: "Administrator", description: "Has complete access to every part of the system" },
                     type: "POST",
                     headers: {'X-Bolt-App-Token': '{{token}}'},
-                    success: function(response3, status3, xhr3){
-                      if(response3.code == 0){ 
-                        //fourth, log user in
+                    success: function(response2, status2, xhr2){
+                      if(response2.code == 0){ 
+                        //third, associate user and role
                         $.ajax({
-                          url: "/api/users/login",
-                          data: { name: username, password: password },
+                          url: "/api/user-roles",
+                          data: { user: response1.body.name, role: response2.body.name },
                           type: "POST",
                           headers: {'X-Bolt-App-Token': '{{token}}'},
-                          success: function(response4, status4, xhr4){
-                            if(response4.code == 0){ 
-                                swal({
-                                  title: "Admin added!",
-                                  text: displayname + " has been added as a system administrator!",
-                                  type: "success",
-                                  showCancelButton: false,
-                                  closeOnConfirm: true
-                                }, function(isConfirm){
-                                  if (isConfirm) {
-                                    $("#setup")[0].click();
+                          success: function(response3, status3, xhr3){
+                            if(response3.code == 0){ 
+                              //fourth, log user in
+                              $.ajax({
+                                url: "/api/users/login",
+                                data: { name: username, password: password },
+                                type: "POST",
+                                headers: {'X-Bolt-App-Token': '{{token}}'},
+                                success: function(response4, status4, xhr4){
+                                  if(response4.code == 0){ 
+                                      swal({
+                                        title: "Admin added!",
+                                        text: displayname + " has been added as a system administrator!",
+                                        type: "success",
+                                        showCancelButton: false,
+                                        closeOnConfirm: true
+                                      }, function(isConfirm){
+                                        if (isConfirm) {
+                                          $("#setup")[0].click();
+                                        }
+                                      });
                                   }
-                                });
+                                  else {
+                                    sweetAlert(response4.errorUserTitle, response4.errorUserMessage, "error");
+                                  }
+                                },
+                                error: function(xhr4, status4, err4){
+                                  alert(xhr4.responseText);
+                                }
+                              });
                             }
                             else {
-                              sweetAlert(response4.errorUserTitle, response4.errorUserMessage, "error");
+                              sweetAlert(response3.errorUserTitle, response3.errorUserMessage, "error");
                             }
                           },
-                          error: function(xhr4, status4, err4){
-                            alert(xhr4.responseText);
+                          error: function(xhr3, status3, err3){
+                            alert(xhr3.responseText);
                           }
                         });
                       }
                       else {
-                        sweetAlert(response3.errorUserTitle, response3.errorUserMessage, "error");
+                        sweetAlert(response2.errorUserTitle, response2.errorUserMessage, "error");
                       }
                     },
-                    error: function(xhr3, status3, err3){
-                      alert(xhr3.responseText);
+                    error: function(xhr2, status2, err2){
+                      alert(xhr2.responseText);
                     }
                   });
                 }
                 else {
-                  sweetAlert(response2.errorUserTitle, response2.errorUserMessage, "error");
+                  sweetAlert(response1.errorUserTitle, response1.errorUserMessage, "error");
                 }
               },
-              error: function(xhr2, status2, err2){
-                alert(xhr2.responseText);
+              error: function(xhr1, status1, err1){
+                alert(xhr1.responseText);
               }
             });
           }
           else {
-            sweetAlert(response.errorUserTitle, response.errorUserMessage, "error");
+              swal(response.errorUserTitle, response.errorUserMessage, "error");
           }
         },
         error: function(xhr, status, err){
