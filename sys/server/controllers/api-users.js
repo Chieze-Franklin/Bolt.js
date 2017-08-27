@@ -295,39 +295,69 @@ module.exports = {
 		request.session.reset();
 	  	response.end(utils.Misc.createResponse(user, null, 0));
 	},
-	put: function(request, response){ //TODO: there has to be a way to update 'displayPic'
+	put: function(request, response){
 		var searchCriteria = request.query;
 
 		var updateObject = utils.Misc.extractModel(request.body, __updatableProps);
 
 		if (utils.Misc.isNullOrUndefined(updateObject.displayName) && !utils.Misc.isNullOrUndefined(updateObject.dn))
 			updateObject.displayName = updateObject.dn;
+		if (utils.Misc.isNullOrUndefined(updateObject.displayPic) && !utils.Misc.isNullOrUndefined(updateObject.dp))
+			updateObject.displayPic = updateObject.dp;
 
-		models.user.update(searchCriteria,
-			{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
-			{ upsert: false }, 
-			function (updateError, updateDoc) {
-			if (!utils.Misc.isNullOrUndefined(updateError)) {
-				response.end(utils.Misc.createResponse(null, updateError));
-			}
-			else {
-				models.user.find(searchCriteria, function (error, users) {
-					if (!utils.Misc.isNullOrUndefined(error)) {
-						response.end(utils.Misc.createResponse(null, error));
-					}
-					else if (!utils.Misc.isNullOrUndefined(users)) {
-						users = utils.Misc.sanitizeUsers(users);
-						users.forEach(function(user){
-							utils.Events.fire('user-updated', { body: user }, request.bolt.token, function(eventError, eventResponse){});
-						});
-						response.send(utils.Misc.createResponse(users));
-					}
-					else {
-						response.send(utils.Misc.createResponse([]));
-					}
-				});
-			}
-		});
+		function updateUsers() {
+			models.user.update(searchCriteria,
+				{ $set: updateObject }, //with mongoose there is no need for the $set but I need to make it a habit in case I'm using MongoDB directly
+				{ upsert: false }, 
+				function (updateError, updateDoc) {
+				if (!utils.Misc.isNullOrUndefined(updateError)) {
+					response.end(utils.Misc.createResponse(null, updateError));
+				}
+				else {
+					models.user.find(searchCriteria, function (error, users) {
+						if (!utils.Misc.isNullOrUndefined(error)) {
+							response.end(utils.Misc.createResponse(null, error));
+						}
+						else if (!utils.Misc.isNullOrUndefined(users)) {
+							users = utils.Misc.sanitizeUsers(users);
+							users.forEach(function(user){
+								utils.Events.fire('user-updated', { body: user }, request.bolt.token, function(eventError, eventResponse){});
+							});
+							response.send(utils.Misc.createResponse(users));
+						}
+						else {
+							response.send(utils.Misc.createResponse([]));
+						}
+					});
+				}
+			});
+		}
+
+		if (!utils.Misc.isNullOrUndefined(updateObject.displayPic)) {
+			//delete the former dp
+			models.user.find(searchCriteria, function(error, users){
+				if (!utils.Misc.isNullOrUndefined(users)) {
+					users.forEach(function(user){
+						if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)){
+							var prevPic = user.displayPic;
+							var indexOfLastSlash = prevPic.lastIndexOf('/');
+							var filename = prevPic.substring(indexOfLastSlash + 1);
+							superagent
+								.delete(process.env.BOLT_ADDRESS + '/public/upload/' + filename)
+								.end(function(deleteError, deleteResponse){});
+						}
+					});
+
+					updateUsers();
+				}
+				else {
+					updateUsers();
+				}
+			});
+		}
+		else {
+			updateUsers();
+		}
 	},
 	putUser: function(request, response){
 		var usrnm = utils.String.trim(request.params.name.toLowerCase());
@@ -338,6 +368,8 @@ module.exports = {
 
 		if (utils.Misc.isNullOrUndefined(updateObject.displayName) && !utils.Misc.isNullOrUndefined(updateObject.dn))
 			updateObject.displayName = updateObject.dn;
+		if (utils.Misc.isNullOrUndefined(updateObject.displayPic) && !utils.Misc.isNullOrUndefined(updateObject.dp))
+			updateObject.displayPic = updateObject.dp;
 
 		function updateUser() {
 			models.user.update(searchCriteria,
@@ -366,44 +398,21 @@ module.exports = {
 			});
 		}
 
-		var file;
-		if (!utils.Misc.isNullOrUndefined(request.file)) file = request.file;
-		else if (!utils.Misc.isNullOrUndefined(request.files)) {
-			for(var index = 0; index < request.files.length; index++) {
-				if ("dp" == request.files[index].fieldname || "displayPic" == request.files[index].fieldname) {
-					file = request.files[index];
-					break;
-				}
-			}
-		}
-		if (!utils.Misc.isNullOrUndefined(file)) {
-			function setNewPic() {
-				//since multer seems not to add extensions, I'm doing it manually here
-				var tempPath = path.resolve(file.path),
-					targetPath = path.resolve(file.path + path.extname(file.originalname));
-				fs.rename(tempPath, targetPath, function(renameError){	
-					//I can easily use targetPath (file.path + ext) but file.path uses '\' (instead of '/') as path separator, 
-					//with which Mozilla doesn't work well sometimes
-					if(!utils.Misc.isNullOrUndefined(renameError)) { //if the file could not be renamed just use the original name
-						updateObject.displayPic = file.destination + file.filename;
-					}
-					else {
-						updateObject.displayPic = file.destination + file.filename + path.extname(file.originalname);
-					}
-
-					updateUser();
-				});
-			}
-
-			//first delete the former dp
+		if (!utils.Misc.isNullOrUndefined(updateObject.displayPic)) {
+			//delete the former dp
 			models.user.findOne(searchCriteria, function(error, user){
 				if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)){
-					fs.unlink(path.resolve(user.displayPic), function(unlinkError){});
+					var prevPic = user.displayPic;
+					var indexOfLastSlash = prevPic.lastIndexOf('/');
+					var filename = prevPic.substring(indexOfLastSlash + 1);
+					superagent
+						.delete(process.env.BOLT_ADDRESS + '/public/upload/' + filename)
+						.end(function(deleteError, deleteResponse){});
 
-					setNewPic();
+					updateUser();
 				}
 				else {
-					setNewPic();
+					updateUser();
 				}
 			});
 		}
