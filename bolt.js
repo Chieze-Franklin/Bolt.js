@@ -3,6 +3,8 @@
 
 'use strict';
 
+require('dotenv-extended').load();
+
 var models = require("bolt-internal-models");
 var sockets = require("bolt-internal-sockets");
 var utils = require("bolt-internal-utils");

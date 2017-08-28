@@ -20,6 +20,7 @@ sys/client/
 sys/data/mongodb/**/*
 !sys/data/mongodb/
 test_nodegit/*
+.env
 ./*.png
 ./*.jpg
 npm-debug.log*
