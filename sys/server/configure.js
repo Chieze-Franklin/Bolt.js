@@ -1,6 +1,7 @@
 var models = require("bolt-internal-models");
 var utils = require("bolt-internal-utils");
 
+var AWS = require('aws-sdk');
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var express = require("express");
@@ -126,7 +127,6 @@ module.exports = function(app) {
 				var bucket = process.env.S3_BUCKET;
 				var region = process.env.S3_REGION;
 
-				var AWS = require('aws-sdk');
 				AWS.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
 					region: region });
 
@@ -199,6 +199,32 @@ module.exports = function(app) {
 		fs.unlink(path.resolve('public/bolt/uploads/' + filename), function(unlinkError){});
 
 		//delete AWS S3 copy
+		if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && 
+			process.env.S3_BUCKET && process.env.S3_REGION) {
+			var bucket = process.env.S3_BUCKET;
+			var region = process.env.S3_REGION;
+
+			AWS.config.update({ accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
+				region: region });
+
+			var s3 = new AWS.S3();
+
+			var params = {
+				Bucket: bucket, 
+				Delete: {
+					Objects: [
+						{
+							Key: filename
+						}
+					]
+				}
+			};
+
+			s3.deleteObjects(params, function(err, data) {console.log("deleting: ", filename)
+				//if (err) console.log(err, err.stack); // an error occurred
+				//else     console.log(data);           // successful response
+			});
+		}
 
 		response
 			.set('Content-Type', 'application/json')
