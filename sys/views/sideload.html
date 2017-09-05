@@ -75,7 +75,7 @@ $(document).ready(function(){
           url: "/api/apps/local",
           data: { path: "{{path}}", system: system },
           type: "POST",
-          headers: {'X-Bolt-App-Token': '{{token}}'},
+          headers: {'X-Bolt-App-Token': '{{token}}', 'X-Bolt-User-Name': '{{user.name}}'},
           success: function(response, status, xhr){
             if(response.code == 0){
               sweetAlert({

@@ -8,6 +8,6 @@ var router = express.Router();
 router.get('/visible-apps/:user', apiAppChecksCtrlr.getAppsForUser)
 
 //checks to see if the user has been granted the permission
-router.post('/has-permission/', apiAppChecksCtrlr.postHasPermission);
+router.post('/has-permission', apiAppChecksCtrlr.postHasPermission);
 
 module.exports = router;

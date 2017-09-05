@@ -25,19 +25,19 @@ router.get('/:name', apiAppsCtrlr.getApp);
 router.post('/', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.post);
 
 //returns the package.json of an app from an online repository (current only npm is supported)
-router.post('/package', checksCtrlr.forAdminRight, apiAppsCtrlr.postPackage);
+router.post('/package', /*checksCtrlr.forAdminRight,*/ apiAppsCtrlr.postPackage);
 
 //returns the readme.md of an app from an online repository (current only npm is supported)
-router.post('/readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postReadme);
+router.post('/readme', /*checksCtrlr.forAdminRight,*/ apiAppsCtrlr.postReadme);
 
 //installs an app from a local repository (current only the node_modules folder is supported)
 router.post('/local', checksCtrlr.forSystemApp, checksCtrlr.forAdminRight, apiAppsCtrlr.postLocal);
 
 //returns the package.json of an app from a local repository (current only the node_modules folder is supported)
-router.post('/local-package', checksCtrlr.forAdminRight, apiAppsCtrlr.postLocalPackage);
+router.post('/local-package', /*checksCtrlr.forAdminRight,*/ apiAppsCtrlr.postLocalPackage);
 
 //returns the readme.md of an app from a local repository (current only the node_modules folder is supported)
-router.post('/local-readme', checksCtrlr.forAdminRight, apiAppsCtrlr.postLocalReadme);
+router.post('/local-readme', /*checksCtrlr.forAdminRight,*/ apiAppsCtrlr.postLocalReadme);
 
 //TODO: /remote, /remote-package, /remote-readme
 

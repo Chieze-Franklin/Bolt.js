@@ -9,6 +9,9 @@ var Showdown = require("showdown");
 var superagent = require('superagent');
 var url = require('url');
 
+const X_BOLT_USER_NAME = 'X-Bolt-User-Name';
+const X_BOLT_USER_TOKEN = 'X-Bolt-User-Token';
+
 var __node_modulesDir = path.join(__dirname + './../../../node_modules');
 var __sysdir = path.join(__dirname + './../../../sys');
 
@@ -123,7 +126,9 @@ module.exports = {
 									version: request.query.version,
 									success: request.query.success,
 
-									token: request.bolt.token
+									token: request.bolt.token,
+
+									user: request.user
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
@@ -225,7 +230,9 @@ module.exports = {
 
 									success: request.query.success,
 
-									token: request.bolt.token
+									token: request.bolt.token,
+
+									user: request.user
 								};
 
 								if (!utils.Misc.isNullOrUndefined(package)) {
@@ -253,7 +260,9 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			token: request.bolt.token
+			token: request.bolt.token,
+
+			user: request.user
 		};
 		response.locals.title = "Uninstall";
 		response
@@ -268,7 +277,9 @@ module.exports = {
 			success: request.query.success,
 			failure: request.query.failure,
 
-			token: request.bolt.token
+			token: request.bolt.token,
+
+			user: request.user
 		};
 		response.locals.title = "Update";
 		response
