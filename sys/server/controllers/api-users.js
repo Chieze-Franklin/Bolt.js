@@ -338,7 +338,8 @@ module.exports = {
 			models.user.find(searchCriteria, function(error, users){
 				if (!utils.Misc.isNullOrUndefined(users)) {
 					users.forEach(function(user){
-						if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)){
+						if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)
+							&& user.displayPic != updateObject.displayPic){
 							var prevPic = user.displayPic;
 							var indexOfLastSlash = prevPic.lastIndexOf('/');
 							var filename = prevPic.substring(indexOfLastSlash + 1);
@@ -401,7 +402,8 @@ module.exports = {
 		if (!utils.Misc.isNullOrUndefined(updateObject.displayPic)) {
 			//delete the former dp
 			models.user.findOne(searchCriteria, function(error, user){
-				if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic)){
+				if(!utils.Misc.isNullOrUndefined(user) && !utils.Misc.isNullOrUndefined(user.displayPic) 
+					&& user.displayPic != updateObject.displayPic){
 					var prevPic = user.displayPic;
 					var indexOfLastSlash = prevPic.lastIndexOf('/');
 					var filename = prevPic.substring(indexOfLastSlash + 1);

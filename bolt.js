@@ -30,6 +30,7 @@ var apiTokensRouter = require('./sys/server/routers/api-tokens');
 var apiUserRolesRouter = require('./sys/server/routers/api-user-roles');
 var apiUsersRouter = require('./sys/server/routers/api-users');
 
+var uiProfilesRouter = require('./sys/server/routers/ui-profiles');
 var uiAppsRouter = require('./sys/server/routers/ui-apps');
 var uiFilesRouter = require('./sys/server/routers/ui-files');
 var uiViewsRouter = require('./sys/server/routers/ui-views');
@@ -191,6 +192,8 @@ app.use('/x/bolt', xBoltRouter);
 //</X-Endpoints>
 
 //<UI-Endpoints>
+app.use(uiProfilesRouter);
+
 app.use('/apps', uiAppsRouter);
 
 app.use('/files', uiFilesRouter);
