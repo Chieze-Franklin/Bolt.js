@@ -220,7 +220,7 @@ module.exports = function(app) {
 				}
 			};
 
-			s3.deleteObjects(params, function(err, data) {console.log("deleting: ", filename)
+			s3.deleteObjects(params, function(err, data) {
 				//if (err) console.log(err, err.stack); // an error occurred
 				//else     console.log(data);           // successful response
 			});
