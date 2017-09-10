@@ -29,6 +29,9 @@ router.get('/:name', apiUsersCtrlr.getUser);
 //adds a user to the database
 router.post('/', checksCtrlr.forSystemApp, apiUsersCtrlr.post);
 
+//changes a user's password
+router.post('/change-password', checksCtrlr.forSystemApp, apiUsersCtrlr.postChangePassword);
+
 //logs a user into the system
 router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);
 

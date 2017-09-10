@@ -60,7 +60,7 @@
                         <div class="row">
                           <div class="col-sm-12">
                             <a class="btn btn-info btn-cons m-t-10" id="change_pwd" data-toggle="tab" href="#tab_change_pwd">
-                              <span>Change Password</span>
+                              <span>Change password</span>
                             </a>
                           </div>
                         </div>
@@ -126,24 +126,48 @@
             </div>
             {{#if editable}}
             <div class="tab-pane slide-left" id="tab_change_pwd">
-                <div class="row row-same-height">
-                    <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
-                        <h1>Done</h1>
+              <div class="p-l-50 m-l-20 p-r-50 m-r-20 p-t-50 m-t-30 sm-p-l-15 sm-p-r-15 sm-p-t-40">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div class="form-group form-group-default">
+                      <label>Old Password</label>
+                      <input type="password" name="password" id="password" placeholder="enter old password" class="form-control" required>
                     </div>
+                  </div>
                 </div>
+
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div class="form-group form-group-default">
+                      <label>New Password</label>
+                      <input type="password" name="new_password" id="new_password" placeholder="enter new password" class="form-control" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div class="form-group form-group-default">
+                      <label>Confirm New Password</label>
+                      <input type="password" name="confirm_new_password" id="confirm_new_password" placeholder="enter new password again" class="form-control" required>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="row">
                   <div class="col-sm-4">
                     <a class="btn btn-primary btn-cons m-t-10" data-toggle="tab" href="#begin">
                       <span><i class="fa fa-arrow-left"></i> Back</span>
                     </a>
                   </div>
-                  <div class="col-sm-4"></div>
                   <div class="col-sm-4">
                     <a class="btn btn-primary btn-cons m-t-10" id="save_pwd" data-toggle="tab">
                       <span>Save Password</span>
                     </a>
                   </div>
+                  <div class="col-sm-4"></div>
                 </div>
+              </div>
             </div>
             {{/if}}
       </div>
@@ -218,7 +242,6 @@ $(document).ready(function(){
           if(response.code === 0) {
             if (response.body.length > 0) user.displayPic = response.body[0].url;
 
-            //first, add the user
             $.ajax({
               url: '/api/users/{{user.name}}',
               type: 'PUT',
@@ -282,6 +305,50 @@ $(document).ready(function(){
           return xhr;
         }
       });
+  });
+
+  $("#save_pwd").click(function(){
+    var password = $("#password").val();
+    var new_password = $("#new_password").val();
+    var con_new_password = $("#confirm_new_password").val();
+
+    if (!password || !new_password) {
+      sweetAlert("Error", "Password or new password not supplied!", "error");
+      return;
+    }
+
+    if (new_password !== con_new_password) {
+      sweetAlert("Error", "New password and confirmation password do not match!", "error");
+      return;
+    }
+
+    $.ajax({
+      url: '/api/users/change-password',
+      type: 'POST',
+      data: {password: password, newPassword: new_password},
+      headers: {'X-Bolt-App-Token': '{{token}}', 'X-Bolt-User-Name': '{{user.name}}'},
+      success: function(response1){
+        if(response1.code == 0){
+          swal({
+            title: "Password Updated!",
+            text: "Password for {{user.displayName}} has been updated!",
+            type: "success",
+            showCancelButton: false,
+            closeOnConfirm: true
+          }, function(isConfirm){
+            if (isConfirm) {
+              window.location.href = "/@{{user.name}}";
+            }
+          });
+        }
+        else {
+          sweetAlert(response1.errorUserTitle, response1.errorUserMessage, "error");
+        }
+      },
+      error: function(xhr1, status1, err1){
+        alert(xhr1.responseText);
+      }
+    });
   });
 });
 </script>

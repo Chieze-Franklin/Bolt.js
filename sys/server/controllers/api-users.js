@@ -243,6 +243,34 @@ module.exports = {
 			response.end(utils.Misc.createResponse(null, error, 200));
 		}
 	},
+	postChangePassword: function(request, response){
+		if(request.user && request.body.password && request.body.newPassword){
+			var usrnm = utils.String.trim(request.user.name.toLowerCase());
+			models.user.findOne({ 
+				name: usrnm, 
+				passwordHash: utils.Security.hashSync(request.body.password + usrnm) 
+			}, function(error, user){
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else if(utils.Misc.isNullOrUndefined(user)){
+					request.session.reset();
+					var err = new Error(errors['203']);
+					response.end(utils.Misc.createResponse(null, err, 203));
+				}
+				else{
+					user.passwordHash = utils.Security.hashSync(request.body.newPassword + usrnm);
+					user.save(function(saveError, savedUser){});
+					user = utils.Misc.sanitizeUser(user);
+					response.send(utils.Misc.createResponse(user));
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['200']);
+			response.end(utils.Misc.createResponse(null, error, 200));
+		}
+	},
 	postLogin: function(request, response){
 		if(!utils.Misc.isNullOrUndefined(request.body.name) && !utils.Misc.isNullOrUndefined(request.body.password)){
 			var usrnm = utils.String.trim(request.body.name.toLowerCase());
