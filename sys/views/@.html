@@ -24,7 +24,7 @@
                       <form id="form-register" enctype="multipart/form-data">
                         <div class="row">
                           <div class="col-sm-12">
-                            <h2 class="semi-bold">@{{user.name}}</h2>
+                            <h2 class="semi-bold">{{user.displayName}}</h2>
                           </div>
                         </div>
                         
@@ -74,18 +74,16 @@
 
                         <hr />
 
+                        {{#if editable}}
                         <div class="row">
                           <div class="col-sm-12">
-                            {{#if editable}}
                             <div class="form-group form-group-default">
                               <label>Display name</label>
                               <input type="text" name="dn" id="dn" value="{{user.displayName}}" class="form-control">
                             </div>
-                            {{else}}
-                            <h5 class="semi-bold">{{user.displayName}}</h5>
-                            {{/if}}
                           </div>
                         </div>
+                        {{/if}}
 
                         <div class="row">
                           <div class="col-sm-12">
