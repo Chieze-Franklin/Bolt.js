@@ -7,9 +7,9 @@
     <!-- START Background Caption-->
     <div class="bg-caption pull-bottom sm-pull-bottom text-white p-l-20 m-b-20">
       <h2 class="semi-bold text-white">
-      Log into Bolt!</h2>
+      Log into {{config.friendlyName}}!</h2>
       <p class="small">
-        All work copyright of respective owners, otherwise © 2016 Bolt.
+        All work copyright of respective owners, otherwise © {{year}} {{config.friendlyName}}.
       </p>
     </div>
     <!-- END Background Caption-->
@@ -38,6 +38,8 @@
           </div>
         </div>
         <button class="btn btn-primary btn-cons m-t-10" value="submit" id="submit">Log In</button>
+        <hr/>
+        <button class="btn btn-primary btn-cons m-t-10" id="reset_pwd">I cannot remember my password</button>
       </div>
       <!--END Login Form-->
     </div>
@@ -127,6 +129,10 @@ $(document).ready(function(){
             alert(xhr.responseText);
           }
         });
+    });
+
+    $("#reset_pwd").click(function(){
+      sweetAlert("Reset Password", "Please contact your system administrator", "info");
     });
   });
 </script>

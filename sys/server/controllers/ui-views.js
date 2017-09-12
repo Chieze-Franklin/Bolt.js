@@ -1,3 +1,4 @@
+var config = require("bolt-internal-config");
 var errors = require("bolt-internal-errors");
 var models = require("bolt-internal-models");
 var setup = require("bolt-internal-setup");
@@ -170,10 +171,17 @@ module.exports = {
 			.render('install.html', scope);
 	},
 	getLogin: function(request, response){
+		var conf = {
+			friendlyName: config.getFriendlyName(),
+			friendlyVersion: config.getFriendlyVersion()
+		};
 		var scope = {
 			success: request.query.success,
 			failure: request.query.failure,
 			noQuery: request.query.no_query === 'true',
+
+			config: conf,
+			year: new Date().getFullYear(),
 
 			token: request.bolt.token
 		};
