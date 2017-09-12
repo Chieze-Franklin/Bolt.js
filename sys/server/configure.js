@@ -231,7 +231,7 @@ module.exports = function(app) {
 			.send(JSON.stringify({}));
 	});
 
-	app.use('/public', express.static(__publicdir));
+	app.use('**/public', express.static(__publicdir));
 
 	app.set('views', __sysdir + '/views');
 	app.engine('html', exphbs.create({
