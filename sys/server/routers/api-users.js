@@ -38,6 +38,9 @@ router.post('/login', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogin);
 //logs a user out of the system
 router.post('/logout', checksCtrlr.forSystemApp, apiUsersCtrlr.postLogout);
 
+//resets a user's password (to the user's username)
+router.post('/reset-password', checksCtrlr.forSystemApp, apiUsersCtrlr.postResetPassword);
+
 //deletes an array of user objects matching the specified criteria
 router.delete('/', checksCtrlr.forSystemApp, checksCtrlr.forBulkDeleteCriterion, apiUsersCtrlr.delete);
 

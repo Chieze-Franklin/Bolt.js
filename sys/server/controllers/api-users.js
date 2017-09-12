@@ -323,6 +323,33 @@ module.exports = {
 		request.session.reset();
 	  	response.end(utils.Misc.createResponse(user, null, 0));
 	},
+	postResetPassword: function(request, response){
+		if(request.body.name && request.body.password){
+			var usrnm = utils.String.trim(request.body.name.toLowerCase());
+			models.user.findOne({ 
+				name: usrnm
+			}, function(error, user){
+				if (!utils.Misc.isNullOrUndefined(error)) {
+					response.end(utils.Misc.createResponse(null, error));
+				}
+				else if(utils.Misc.isNullOrUndefined(user)){
+					request.session.reset();
+					var err = new Error(errors['203']);
+					response.end(utils.Misc.createResponse(null, err, 203));
+				}
+				else{
+					user.passwordHash = utils.Security.hashSync(request.body.password + usrnm);
+					user.save(function(saveError, savedUser){});
+					user = utils.Misc.sanitizeUser(user);
+					response.send(utils.Misc.createResponse(user));
+				}
+			});
+		}
+		else {
+			var error = new Error(errors['200']);
+			response.end(utils.Misc.createResponse(null, error, 200));
+		}
+	},
 	put: function(request, response){
 		var searchCriteria = request.query;
 
