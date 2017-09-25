@@ -249,7 +249,6 @@ module.exports = {
 			        superagent
 						.post(process.env.BOLT_ADDRESS + '/api/apps/local')
 						.set({'X-Bolt-App-Token': request.bolt.token, 'X-Bolt-User-Name': request.user.name})
-						//.set({'X-Bolt-App-Token': request.bolt.token})
 						.send({ path: appnm, system: request.body.system || false })
 						.end(function(appregError, appregResponse){
 							if (!utils.Misc.isNullOrUndefined(appregError)) {
