@@ -1,5 +1,5 @@
 {
-	"redirect": "/settings",
+	"redirect": "/admin",
 	"steps": [
 		{
 			"title": "Download Core Modules",
