@@ -3,7 +3,7 @@ var assert = require('assert');
 //var server = require('../bolt');
 var browser = soda.createClient({
 	host: '127.0.0.1',
-	port: 4444,
+	port: 400,
 	url: 'http://localhost:400',
 	browser: 'firefox'
 });
