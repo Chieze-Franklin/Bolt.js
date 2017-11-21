@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "gulp build",
+    "eslint": "./node_modules/.bin/eslint bolt.js",
     "start": "node bolt",
     "start-electron": ".\\node_modules\\.bin\\electron .",
     "start-in-electron": "npm run start-electron",
@@ -80,6 +81,9 @@
   "devDependencies": {
     "coveralls": "^2.12.0",
     "del": "^2.2.2",
+    "eslint": "^4.11.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
     "gulp": "^3.9.1",
     "gulp-jslint": "^1.0.10",
     "jscoverage": "^0.6.0",
